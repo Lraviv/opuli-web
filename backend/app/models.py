@@ -21,7 +21,10 @@ class User(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
+    # למשתמשים שנרשמו רק עם Google: סימון שלא תואם לשום סיסמה (ראו security.py)
     password_hash: str
+    # מזהה המשתמש הקבוע אצל Google ("sub" בטוקן) - נשאר גם אם כתובת ה-Gmail משתנה
+    google_sub: Optional[str] = Field(default=None, index=True, unique=True)
     display_name: Optional[str] = None
     # צבע ראשי (hex, למשל "#2563EB") שנבחר במסך הפרופיל - ברירת מחדל נקבעת בצד הלקוח
     accent_color: Optional[str] = None

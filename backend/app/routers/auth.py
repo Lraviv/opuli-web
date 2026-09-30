@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import User
-from ..schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserRead, UserUpdate
+from ..google_auth import GoogleAuthError, verify_google_id_token
+from ..schemas import GoogleLoginRequest, LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserRead, UserUpdate
 from ..security import (
     InvalidTokenError,
     create_access_token,
     create_refresh_token,
     decode_token,
+    UNUSABLE_PASSWORD,
     hash_password,
     verify_password,
 )
@@ -43,6 +45,44 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.email == payload.email)).first()
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="אימייל או סיסמה שגויים")
+
+    return TokenResponse(
+        access_token=create_access_token(user.id),
+        refresh_token=create_refresh_token(user.id),
+    )
+
+
+@router.post("/google", response_model=TokenResponse)
+def login_with_google(payload: GoogleLoginRequest, session: Session = Depends(get_session)):
+    """התחברות/הרשמה עם Google: מאמתים את ה-ID token ומחזירים את הטוקנים שלנו.
+
+    סדר החיפוש: לפי מזהה Google (sub) -> לפי אימייל (חשבון קיים עם סיסמה
+    מקושר ל-Google, כי Google אימתה שהאימייל שייך למשתמש/ת) -> חשבון חדש.
+    """
+    try:
+        claims = verify_google_id_token(payload.credential)
+    except GoogleAuthError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+
+    google_sub = claims["sub"]
+    email = claims["email"].lower()
+
+    user = session.exec(select(User).where(User.google_sub == google_sub)).first()
+    if user is None:
+        # השוואה בלי תלות באותיות גדולות/קטנות - Google מחזירה אימייל באותיות קטנות
+        user = session.exec(select(User).where(func.lower(User.email) == email)).first()
+        if user is not None:
+            user.google_sub = google_sub
+        else:
+            user = User(
+                email=email,
+                password_hash=UNUSABLE_PASSWORD,
+                google_sub=google_sub,
+                display_name=claims.get("given_name") or claims.get("name"),
+            )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     return TokenResponse(
         access_token=create_access_token(user.id),

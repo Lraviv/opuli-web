@@ -3,11 +3,12 @@ import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Input } from '@/components/ui'
+import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 import { ApiError } from '@/lib/api'
 import './AuthLayout.css'
 
 export default function Login() {
-  const { login, user, loading } = useAuth()
+  const { loginWithGoogle, login, user, loading } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -25,6 +26,19 @@ export default function Login() {
       navigate('/')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'ההתחברות נכשלה')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleGoogle(credential: string) {
+    setError(null)
+    setBusy(true)
+    try {
+      await loginWithGoogle(credential)
+      navigate('/')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ההתחברות עם Google נכשלה')
     } finally {
       setBusy(false)
     }
@@ -55,6 +69,7 @@ export default function Login() {
             {busy ? 'מתחברת…' : 'התחברות'}
           </Button>
         </form>
+        <GoogleSignInButton onCredential={handleGoogle} onError={setError} />
         <div className="auth-switch">
           עוד אין לך חשבון? <Link to="/register">הרשמה</Link>
         </div>

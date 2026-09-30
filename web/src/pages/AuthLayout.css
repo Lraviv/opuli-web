@@ -58,3 +58,24 @@
   color: var(--color-primary);
   font-weight: 700;
 }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  margin: var(--space-four) 0 var(--space-three);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+/* הכפתור של Google נטען ב-iframe - שומרים לו גובה כדי שהכרטיס לא יקפוץ */
+.auth-google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}

@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     # "https://opuli.vercel.app". "*" = כולם (לפיתוח בלבד).
     cors_origins: str = "*"
 
+    # OAuth Client ID של Google (מ-Google Cloud Console) - מזהה ציבורי, לא סוד.
+    # ריק = התחברות עם Google כבויה. חייב להיות זהה ל-VITE_GOOGLE_CLIENT_ID באתר.
+    google_client_id: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("database_url")

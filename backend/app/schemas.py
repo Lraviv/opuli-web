@@ -16,6 +16,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    # ה-ID token ("credential") שהכפתור של Google מחזיר לדפדפן
+    credential: str
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 

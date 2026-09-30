@@ -13,8 +13,16 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
+# סיסמה "לא שמישה" לחשבונות שנוצרו דרך Google בלבד - אף סיסמה לא תתאים לה
+UNUSABLE_PASSWORD = "!google-only"
+
+
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    try:
+        return pwd_context.verify(password, password_hash)
+    except ValueError:
+        # hash שלא מזוהה (למשל UNUSABLE_PASSWORD) = אין התאמה
+        return False
 
 
 def _create_token(subject: str, expires_delta: timedelta, token_type: Literal["access", "refresh"]) -> str:
