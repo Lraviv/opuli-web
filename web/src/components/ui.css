@@ -1,0 +1,98 @@
+.ui-card {
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: var(--space-four);
+}
+
+.ui-button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.ui-button:active {
+  transform: scale(0.98);
+}
+.ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ui-button--primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+.ui-button--secondary {
+  background: var(--color-background-selected);
+  color: var(--color-text);
+}
+.ui-button--danger {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+.ui-button--primary:hover {
+  opacity: 0.92;
+}
+
+.ui-input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+}
+.ui-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.ui-empty {
+  text-align: center;
+  padding: var(--space-six) var(--space-four);
+  color: var(--color-text-secondary);
+}
+.ui-empty__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+.ui-empty__subtitle {
+  font-size: 14px;
+  margin: 0;
+}
+
+.ui-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.ui-pill--neutral {
+  background: var(--color-background-selected);
+  color: var(--color-text-secondary);
+}
+.ui-pill--success {
+  background: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+}
+.ui-pill--warning {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: var(--color-warning);
+}
+.ui-pill--danger {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+.grade-input {
+  width: 84px;
+  padding: 6px 10px;
+  font-size: 14px;
+  text-align: center;
+}

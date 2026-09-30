@@ -1,0 +1,137 @@
+.courses-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-three);
+  margin-bottom: var(--space-four);
+}
+.courses-header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+.courses-actions {
+  display: flex;
+  gap: var(--space-two);
+}
+.courses-actions .ui-button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* טופס הוספה ידנית - פס אחד דק, לא כרטיס */
+.courses-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two);
+  align-items: center;
+  padding: var(--space-two);
+  margin-bottom: var(--space-three);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-background-element));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+.courses-add .ui-input {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--color-background-element);
+}
+.courses-add .courses-add__credits {
+  flex: 0 0 76px;
+  min-width: 0;
+}
+.courses-add .ui-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* בורר טאבים (segmented) */
+.courses-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: var(--space-three);
+  border-radius: 12px;
+  background: var(--color-background-selected);
+}
+.courses-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 9px;
+  padding: 7px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.courses-tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+.courses-tab--active {
+  background: var(--color-background-element);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.courses-tab__count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-background-selected);
+  color: var(--color-text-secondary);
+}
+.courses-tab--active .courses-tab__count {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+.courses-search {
+  margin-bottom: var(--space-four);
+}
+.courses-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  padding: var(--space-two) 0;
+}
+.courses-row + .courses-row {
+  border-top: 1px solid var(--color-border);
+}
+.courses-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.courses-row__title {
+  margin: 0;
+  font-weight: 500;
+}
+.courses-row__subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.courses-row__meta {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.courses-row__link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  min-width: 0;
+}

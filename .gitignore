@@ -1,0 +1,6 @@
+# לאפליקציית המובייל יש מאגר git משלה
+mobile/
+# קבצי ייצוא מקומיים
+Claude outputs/
+.DS_Store
+.env

@@ -1,0 +1,96 @@
+/* טוקני עיצוב - הועתקו מ-mobile/src/constants/theme.ts כדי לשמור על זהות
+   חזותית בין האפליקציה הניידת לאתר (אותה פלטה, אותם מרווחים). */
+
+:root {
+  --color-primary: #3c87f7;
+  --color-primary-soft: #8fb8fb;
+  --color-danger: #e5484d;
+  --color-success: #2fb344;
+  --color-warning: #f5a524;
+  --color-white: #ffffff;
+
+  --color-text: #14161a;
+  --color-background: #f6f7f9;
+  --color-background-element: #ffffff;
+  --color-background-selected: #edeff3;
+  --color-text-secondary: #666b76;
+  --color-border: #e3e5ea;
+
+  --space-half: 2px;
+  --space-one: 4px;
+  --space-two: 8px;
+  --space-three: 16px;
+  --space-four: 24px;
+  --space-five: 32px;
+  --space-six: 64px;
+
+  --max-content-width: 800px;
+  --font-display: 'Heebo', system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-text: #f4f5f7;
+    --color-background: #0b0c0e;
+    --color-background-element: #1c1e23;
+    --color-background-selected: #282b32;
+    --color-text-secondary: #9aa0ac;
+    --color-border: #302f3a;
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-text: #f4f5f7;
+  --color-background: #0b0c0e;
+  --color-background-element: #1c1e23;
+  --color-background-selected: #282b32;
+  --color-text-secondary: #9aa0ac;
+  --color-border: #302f3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  direction: rtl;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-white);
+}
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}

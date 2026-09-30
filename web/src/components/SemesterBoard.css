@@ -1,0 +1,167 @@
+.sb-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-three);
+}
+
+/* סמסטר = מקטע אחד ברוחב מלא; הקורסים הם שורות בתוכו, לא כרטיסים בתוך כרטיס */
+.sb-section {
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: var(--space-three);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.sb-section__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-two);
+  padding-bottom: var(--space-two);
+}
+.sb-section__header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sb-section__count {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+/* עומס הסמסטר בנ"ז - המידע שמתכננים לפיו, בקצה השורה */
+.sb-section__load {
+  margin-inline-start: auto;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+.sb-section__empty {
+  margin: 0;
+  padding: var(--space-two) 0 var(--space-one);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* "לא משובץ" = תיבת דואר נכנס: קו מקווקו וגוון של צבע ה"מתוכנן" */
+.sb-section--inbox {
+  background: color-mix(in srgb, var(--color-warning) 7%, var(--color-background-element));
+  border: 1.5px dashed color-mix(in srgb, var(--color-warning) 55%, transparent);
+}
+.sb-section--inbox .sb-section__load {
+  color: color-mix(in srgb, var(--color-warning) 65%, var(--color-text));
+  background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+}
+/* יעד גרירה פעיל */
+.sb-section--over {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-background-element));
+}
+
+.sb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sb-course {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  padding: 8px 4px;
+  border-top: 1px solid var(--color-border);
+  cursor: grab;
+}
+.sb-course:active {
+  cursor: grabbing;
+}
+.sb-course__grip {
+  font-size: 12px;
+  letter-spacing: -2px;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  user-select: none;
+}
+.sb-course:hover .sb-course__grip {
+  opacity: 1;
+}
+.sb-course__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+.sb-course__name:hover {
+  color: var(--color-primary);
+}
+.sb-course__credits {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* "העבר ל…" - שקט עד שמעבירים עליו את העכבר */
+.sb-course__move {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+.sb-course:hover .sb-course__move,
+.sb-course__move:focus-visible {
+  border-color: var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+.sb-course__move:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* הוספת סמסטר - שורה אחת דקה מעל החיפוש במסך הקורסים */
+.sb-new {
+  display: flex;
+  gap: var(--space-two);
+  margin-bottom: var(--space-three);
+}
+.sb-new .ui-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: transparent;
+  border-style: dashed;
+}
+.sb-new .ui-input:focus {
+  border-style: solid;
+  background: var(--color-background-element);
+}
+.sb-new .ui-button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-section {
+    transition: none;
+  }
+}
+@media (max-width: 480px) {
+  .sb-course {
+    flex-wrap: wrap;
+  }
+  .sb-course__grip {
+    display: none;
+  }
+  .sb-course__move {
+    border-color: var(--color-border);
+  }
+}

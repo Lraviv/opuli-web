@@ -1,0 +1,112 @@
+.home-greeting {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0 0 var(--space-one);
+}
+.home-subgreeting {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-five);
+}
+.home-section {
+  margin-bottom: var(--space-five);
+}
+.home-section h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-two);
+}
+.home-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+}
+.home-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-three);
+  padding: var(--space-three);
+}
+.home-row + .home-row {
+  border-top: 1px solid var(--color-border);
+}
+.home-row__title {
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+.home-row__meta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+.home-section__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-two);
+}
+.home-section__header h2 {
+  margin: 0;
+}
+.home-section__link {
+  font-size: 13px;
+  color: var(--color-primary);
+}
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-three);
+  margin-bottom: var(--space-three);
+}
+@media (max-width: 480px) {
+  .home-stats {
+    grid-template-columns: 1fr;
+  }
+}
+.home-stat {
+  text-align: center;
+}
+.home-stat__value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+.home-stat__label {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.home-credits__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-two);
+}
+.home-credits__label {
+  font-weight: 600;
+}
+.home-credits__value {
+  font-weight: 800;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.home-progress {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--color-background-selected);
+  overflow: hidden;
+  margin-bottom: var(--space-two);
+}
+.home-progress__bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 5px;
+}
+.home-reminder {
+  justify-content: flex-start;
+  cursor: pointer;
+}

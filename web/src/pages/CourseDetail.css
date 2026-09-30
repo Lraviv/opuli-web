@@ -1,0 +1,125 @@
+.cd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-five);
+}
+.cd-header h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+.cd-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+.cd-status-row {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-two);
+}
+.cd-status-row button {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.cd-section {
+  margin-bottom: var(--space-five);
+}
+.cd-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-two);
+}
+.cd-section-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+.cd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  padding: var(--space-two) 0;
+}
+.cd-row + .cd-row {
+  border-top: 1px solid var(--color-border);
+}
+.cd-row__title {
+  flex: 1;
+  margin: 0;
+  font-weight: 500;
+}
+.cd-row__title--done {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+.cd-inline-form {
+  display: flex;
+  gap: var(--space-two);
+  margin-bottom: var(--space-three);
+  flex-wrap: wrap;
+}
+.cd-inline-form input,
+.cd-inline-form select {
+  flex: 1;
+  min-width: 120px;
+}
+.cd-grade {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  margin-top: var(--space-three);
+  font-size: 14px;
+  font-weight: 600;
+}
+.cd-item__body {
+  flex: 1;
+  min-width: 0;
+}
+.cd-item__notes {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+}
+.cd-item-edit {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-two);
+}
+.cd-item-edit > .ui-input {
+  flex: 1;
+  min-width: 180px;
+}
+.cd-item-edit__date {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.cd-item-edit__notes {
+  flex-basis: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+.cd-item-edit__actions {
+  display: flex;
+  gap: var(--space-two);
+}
+/* טופס שורה אחרון בתוך כרטיס - בלי רווח מיותר בתחתית הכרטיס */
+.ui-card > .cd-inline-form:last-child {
+  margin-bottom: 0;
+}
+.cd-back {
+  display: inline-block;
+  margin-bottom: var(--space-two);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.cd-back:hover,
+.cd-back:focus-visible {
+  color: var(--color-primary);
+}
