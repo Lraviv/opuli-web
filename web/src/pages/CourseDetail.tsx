@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, EmptyState, Input, Pill } from '@/components/ui'
+import { Button, Card, EmptyState, IconButton, Input, Pill } from '@/components/ui'
 import { GradeInput } from '@/components/GradeInput'
 import { CourseItemRow } from '@/components/CourseItemRow'
 import {
@@ -195,9 +195,12 @@ export default function CourseDetail() {
               <div className="cd-row" key={exam.id}>
                 <p className="cd-row__title">{formatDateTime(exam.date_time)}</p>
                 {exam.location && <Pill>{exam.location}</Pill>}
-                <Button variant="secondary" onClick={() => deleteExam.mutate(exam.id)}>
-                  מחיקה
-                </Button>
+                <IconButton
+                  icon="delete"
+                  tone="danger"
+                  label={`מחיקת המבחן ב-${formatDateTime(exam.date_time)}`}
+                  onClick={() => deleteExam.mutate(exam.id)}
+                />
               </div>
             ))
           )}

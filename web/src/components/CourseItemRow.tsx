@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, Input, Pill } from '@/components/ui'
+import { Button, IconButton, Input, Pill } from '@/components/ui'
 import { useDeleteCourseItem, useUpdateCourseItem } from '@/lib/queries'
 import type { CourseItemRead } from '@/lib/types'
 
@@ -91,15 +91,23 @@ export function CourseItemRow({ item }: { item: CourseItemRead }) {
       />
       <div className="cd-item__body">
         <p className={`cd-row__title${item.is_done ? ' cd-row__title--done' : ''}`}>{item.title}</p>
+        {date_ && (
+          <div className="cd-item__meta">
+            <Pill tone={isLesson ? 'success' : 'neutral'}>{`${isLesson ? 'נצפה' : 'הגשה'} ${formatDate(date_)}`}</Pill>
+          </div>
+        )}
         {item.notes && <p className="cd-item__notes">{item.notes}</p>}
       </div>
-      {date_ && <Pill tone={isLesson ? 'success' : 'neutral'}>{`${isLesson ? 'נצפה' : 'הגשה'} ${formatDate(date_)}`}</Pill>}
-      <Button variant="secondary" onClick={startEdit}>
-        עריכה
-      </Button>
-      <Button variant="secondary" onClick={handleDelete} disabled={deleteItem.isPending}>
-        מחיקה
-      </Button>
+      <div className="cd-row__actions">
+        <IconButton icon="edit" label={`עריכת "${item.title}"`} onClick={startEdit} />
+        <IconButton
+          icon="delete"
+          tone="danger"
+          label={`מחיקת "${item.title}"`}
+          onClick={handleDelete}
+          disabled={deleteItem.isPending}
+        />
+      </div>
     </div>
   )
 }

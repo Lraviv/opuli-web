@@ -20,21 +20,6 @@
   gap: var(--space-four);
 }
 
-.shell__brand {
-  font-weight: 800;
-  font-size: 17px;
-  color: var(--color-text);
-  text-decoration: none;
-}
-.shell__brand:hover {
-  color: var(--color-primary);
-}
-.shell__brand:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
 .shell__nav {
   display: flex;
   gap: var(--space-three);

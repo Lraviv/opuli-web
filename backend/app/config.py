@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     # ריק = התחברות עם Google כבויה. חייב להיות זהה ל-VITE_GOOGLE_CLIENT_ID באתר.
     google_client_id: str = ""
 
+    # משוב/באגים ממסך הפרופיל נשלחים במייל דרך Resend (HTTP API - Render בחינם
+    # חוסם SMTP יוצא). ריק = הטופס מחזיר 503. בלי דומיין מאומת ב-Resend אפשר
+    # לשלוח רק מ-onboarding@resend.dev ורק לכתובת של בעל החשבון ב-Resend.
+    resend_api_key: str = ""
+    feedback_to_email: str = "lihirweb@gmail.com"
+    feedback_from_email: str = "OpuLi Feedback <onboarding@resend.dev>"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("database_url")

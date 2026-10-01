@@ -9,6 +9,7 @@ from .routers.auth import me_router, router as auth_router
 from .routers.courses import router as courses_router
 from .routers.degrees import router as degrees_router
 from .routers.exams import router as exams_router
+from .routers.feedback import router as feedback_router
 from .routers.internal import router as internal_router
 from .routers.push_tokens import router as push_tokens_router
 from .routers.semesters import router as semesters_router
@@ -58,4 +59,5 @@ app.include_router(exams_router)
 app.include_router(push_tokens_router)
 app.include_router(semesters_router)
 app.include_router(reminders_router)
+app.include_router(feedback_router)
 app.include_router(internal_router)

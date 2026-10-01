@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import './Shell.css'
 
 const NAV_ITEMS = [
@@ -15,10 +15,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="shell">
       <header className="shell__topbar">
         <div className="shell__topbar-inner">
-          <Link to="/" className="shell__brand" aria-label="OpuLi - לדף הבית">
-            OpuLi
-          </Link>
-          <nav className="shell__nav">
+          <nav className="shell__nav" aria-label="ניווט ראשי">
             {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.to}

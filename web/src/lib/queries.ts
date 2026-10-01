@@ -332,6 +332,19 @@ export function useUpdateSettings() {
 }
 
 // ---------------------------------------------------------------------------
+// משוב / דיווח באגים - נשלח במייל למפתחת (POST /feedback)
+// ---------------------------------------------------------------------------
+
+export type FeedbackCategory = 'bug' | 'idea' | 'other'
+
+export function useSendFeedback() {
+  return useMutation({
+    mutationFn: (payload: { category: FeedbackCategory; message: string; page?: string }) =>
+      api.post<{ status: string }>('/feedback', payload),
+  })
+}
+
+// ---------------------------------------------------------------------------
 // לוח תכנון סמסטרים
 // ---------------------------------------------------------------------------
 

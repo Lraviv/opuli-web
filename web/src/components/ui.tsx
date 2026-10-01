@@ -29,6 +29,27 @@ export function Button({
   )
 }
 
+const ICON_PATHS = {
+  edit: 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z',
+  delete: 'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6',
+} as const
+
+/** כפתור אייקון קומפקטי (עריכה/מחיקה) - label חובה, משמש גם כ-aria-label וגם כ-tooltip. */
+export function IconButton({
+  icon,
+  label,
+  tone = 'neutral',
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon: keyof typeof ICON_PATHS; label: string; tone?: 'neutral' | 'danger' }) {
+  return (
+    <button type="button" className={`ui-icon-button ui-icon-button--${tone}`} aria-label={label} title={label} {...rest}>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d={ICON_PATHS[icon]} />
+      </svg>
+    </button>
+  )
+}
+
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`ui-input${className ? ` ${className}` : ''}`} {...rest} />
 }

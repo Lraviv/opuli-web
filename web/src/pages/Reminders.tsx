@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, Card, EmptyState, Input, Pill } from '@/components/ui'
+import { Button, Card, EmptyState, IconButton, Input, Pill } from '@/components/ui'
 import { useAddReminder, useDeleteReminder, useReminders, useUpdateReminder } from '@/lib/queries'
 import type { UserReminderRead } from '@/lib/types'
 import '@/pages/CourseDetail.css'
@@ -40,15 +40,16 @@ export default function Reminders() {
     <div>
       <h1 style={{ fontSize: 24, marginBottom: 'var(--space-four)' }}>תזכורות</h1>
       <Card style={{ marginBottom: 'var(--space-three)' }}>
-        <form className="cd-inline-form" onSubmit={handleAdd}>
+        <form className="cd-inline-form cd-inline-form--stack" onSubmit={handleAdd}>
           <Input placeholder="תזכורת חדשה" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input
-            type="datetime-local"
-            aria-label="מועד יעד"
-            title="מועד יעד (תאריך ושעה)"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
+          <label className="cd-item-edit__date">
+            מועד יעד (לא חובה)
+            <Input
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </label>
           <Button type="submit" disabled={addReminder.isPending}>
             הוספה
           </Button>
@@ -139,16 +140,24 @@ function ReminderRow({ reminder: r, overdue }: { reminder: UserReminderRead; ove
         aria-label={`סימון "${r.title}" כבוצע`}
         onChange={(e) => updateReminder.mutate({ id: r.id, payload: { is_done: e.target.checked } })}
       />
-      <p className={`cd-row__title${r.is_done ? ' cd-row__title--done' : ''}`}>{r.title}</p>
-      {r.due_date && (
-        <Pill tone={r.is_done ? 'neutral' : overdue ? 'danger' : 'warning'}>{formatDue(r.due_date)}</Pill>
-      )}
-      <Button variant="secondary" onClick={startEdit}>
-        עריכה
-      </Button>
-      <Button variant="secondary" onClick={handleDelete} disabled={deleteReminder.isPending}>
-        מחיקה
-      </Button>
+      <div className="cd-item__body">
+        <p className={`cd-row__title${r.is_done ? ' cd-row__title--done' : ''}`}>{r.title}</p>
+        {r.due_date && (
+          <div className="cd-item__meta">
+            <Pill tone={r.is_done ? 'neutral' : overdue ? 'danger' : 'warning'}>{formatDue(r.due_date)}</Pill>
+          </div>
+        )}
+      </div>
+      <div className="cd-row__actions">
+        <IconButton icon="edit" label={`עריכת "${r.title}"`} onClick={startEdit} />
+        <IconButton
+          icon="delete"
+          tone="danger"
+          label={`מחיקת "${r.title}"`}
+          onClick={handleDelete}
+          disabled={deleteReminder.isPending}
+        />
+      </div>
     </div>
   )
 }

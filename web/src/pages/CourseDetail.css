@@ -47,12 +47,29 @@
 }
 .cd-row__title {
   flex: 1;
+  min-width: 0;
   margin: 0;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .cd-row__title--done {
   text-decoration: line-through;
   color: var(--color-text-secondary);
+}
+.cd-row__actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+.cd-item__meta {
+  margin-top: 4px;
+}
+.cd-row > input[type='checkbox'] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
 }
 .cd-inline-form {
   display: flex;
@@ -64,6 +81,19 @@
 .cd-inline-form select {
   flex: 1;
   min-width: 120px;
+}
+.cd-inline-form > .cd-item-edit__date {
+  flex: 1;
+  min-width: 180px;
+}
+@media (max-width: 640px) {
+  .cd-inline-form--stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cd-inline-form--stack > .cd-item-edit__date {
+    min-width: 0;
+  }
 }
 .cd-grade {
   display: flex;

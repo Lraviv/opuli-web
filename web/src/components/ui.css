@@ -67,8 +67,38 @@
   margin: 0;
 }
 
+.ui-icon-button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ui-icon-button:hover,
+.ui-icon-button:focus-visible {
+  background: var(--color-background-selected);
+  color: var(--color-text);
+}
+.ui-icon-button--danger:hover,
+.ui-icon-button--danger:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+.ui-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .ui-pill {
   display: inline-block;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 700;
   padding: 3px 10px;
