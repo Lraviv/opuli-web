@@ -99,3 +99,14 @@ def test_course_cannot_point_to_another_users_degree_or_semester(client):
     assert client.post("/courses", json={"name": "y", "credits": 1, "degree_id": deg_b, "semester_id": sem_b}, headers=b).status_code == 201
     assert client.put(f"/courses/{own['id']}", json={"semester_id": sem_b}, headers=b).status_code == 200
     assert client.put(f"/courses/{own['id']}", json={"semester_id": None}, headers=b).status_code == 200
+
+
+def test_api_responses_are_not_cacheable(client):
+    """כל המשתמשים מבקשים אותן כתובות - תשובה אישית לא אמורה להישמר במטמון משותף."""
+    h = register_and_login(client, "cache@example.com")["headers"]
+    for path in ["/me", "/courses", "/degrees", "/health"]:
+        r = client.get(path, headers=h)
+        assert "no-store" in r.headers["cache-control"], path
+        assert "Authorization" in r.headers["vary"], path
+    # תשובות שקבעו Cache-Control בעצמן נשארות כמו שהן (למשל קובץ היומן)
+    assert client.get("/calendar.ics", headers=h).headers["cache-control"] == "no-store"

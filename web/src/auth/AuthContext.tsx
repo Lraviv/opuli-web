@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, clearTokens, getAccessToken, setTokens } from '@/lib/api'
@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserRead | null>(null)
   const [loading, setLoading] = useState(true)
   const queryClient = useQueryClient()
+  const lastUserId = useRef<number | null>(null)
 
   useEffect(() => {
     applyUserPreferences(user)
@@ -45,6 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadMe() {
     try {
       const me = await api.get<UserRead>('/me')
+      // משתמש אחר מהקודם (או התחברות ראשונה בטאב) - מוחקים כל נתון שנשאר בזיכרון,
+      // כדי שאף מסך לא יציג לרגע נתונים של חשבון קודם
+      if (lastUserId.current !== me.id) queryClient.clear()
+      lastUserId.current = me.id
       setUser(me)
     } catch {
       setUser(null)
@@ -91,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function logout() {
     clearTokens()
+    lastUserId.current = null
     setUser(null)
     queryClient.clear()
   }
