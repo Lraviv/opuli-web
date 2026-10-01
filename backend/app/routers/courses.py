@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from ..authz import get_owned_course, get_owned_course_item
+from ..authz import get_owned_course, get_owned_course_item, get_owned_degree, get_owned_semester
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import (
@@ -35,6 +35,14 @@ class BatchLessonCreate(BaseModel):
 router = APIRouter(tags=["courses"])
 
 
+def _check_course_refs(data: dict, user_id: int, session: Session) -> None:
+    """קורס יכול להצביע רק על תואר/סמסטר של אותו משתמש (אחרת 404, כמו בכל משאב זר)."""
+    if data.get("degree_id") is not None:
+        get_owned_degree(data["degree_id"], user_id, session)
+    if data.get("semester_id") is not None:
+        get_owned_semester(data["semester_id"], user_id, session)
+
+
 # ---------------------------------------------------------------------------
 # קורסים אישיים
 # ---------------------------------------------------------------------------
@@ -62,6 +70,7 @@ def create_course(
     session: Session = Depends(get_session),
 ):
     """הוספת קורס ידנית (לא מהקטלוג) - למשל קורס מוכר מתואר קודם."""
+    _check_course_refs(payload.model_dump(), current_user.id, session)
     course = Course(user_id=current_user.id, **payload.model_dump())
     session.add(course)
     session.commit()
@@ -77,6 +86,7 @@ def update_course(
     session: Session = Depends(get_session),
 ):
     course = get_owned_course(course_id, current_user.id, session)
+    _check_course_refs(payload.model_dump(exclude_unset=True), current_user.id, session)
     for field, value in payload.model_dump(exclude_unset=True).items():
         if field == "assignments_shield" and value is None:
             continue  # עמודה לא-nullable - null מפורש פשוט מתעלמים ממנו
