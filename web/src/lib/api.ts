@@ -40,6 +40,7 @@ async function tryRefresh(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token }),
     })
@@ -83,6 +84,8 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
+    // הנתונים אישיים - בלי מטמון HTTP בדפדפן (ראו גם no_shared_caching בשרת)
+    cache: 'no-store',
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
