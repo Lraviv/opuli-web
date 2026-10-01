@@ -11,10 +11,18 @@ import DegreeDetail from '@/pages/DegreeDetail'
 import CourseDetail from '@/pages/CourseDetail'
 import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
+import Schedule from '@/pages/Schedule'
+import { PageSkeleton } from '@/components/Skeleton'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="app-loading">טוען…</div>
+  if (loading) {
+    return (
+      <div className="app-boot">
+        <PageSkeleton variant="home" />
+      </div>
+    )
+  }
   if (!user) return <Navigate to="/login" replace />
   return <Shell>{children}</Shell>
 }
@@ -61,6 +69,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <CourseDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/schedule"
+        element={
+          <ProtectedRoute>
+            <Schedule />
           </ProtectedRoute>
         }
       />

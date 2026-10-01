@@ -5,7 +5,7 @@ from ..authz import get_catalog_course_in_own_degree, get_owned_degree
 from ..catalog_templates import TEMPLATES, get_template
 from ..db import get_session
 from ..deps import get_current_user
-from ..models import CatalogCourse, Course, Degree, User
+from ..models import CatalogCourse, Course, Degree, DegreeRequirement, User
 from ..schemas import (
     CatalogCourseCreate,
     CatalogCourseRead,
@@ -130,6 +130,11 @@ def delete_degree(
     ).all()
     for catalog_course in catalog_courses:
         session.delete(catalog_course)
+
+    for requirement in session.exec(
+        select(DegreeRequirement).where(DegreeRequirement.degree_id == degree_id)
+    ).all():
+        session.delete(requirement)
 
     courses = session.exec(select(Course).where(Course.degree_id == degree_id)).all()
     for course in courses:

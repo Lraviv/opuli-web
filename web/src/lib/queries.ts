@@ -4,14 +4,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
 import type {
+  AssignmentKind,
   CatalogCourseRead,
+  ClassSessionRead,
   CourseItemRead,
   CourseItemType,
   CourseRead,
   CourseStatus,
   DegreeRead,
+  DegreeRequirementRead,
   DegreeTemplateRead,
   ExamRead,
+  LinkRead,
   SemesterRead,
   StudyTopicRead,
   ThemeModePreference,
@@ -127,6 +131,11 @@ export interface CourseCreatePayload {
   status?: CourseStatus
   category?: string | null
   grade?: number | null
+  exam_weight?: number | null
+  min_exam_grade?: number | null
+  min_assignments_count?: number | null
+  min_assignments_weight?: number | null
+  assignments_shield?: boolean
 }
 
 export function useCreateCourse() {
@@ -198,6 +207,8 @@ export interface CourseItemCreatePayload {
   grade?: number | null
   notes?: string | null
   watched_at?: string | null
+  kind?: AssignmentKind | null
+  is_mandatory?: boolean
 }
 
 export function useAddCourseItem(courseId: number) {
@@ -434,5 +445,156 @@ export function useDeleteStudyTopic(courseId: number) {
   return useMutation({
     mutationFn: (id: number) => api.delete<void>(`/topics/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['topics', courseId] }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// סדרת מטלות (ממ"ן 11-15 וכו')
+// ---------------------------------------------------------------------------
+
+export interface BatchAssignmentsPayload {
+  kind: AssignmentKind
+  count: number
+  start_number?: number | null
+  weight_percent?: number | null
+  is_mandatory?: boolean
+}
+
+export function useBatchAddAssignments(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: BatchAssignmentsPayload) =>
+      api.post<CourseItemRead[]>(`/courses/${courseId}/items/batch-assignments`, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['course-items', courseId] })
+      qc.invalidateQueries({ queryKey: ['all-course-items'] })
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// דרישות תואר
+// ---------------------------------------------------------------------------
+
+export function useDegreeRequirements(degreeId: number | undefined) {
+  return useQuery({
+    queryKey: ['requirements', degreeId],
+    queryFn: () => api.get<DegreeRequirementRead[]>(`/degrees/${degreeId}/requirements`),
+    enabled: degreeId !== undefined,
+  })
+}
+
+export function useReplaceDegreeRequirements(degreeId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (requirements: { category: string; min_credits: number | null }[]) =>
+      api.put<DegreeRequirementRead[]>(`/degrees/${degreeId}/requirements`, { requirements }),
+    onSuccess: (data) => qc.setQueryData(['requirements', degreeId], data),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// קישורים אישיים - course_id ריק = קישור כללי (מסך הבית)
+// ---------------------------------------------------------------------------
+
+function linksKey(courseId: number | null) {
+  return ['links', courseId ?? 'global']
+}
+
+export function useLinks(courseId: number | null) {
+  return useQuery({
+    queryKey: linksKey(courseId),
+    queryFn: () => api.get<LinkRead[]>(courseId != null ? `/links?course_id=${courseId}` : '/links?scope=global'),
+  })
+}
+
+export function useCreateLink(courseId: number | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { title: string; url: string }) => api.post<LinkRead>('/links', { ...payload, course_id: courseId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linksKey(courseId) }),
+  })
+}
+
+export function useUpdateLink(courseId: number | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: { title?: string; url?: string } }) =>
+      api.put<LinkRead>(`/links/${id}`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linksKey(courseId) }),
+  })
+}
+
+export function useDeleteLink(courseId: number | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/links/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linksKey(courseId) }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// מפגשים קבועים (מערכת שעות)
+// ---------------------------------------------------------------------------
+
+export interface ClassSessionPayload {
+  weekday: number
+  start_time: string
+  end_time: string
+  title?: string | null
+  location?: string | null
+  interval_weeks?: number
+  start_date?: string | null
+  end_date?: string | null
+}
+
+export function useAllSessions() {
+  return useQuery({ queryKey: ['sessions'], queryFn: () => api.get<ClassSessionRead[]>('/sessions') })
+}
+
+export function useCourseSessions(courseId: number) {
+  const { data, ...rest } = useAllSessions()
+  return { sessions: data?.filter((s) => s.course_id === courseId) ?? [], ...rest }
+}
+
+export function useCreateSession(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: ClassSessionPayload) => api.post<ClassSessionRead>(`/courses/${courseId}/sessions`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
+  })
+}
+
+export function useUpdateSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<ClassSessionPayload> }) =>
+      api.put<ClassSessionRead>(`/sessions/${id}`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
+  })
+}
+
+export function useDeleteSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/sessions/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// ייצוא ליומן
+// ---------------------------------------------------------------------------
+
+// הטוקן נשמר במשתמש (AuthContext) - הקומפוננטה מעדכנת אותו דרך updateUser
+export function useRotateCalendarToken() {
+  return useMutation({
+    mutationFn: () => api.post<{ token: string; path: string }>('/me/calendar-token'),
+  })
+}
+
+export function useRevokeCalendarToken() {
+  return useMutation({
+    mutationFn: () => api.delete<void>('/me/calendar-token'),
   })
 }

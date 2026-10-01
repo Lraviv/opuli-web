@@ -36,13 +36,16 @@ npm run dev
 src/
   lib/
     api.ts        # קליינט REST דק (fetch) - הרשאות JWT, refresh אוטומטי
-    queries.ts     # React Query hooks - תואמים ל-mobile/src/lib/queries.ts
+    queries.ts     # React Query hooks
     types.ts       # טיפוסי TS תואמים לסכמות ה-Pydantic של ה-backend
     theme.css      # טוקני עיצוב - הועתקו מ-mobile/src/constants/theme.ts
+    grades.ts / schedule.ts / requirements.ts / links.ts  # לוגיקה טהורה, זהה לאפליקציה
   auth/
     AuthContext.tsx  # התחברות/הרשמה/התנתקות, שמירת טוקנים ב-localStorage
-  components/      # Shell (ניווט עליון) + רכיבי UI כלליים (Card/Button/Input/Pill)
-  pages/           # Login, Register, Home, Degrees, DegreeDetail, CourseDetail, Reminders, Profile
+  components/      # Shell, רכיבי UI, Skeleton, מחשבון ציון, מטלות, מפגשים, קישורים, דרישות תואר
+  pages/           # Login, Register, Home, Schedule, Degrees, DegreeDetail, Courses, CourseDetail, Reminders, Profile
+tests/
+  logic.test.ts    # npm test - בלי framework, רץ בכמה אזורי זמן
 ```
 
 ## בנייה לפרודקשן
@@ -52,6 +55,5 @@ npm run build
 ```
 
 יוצר `dist/` - קבצים סטטיים שאפשר להעלות לכל שירות אחסון סטטי (Netlify,
-Vercel, Cloudflare Pages וכו'). צריך גם להגדיר שם משתנה סביבה
-`VITE_API_URL` שמצביע לכתובת ה-backend בענן (כרגע ה-backend רץ רק מקומית -
-ראו `backend/README.md` לגבי פריסה).
+Vercel, Cloudflare Pages וכו'). האתר עצמו פרוס ב-Vercel, ומשתנה הסביבה
+`VITE_API_URL` שם מצביע לשרת ב-Render.

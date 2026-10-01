@@ -5,6 +5,7 @@ import './Shell.css'
 
 const NAV_ITEMS = [
   { to: '/', label: 'בית', icon: '🏠' },
+  { to: '/schedule', label: 'לו״ז', icon: '📅' },
   { to: '/degrees', label: 'התואר שלי', icon: '🎓' },
   { to: '/courses', label: 'קורסים', icon: '📚' },
   { to: '/reminders', label: 'תזכורות', icon: '🔔' },

@@ -1,0 +1,36 @@
+.cs-day {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-weight: 800;
+  font-size: 15px;
+}
+.cs-meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.cs-form {
+  margin-top: var(--space-three);
+  padding-top: var(--space-three);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-three);
+}
+.ui-card > .cs-form:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.cs-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-three);
+}

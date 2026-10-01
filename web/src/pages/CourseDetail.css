@@ -159,3 +159,78 @@
 .cd-back:focus-visible {
   color: var(--color-primary);
 }
+
+/* ---- שדות טופס עם תווית (משמש במטלות, מפגשים, כללי ציון) ---- */
+.cd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.cd-field select {
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+}
+.cd-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cd-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+.cd-form-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-danger);
+}
+.cd-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cd-item-edit__grid {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-two);
+  align-items: end;
+}
+.cd-item-edit__grid .cd-check {
+  padding-bottom: 12px;
+}
+.cd-lesson-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two) var(--space-four);
+  margin-top: var(--space-three);
+  padding-top: var(--space-three);
+  border-top: 1px solid var(--color-border);
+}
+.ui-empty + .cd-lesson-forms {
+  border-top: none;
+  margin-top: 0;
+}
+.cd-lesson-forms .cd-inline-form {
+  flex: 1;
+  min-width: 240px;
+  margin-bottom: 0;
+}
+.cd-lesson-forms .ui-button {
+  padding: 8px 14px;
+  font-size: 14px;
+}

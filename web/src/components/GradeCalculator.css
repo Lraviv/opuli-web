@@ -1,0 +1,216 @@
+.gc {
+  padding: 0;
+  overflow: hidden;
+}
+.gc__modes {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+.gc__mode {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.gc__mode--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-primary);
+}
+.gc__mode:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* הלב של המחשבון: קלט אחד בצד, התוצאה גדולה בצד השני */
+.gc__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: var(--space-four);
+  padding: var(--space-four);
+}
+@media (max-width: 520px) {
+  .gc__main {
+    grid-template-columns: 1fr;
+    gap: var(--space-three);
+  }
+}
+.gc__input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.gc__input .ui-input {
+  font-size: 28px;
+  font-weight: 700;
+  padding: 10px 14px;
+  font-variant-numeric: tabular-nums;
+  max-width: 160px;
+}
+.gc__result {
+  text-align: center;
+  padding: var(--space-three);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  color: var(--color-primary);
+}
+.gc__result--bad {
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+}
+.gc__result--muted {
+  background: var(--color-background-selected);
+  color: var(--color-text-secondary);
+}
+.gc__caption {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.gc__number {
+  margin: 2px 0;
+  font-size: 56px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.gc__sub {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.gc__weights {
+  margin: 0;
+  padding: 0 var(--space-four) var(--space-three);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.gc__note {
+  margin: 0;
+  padding: 0 var(--space-four) var(--space-three);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.gc__parts {
+  border-top: 1px solid var(--color-border);
+}
+.gc__parts > summary {
+  padding: var(--space-three) var(--space-four);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.gc__parts-hint {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+.gc__parts .gc__note {
+  padding-top: var(--space-two);
+}
+.gc__default {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  padding: 0 var(--space-four) var(--space-two);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.gc__default .ui-input {
+  width: 84px;
+  padding: 6px 10px;
+  text-align: center;
+}
+.gc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-four);
+}
+.gc__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  min-height: 48px;
+}
+.gc__item + .gc__item {
+  border-top: 1px solid var(--color-border);
+}
+.gc__item-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+.gc__item-weight {
+  width: 48px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.gc__item-grade {
+  width: 84px;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gc__item-what-if {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+}
+.gc__item-what-if .ui-input {
+  width: 84px;
+  padding: 6px 10px;
+  text-align: center;
+}
+.gc__skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gc-rules {
+  margin-bottom: var(--space-three);
+}
+.gc-rules form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-three);
+}
+.gc-rules__intro {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.gc-rules__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-three);
+}
+.gc-rules__shield {
+  align-items: flex-start;
+}
+.gc-rules__shield > span {
+  display: flex;
+  flex-direction: column;
+}
+.gc-rules__hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}

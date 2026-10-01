@@ -1,0 +1,260 @@
+.sch-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-three);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-two);
+}
+.sch-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.sch-range {
+  margin: 2px 0 0;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.sch-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-background-selected);
+}
+.sch-nav__btn,
+.sch-nav__today {
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 9px;
+}
+.sch-nav__btn {
+  width: 36px;
+  height: 34px;
+  font-size: 20px;
+  line-height: 1;
+}
+.sch-nav__today {
+  padding: 7px 14px;
+  font-size: 14px;
+}
+.sch-nav__btn:hover,
+.sch-nav__today:hover:not(:disabled) {
+  background: var(--color-background-element);
+}
+.sch-nav__today:disabled {
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+.sch-nav button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+.sch-summary {
+  margin: 0 0 var(--space-four);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* ימי השבוע: עמודת תאריך צרה + פריטי היום */
+.sch-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.sch-day {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  min-height: 56px;
+}
+.sch-day + .sch-day {
+  border-top: 1px solid var(--color-border);
+}
+.sch-day__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 6px;
+  gap: 0;
+  border-inline-end: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+.sch-day__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.sch-day__num {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.sch-day__today {
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+.sch-day--today .sch-day__date {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-background));
+}
+.sch-day--today .sch-day__num {
+  color: var(--color-primary);
+}
+.sch-day--past .sch-day__date,
+.sch-day--past .sch-day__items {
+  opacity: 0.6;
+}
+.sch-day__items {
+  padding: 6px var(--space-three);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+.sch-day__empty {
+  margin: 0;
+  color: var(--color-border);
+  font-weight: 700;
+}
+
+.sch-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  padding: 8px 0;
+}
+.sch-item + .sch-item {
+  border-top: 1px dashed var(--color-border);
+}
+.sch-item__check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--course-color);
+}
+.sch-item__link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-three);
+  padding-inline-start: 10px;
+  border-inline-start: 3px solid var(--course-color);
+  border-radius: 2px;
+}
+a.sch-item__link:hover .sch-item__title {
+  color: var(--color-primary);
+}
+a.sch-item__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.sch-item__time {
+  flex-shrink: 0;
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.sch-item__end {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+.sch-item__allday {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.sch-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sch-item__title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sch-item__title--done {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+.sch-item__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.sch-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-background-selected);
+  color: var(--color-text-secondary);
+}
+.sch-tag--exam {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+.sch-tag--assignment {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: var(--color-warning);
+}
+.sch-tag--session {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+.sch-tag--mandatory {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: var(--color-warning);
+}
+
+.sch-hint {
+  margin: var(--space-three) 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.sch-export {
+  margin-top: var(--space-five);
+}
+.sch-export h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-two);
+}
+
+@media (max-width: 480px) {
+  .sch-day {
+    grid-template-columns: 56px 1fr;
+  }
+  .sch-item__link {
+    gap: var(--space-two);
+  }
+}
+span.sch-item__check {
+  display: inline-block;
+}

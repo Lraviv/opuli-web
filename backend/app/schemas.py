@@ -1,8 +1,9 @@
-from datetime import datetime
+import re
+from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
-from .models import CourseItemType, CourseStatus
+from .models import AssignmentKind, CourseItemType, CourseStatus
 
 
 class RegisterRequest(BaseModel):
@@ -38,6 +39,8 @@ class UserRead(BaseModel):
     accent_color: str | None
     theme_mode: str | None
     avatar_icon: str | None = None
+    # טוקן מנוי היומן (אם נוצר) - הכתובת המלאה נבנית בצד הלקוח
+    calendar_token: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -152,6 +155,11 @@ class CourseCreate(BaseModel):
     status: CourseStatus = CourseStatus.planned
     category: str | None = None
     grade: float | None = None
+    exam_weight: float | None = Field(default=None, ge=0, le=100)
+    min_exam_grade: float | None = Field(default=None, ge=0, le=100)
+    min_assignments_count: int | None = Field(default=None, ge=0, le=50)
+    min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
+    assignments_shield: bool = False
 
 
 class CourseUpdate(BaseModel):
@@ -162,6 +170,11 @@ class CourseUpdate(BaseModel):
     status: CourseStatus | None = None
     category: str | None = None
     grade: float | None = None
+    exam_weight: float | None = Field(default=None, ge=0, le=100)
+    min_exam_grade: float | None = Field(default=None, ge=0, le=100)
+    min_assignments_count: int | None = Field(default=None, ge=0, le=50)
+    min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
+    assignments_shield: bool | None = None
 
 
 class CourseRead(BaseModel):
@@ -175,6 +188,11 @@ class CourseRead(BaseModel):
     status: CourseStatus
     category: str | None
     grade: float | None
+    exam_weight: float | None = None
+    min_exam_grade: float | None = None
+    min_assignments_count: int | None = None
+    min_assignments_weight: float | None = None
+    assignments_shield: bool = False
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -197,6 +215,9 @@ class CourseItemCreate(BaseModel):
     notes: str | None = None
     # רלוונטי לשיעורים - מתי השיעור נצפה
     watched_at: datetime | None = None
+    # רלוונטי למטלות - ממ"ן / ממ"ח / אחר, והאם חובה
+    kind: AssignmentKind | None = None
+    is_mandatory: bool = False
 
 
 class CourseItemUpdate(BaseModel):
@@ -209,6 +230,8 @@ class CourseItemUpdate(BaseModel):
     grade: float | None = None
     notes: str | None = None
     watched_at: datetime | None = None
+    kind: AssignmentKind | None = None
+    is_mandatory: bool | None = None
 
 
 class CourseItemRead(BaseModel):
@@ -223,8 +246,21 @@ class CourseItemRead(BaseModel):
     grade: float | None
     notes: str | None
     watched_at: datetime | None
+    kind: AssignmentKind | None = None
+    is_mandatory: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BatchAssignmentCreate(BaseModel):
+    """יצירת סדרת מטלות ממוספרות - למשל ממ"ן 11 עד ממ"ן 15."""
+
+    kind: AssignmentKind
+    count: int = Field(gt=0, le=20)
+    # המספר הראשון בסדרה. ריק = ברירת מחדל לפי הסוג (ממ"ן 11, ממ"ח 01)
+    start_number: int | None = Field(default=None, ge=0, le=99)
+    weight_percent: float | None = Field(default=None, ge=0, le=100)
+    is_mandatory: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -345,3 +381,210 @@ class StudyTopicRead(BaseModel):
     order: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# דרישות תואר (יעד נ"ז לכל קטגוריה)
+# ---------------------------------------------------------------------------
+
+
+class DegreeRequirementWrite(BaseModel):
+    category: str = Field(min_length=1, max_length=120)
+    min_credits: float | None = Field(default=None, ge=0, le=500)
+
+    @field_validator("category")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("קטגוריה ריקה")
+        return v
+
+
+class DegreeRequirementsReplace(BaseModel):
+    """PUT /degrees/{id}/requirements - מחליף את כל רשימת הדרישות, לפי הסדר שנשלח."""
+
+    requirements: list[DegreeRequirementWrite] = Field(max_length=50)
+
+    @model_validator(mode="after")
+    def _unique_categories(self) -> "DegreeRequirementsReplace":
+        names = [r.category for r in self.requirements]
+        if len(names) != len(set(names)):
+            raise ValueError("כל קטגוריה יכולה להופיע פעם אחת")
+        return self
+
+
+class DegreeRequirementRead(BaseModel):
+    id: int
+    degree_id: int
+    category: str
+    min_credits: float | None
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# קישורים אישיים
+# ---------------------------------------------------------------------------
+
+_SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
+
+
+def normalize_url(raw: str) -> str:
+    """מוסיפה https:// כשאין פרוטוקול, ומאפשרת רק http/https (חוסם javascript: וכו')."""
+    url = raw.strip()
+    if not url:
+        raise ValueError("כתובת ריקה")
+    if url.startswith("//"):
+        url = "https:" + url
+    elif not _SCHEME_RE.match(url) or re.match(r"^[^/:]+:\d", url):
+        # "example.com" / "localhost:3000" - בלי פרוטוקול
+        url = "https://" + url
+    scheme = url.split(":", 1)[0].lower()
+    if scheme not in ("http", "https"):
+        raise ValueError("אפשר לשמור רק קישורי http/https")
+    if any(c.isspace() for c in url):
+        raise ValueError("כתובת לא תקינה")
+    host = url.split("://", 1)[1].split("/", 1)[0] if "://" in url else ""
+    if not host:
+        raise ValueError("כתובת לא תקינה")
+    return url
+
+
+class LinkCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    url: str = Field(min_length=1, max_length=2000)
+    course_id: int | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("כותרת ריקה")
+        return v
+
+    @field_validator("url")
+    @classmethod
+    def _url(cls, v: str) -> str:
+        return normalize_url(v)
+
+
+class LinkUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    url: str | None = Field(default=None, min_length=1, max_length=2000)
+    sort_order: int | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("כותרת ריקה")
+        return v
+
+    @field_validator("url")
+    @classmethod
+    def _url(cls, v: str | None) -> str | None:
+        return None if v is None else normalize_url(v)
+
+
+class LinkRead(BaseModel):
+    id: int
+    course_id: int | None
+    title: str
+    url: str
+    sort_order: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# מפגשים קבועים (מערכת שעות)
+# ---------------------------------------------------------------------------
+
+_TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def _check_time(v: str) -> str:
+    v = v.strip()
+    if not _TIME_RE.match(v):
+        raise ValueError("שעה בפורמט HH:MM")
+    return v
+
+
+def _check_date(v: str | None) -> str | None:
+    if v is None or v == "":
+        return None
+    date.fromisoformat(v)  # זורק ValueError אם לא תקין
+    return v
+
+
+class _SessionFields(BaseModel):
+    @field_validator("start_time", "end_time", check_fields=False)
+    @classmethod
+    def _times(cls, v: str | None) -> str | None:
+        return None if v is None else _check_time(v)
+
+    @field_validator("start_date", "end_date", check_fields=False)
+    @classmethod
+    def _dates(cls, v: str | None) -> str | None:
+        return _check_date(v)
+
+
+class ClassSessionCreate(_SessionFields):
+    weekday: int = Field(ge=0, le=6)
+    start_time: str
+    end_time: str
+    title: str | None = Field(default=None, max_length=100)
+    location: str | None = Field(default=None, max_length=200)
+    interval_weeks: int = Field(default=1, ge=1, le=4)
+    start_date: str | None = None
+    end_date: str | None = None
+
+    @model_validator(mode="after")
+    def _order(self) -> "ClassSessionCreate":
+        if self.end_time <= self.start_time:
+            raise ValueError("שעת הסיום חייבת להיות אחרי שעת ההתחלה")
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError("תאריך הסיום לפני תאריך ההתחלה")
+        if self.interval_weeks > 1 and not self.start_date:
+            # בלי תאריך עוגן אי אפשר לדעת באיזה שבוע מתחיל ה"כל שבועיים"
+            raise ValueError("במפגש שאינו שבועי צריך תאריך התחלה")
+        return self
+
+
+class ClassSessionUpdate(_SessionFields):
+    weekday: int | None = Field(default=None, ge=0, le=6)
+    start_time: str | None = None
+    end_time: str | None = None
+    title: str | None = Field(default=None, max_length=100)
+    location: str | None = Field(default=None, max_length=200)
+    interval_weeks: int | None = Field(default=None, ge=1, le=4)
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class ClassSessionRead(BaseModel):
+    id: int
+    course_id: int
+    weekday: int
+    start_time: str
+    end_time: str
+    title: str | None
+    location: str | None
+    interval_weeks: int
+    start_date: str | None
+    end_date: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CalendarTokenRead(BaseModel):
+    token: str
+    # נתיב יחסי לשרת ה-API - הקליינט מצמיד אותו לכתובת ה-API שלו
+    path: str

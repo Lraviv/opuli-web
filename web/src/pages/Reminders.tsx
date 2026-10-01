@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Button, Card, DateInput, EmptyState, IconButton, Input, Pill } from '@/components/ui'
 import { useAddReminder, useDeleteReminder, useReminders, useUpdateReminder } from '@/lib/queries'
 import type { UserReminderRead } from '@/lib/types'
+import { SkeletonList } from '@/components/Skeleton'
 import '@/pages/CourseDetail.css'
 
 function formatDue(iso: string): string {
@@ -57,7 +58,7 @@ export default function Reminders() {
 
       <Card>
         {isLoading ? (
-          <p>טוען…</p>
+          <SkeletonList rows={3} check />
         ) : open.length === 0 && done.length === 0 ? (
           <EmptyState title="אין תזכורות" />
         ) : (

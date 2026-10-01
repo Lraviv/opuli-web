@@ -6,8 +6,21 @@ from sqlmodel import Session, select
 from ..authz import get_owned_course, get_owned_course_item
 from ..db import get_session
 from ..deps import get_current_user
-from ..models import Course, CourseItem, CourseItemType, CourseStatus, Exam, ExamReminder, StudyTopic, User
+from ..models import (
+    AssignmentKind,
+    ClassSession,
+    Course,
+    CourseItem,
+    CourseItemType,
+    CourseStatus,
+    Exam,
+    ExamReminder,
+    Link,
+    StudyTopic,
+    User,
+)
 from ..schemas import (
+    BatchAssignmentCreate,
     CourseCreate,
     CourseItemCreate,
     CourseItemRead,
@@ -65,6 +78,8 @@ def update_course(
 ):
     course = get_owned_course(course_id, current_user.id, session)
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "assignments_shield" and value is None:
+            continue  # עמודה לא-nullable - null מפורש פשוט מתעלמים ממנו
         setattr(course, field, value)
     session.add(course)
     session.commit()
@@ -86,6 +101,12 @@ def delete_course(
 
     for topic in session.exec(select(StudyTopic).where(StudyTopic.course_id == course_id)).all():
         session.delete(topic)
+
+    for link in session.exec(select(Link).where(Link.course_id == course_id)).all():
+        session.delete(link)
+
+    for class_session in session.exec(select(ClassSession).where(ClassSession.course_id == course_id)).all():
+        session.delete(class_session)
 
     for exam in session.exec(select(Exam).where(Exam.course_id == course_id)).all():
         for reminder in session.exec(
@@ -168,6 +189,8 @@ def update_course_item(
             item.completed_at = None
 
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "is_mandatory" and value is None:
+            continue
         setattr(item, field, value)
     session.add(item)
     session.commit()
@@ -229,3 +252,48 @@ def batch_add_lessons(
         session.refresh(item)
     
     return new_items
+
+
+# ברירת המחדל למספור לפי סוג: ממ"נים מתחילים ב-11, ממ"חים ב-01 (כמו באו"פ)
+_BATCH_DEFAULT_START = {AssignmentKind.mmn: 11, AssignmentKind.mmh: 1, AssignmentKind.other: 1}
+
+
+def assignment_title(kind: AssignmentKind, number: int) -> str:
+    if kind == AssignmentKind.mmn:
+        return f'ממ"ן {number}'
+    if kind == AssignmentKind.mmh:
+        return f'ממ"ח {number:02d}'
+    return f"מטלה {number}"
+
+
+@router.post(
+    "/courses/{course_id}/items/batch-assignments",
+    response_model=list[CourseItemRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def batch_add_assignments(
+    course_id: int,
+    payload: BatchAssignmentCreate,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """יצירת סדרת מטלות ממוספרות בבת אחת - למשל ממ"ן 11 עד ממ"ן 15."""
+    get_owned_course(course_id, current_user.id, session)
+    start = payload.start_number if payload.start_number is not None else _BATCH_DEFAULT_START[payload.kind]
+    items = [
+        CourseItem(
+            course_id=course_id,
+            type=CourseItemType.assignment,
+            title=assignment_title(payload.kind, start + i),
+            kind=payload.kind,
+            weight_percent=payload.weight_percent,
+            is_mandatory=payload.is_mandatory,
+            order=start + i,
+        )
+        for i in range(payload.count)
+    ]
+    session.add_all(items)
+    session.commit()
+    for item in items:
+        session.refresh(item)
+    return items

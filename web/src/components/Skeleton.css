@@ -1,0 +1,100 @@
+.sk {
+  display: block;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-background-selected) 0%,
+    color-mix(in srgb, var(--color-background-selected) 55%, var(--color-background-element)) 50%,
+    var(--color-background-selected) 100%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+/* RTL: הברק זז מימין לשמאל, בכיוון הקריאה */
+@keyframes sk-shimmer {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk {
+    animation: none;
+  }
+}
+
+.sk-page {
+  animation: sk-fade-in 0.2s ease 0.15s both;
+}
+/* לא מהבהבים שלד בטעינות מהירות - מופיע רק אחרי 150ms */
+@keyframes sk-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sk-card {
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: var(--space-four);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sk-card--center {
+  align-items: center;
+}
+.sk-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-three);
+  margin-bottom: var(--space-three);
+}
+@media (max-width: 480px) {
+  .sk-grid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sk-list {
+  display: flex;
+  flex-direction: column;
+}
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  padding: var(--space-three) 0;
+}
+.sk-row + .sk-row {
+  border-top: 1px solid var(--color-border);
+}
+.sk-row__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.sk-slow {
+  margin: 0 0 var(--space-three);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-selected);
+}

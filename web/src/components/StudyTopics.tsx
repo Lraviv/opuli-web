@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Button, Card, IconButton, Input } from '@/components/ui'
 import { useAddStudyTopics, useDeleteStudyTopic, useStudyTopics, useUpdateStudyTopic } from '@/lib/queries'
 import type { StudyTopicRead } from '@/lib/types'
+import { SkeletonList } from '@/components/Skeleton'
 import './StudyTopics.css'
 
 /** מקטע "חומר ללימוד" במסך הקורס: רשימת נושאים לסימון, עם התקדמות, הוספה
@@ -68,7 +69,7 @@ export function StudyTopics({ courseId }: { courseId: number }) {
         )}
 
         {isLoading ? (
-          <p className="st-empty">טוען…</p>
+          <SkeletonList rows={3} check pill={false} />
         ) : list.length === 0 ? (
           <div className="st-empty">
             <p className="st-empty__title">עוד אין נושאים</p>

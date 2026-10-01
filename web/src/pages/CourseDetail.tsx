@@ -5,6 +5,11 @@ import { Button, Card, DateInput, EmptyState, IconButton, Input, Pill } from '@/
 import { GradeInput } from '@/components/GradeInput'
 import { CourseItemRow } from '@/components/CourseItemRow'
 import { StudyTopics } from '@/components/StudyTopics'
+import { AssignmentsPanel } from '@/components/AssignmentsPanel'
+import { GradeCalculator } from '@/components/GradeCalculator'
+import { ClassSessions } from '@/components/ClassSessions'
+import { LinksBar } from '@/components/LinksBar'
+import { PageSkeleton } from '@/components/Skeleton'
 import {
   useAddCourseItem,
   useBatchAddLessons,
@@ -16,7 +21,7 @@ import {
   useDeleteExam,
   useUpdateCourse,
 } from '@/lib/queries'
-import type { CourseItemType, CourseStatus } from '@/lib/types'
+import type { CourseStatus } from '@/lib/types'
 import './CourseDetail.css'
 
 const STATUS_LABEL: Record<CourseStatus, string> = { done: 'הושלם', current: 'בתהליך', planned: 'מתוכנן' }
@@ -32,9 +37,9 @@ export default function CourseDetail() {
   const id = Number(courseId)
   const navigate = useNavigate()
 
-  const { data: courses } = useCourses()
+  const { data: courses, isLoading: coursesLoading } = useCourses()
   const course = courses?.find((c) => c.id === id)
-  const { data: items } = useCourseItems(id)
+  const { data: items, isLoading: itemsLoading } = useCourseItems(id)
   const { exams } = useCourseExams(id)
 
   const updateCourse = useUpdateCourse()
@@ -44,19 +49,16 @@ export default function CourseDetail() {
   const createExam = useCreateExam(id)
   const deleteExam = useDeleteExam()
 
-  const [itemTitle, setItemTitle] = useState('')
-  const [itemType, setItemType] = useState<CourseItemType>('assignment')
-  const [itemDue, setItemDue] = useState('')
+  const [lessonTitle, setLessonTitle] = useState('')
   const [lessonCount, setLessonCount] = useState('12')
   const [examDate, setExamDate] = useState('')
+  const [rulesOpen, setRulesOpen] = useState(false)
 
-  async function handleAddItem(e: FormEvent) {
+  async function handleAddLesson(e: FormEvent) {
     e.preventDefault()
-    if (!itemTitle.trim()) return
-    const date = itemDue ? new Date(itemDue).toISOString() : null
-    await addItem.mutateAsync({ type: itemType, title: itemTitle, ...(itemType === 'lesson' ? { watched_at: date } : { due_date: date }) })
-    setItemTitle('')
-    setItemDue('')
+    if (!lessonTitle.trim()) return
+    await addItem.mutateAsync({ type: 'lesson', title: lessonTitle.trim() })
+    setLessonTitle('')
   }
 
   async function handleBatchLessons(e: FormEvent) {
@@ -79,10 +81,21 @@ export default function CourseDetail() {
     navigate(`/courses?tab=${STATUS_TAB[course.status]}`)
   }
 
-  if (!course) return <p>טוען…</p>
+  if (coursesLoading || itemsLoading) return <PageSkeleton variant="detail" />
+  if (!course) {
+    return (
+      <Card>
+        <EmptyState title="הקורס לא נמצא" subtitle="ייתכן שהוא נמחק" />
+        <Link to="/courses" className="cd-back">
+          → לרשימת הקורסים
+        </Link>
+      </Card>
+    )
+  }
 
   const lessons = (items ?? []).filter((i) => i.type === 'lesson')
   const assignments = (items ?? []).filter((i) => i.type === 'assignment')
+  const lessonsWatched = lessons.filter((l) => l.is_done).length
 
   return (
     <div>
@@ -92,7 +105,10 @@ export default function CourseDetail() {
       <div className="cd-header">
         <div>
           <h1>{course.name}</h1>
-          <p>{course.credits} נ"ז</p>
+          <p>
+            {course.credits} נ"ז
+            {course.category ? ` · ${course.category}` : ''}
+          </p>
           <div className="cd-status-row">
             {(['planned', 'current', 'done'] as CourseStatus[]).map((s) => (
               <Button
@@ -116,62 +132,51 @@ export default function CourseDetail() {
         </Button>
       </div>
 
-      <div className="cd-section">
-        <div className="cd-section-header">
-          <h2>מטלות</h2>
-        </div>
-        <Card style={{ marginBottom: 'var(--space-three)' }}>
-          <form className="cd-inline-form" onSubmit={handleAddItem}>
-            <select value={itemType} onChange={(e) => setItemType(e.target.value as CourseItemType)}>
-              <option value="assignment">מטלה</option>
-              <option value="lesson">שיעור</option>
-            </select>
-            <Input placeholder="כותרת" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
-            <DateInput
-              label={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
-              placeholder={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
-              value={itemDue}
-              onChange={setItemDue}
-            />
-            <Button type="submit" disabled={addItem.isPending}>
-              הוספה
-            </Button>
-          </form>
-        </Card>
-        <Card>
-          {assignments.length === 0 ? (
-            <EmptyState title="אין מטלות" />
-          ) : (
-            assignments.map((item) => <CourseItemRow key={item.id} item={item} />)
-          )}
-        </Card>
-      </div>
+      <LinksBar courseId={id} title="קישורים לקורס" />
+
+      <AssignmentsPanel course={course} assignments={assignments} onEditRules={() => setRulesOpen(true)} />
+
+      <GradeCalculator course={course} assignments={assignments} rulesOpen={rulesOpen} onRulesOpenChange={setRulesOpen} />
+
+      <ClassSessions courseId={id} />
 
       <div className="cd-section">
         <div className="cd-section-header">
           <h2>שיעורים</h2>
+          {lessons.length > 0 && (
+            <span className="ap-count">
+              {lessonsWatched}/{lessons.length} נצפו
+            </span>
+          )}
         </div>
-        <Card style={{ marginBottom: 'var(--space-three)' }}>
-          <form className="cd-inline-form" onSubmit={handleBatchLessons}>
-            <Input
-              type="number"
-              min={1}
-              max={100}
-              value={lessonCount}
-              onChange={(e) => setLessonCount(e.target.value)}
-              style={{ maxWidth: 100 }}
-            />
-            <Button type="submit" disabled={batchAddLessons.isPending}>
-              יצירת שיעורים אוטומטית
-            </Button>
-          </form>
-        </Card>
         <Card>
           {lessons.length === 0 ? (
-            <EmptyState title="אין שיעורים" />
+            <EmptyState title="אין שיעורים" subtitle="אפשר ליצור רשימת שיעורים ממוספרת בבת אחת" />
           ) : (
             lessons.map((item) => <CourseItemRow key={item.id} item={item} />)
           )}
+          <div className="cd-lesson-forms">
+            <form className="cd-inline-form" onSubmit={handleAddLesson}>
+              <Input placeholder="שיעור חדש" aria-label="כותרת שיעור" value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} />
+              <Button type="submit" variant="secondary" disabled={addItem.isPending}>
+                הוספה
+              </Button>
+            </form>
+            <form className="cd-inline-form" onSubmit={handleBatchLessons}>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                aria-label="מספר שיעורים ליצירה"
+                value={lessonCount}
+                onChange={(e) => setLessonCount(e.target.value)}
+                style={{ maxWidth: 90, minWidth: 70 }}
+              />
+              <Button type="submit" variant="secondary" disabled={batchAddLessons.isPending}>
+                יצירת שיעורים ממוספרים
+              </Button>
+            </form>
+          </div>
         </Card>
       </div>
 

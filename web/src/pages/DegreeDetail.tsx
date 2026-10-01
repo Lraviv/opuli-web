@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, EmptyState, IconPicker, Input, Pill } from '@/components/ui'
+import { DegreeRequirements } from '@/components/DegreeRequirements'
+import { PageSkeleton } from '@/components/Skeleton'
 import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
 import type { CourseStatus } from '@/lib/types'
@@ -20,7 +22,7 @@ export default function DegreeDetail() {
   const id = Number(degreeId)
   const navigate = useNavigate()
 
-  const { degree } = useDegree(id)
+  const { degree, isLoading: degreeLoading } = useDegree(id)
   const { data: catalog } = useCatalog(id)
   const { data: courses } = useCourses({ degree_id: id })
 
@@ -45,7 +47,17 @@ export default function DegreeDetail() {
     navigate('/degrees')
   }
 
-  if (!degree) return <p>טוען…</p>
+  if (degreeLoading) return <PageSkeleton variant="detail" />
+  if (!degree) {
+    return (
+      <Card>
+        <EmptyState title="התואר לא נמצא" />
+        <Link to="/degrees?all=1" className="dd-all-degrees-link">
+          ← כל התארים
+        </Link>
+      </Card>
+    )
+  }
 
   const query = search.trim().toLowerCase()
   const filteredCatalog = catalog?.filter(
@@ -130,6 +142,8 @@ export default function DegreeDetail() {
           </div>
         </Card>
       </div>
+
+      <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} />
 
       <div className="dd-section" id="catalog">
         <div className="dd-section-header">

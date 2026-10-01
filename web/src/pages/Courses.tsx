@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
 import { NewSemesterForm, SemesterBoard } from '@/components/SemesterBoard'
 import { GradeInput } from '@/components/GradeInput'
+import { SkeletonList } from '@/components/Skeleton'
 import { useCourses, useCreateCourse, useDegrees } from '@/lib/queries'
 import type { CourseStatus } from '@/lib/types'
 import './Courses.css'
@@ -141,7 +142,9 @@ export default function Courses() {
       ) : (
         <>
           <Card>
-            {!filteredCourses || filteredCourses.length === 0 ? (
+            {coursesQuery.isLoading ? (
+              <SkeletonList rows={4} pill={false} />
+            ) : !filteredCourses || filteredCourses.length === 0 ? (
               <EmptyState
                 title={search.trim() ? 'לא נמצאו קורסים תואמים לחיפוש' : 'אין כאן קורסים עדיין'}
                 subtitle={search.trim() ? undefined : 'אפשר לבחור קורס מהקטלוג במסך התואר, או להוסיף ידנית למעלה'}
