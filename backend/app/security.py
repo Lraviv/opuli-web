@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -54,6 +56,41 @@ def create_refresh_token(user_id: int) -> str:
 
 class InvalidTokenError(Exception):
     pass
+
+
+def _password_fingerprint(password_hash: str) -> str:
+    # טביעה של ה-hash הנוכחי: אחרי שהסיסמה משתנה הטוקן הישן כבר לא תקף (שימוש חד-פעמי)
+    return hashlib.sha256(f"{settings.jwt_secret}:{password_hash}".encode()).hexdigest()[:24]
+
+
+def create_password_reset_token(user_id: int, password_hash: str) -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(user_id),
+        "type": "reset",
+        "pwd": _password_fingerprint(password_hash),
+        "iat": now,
+        "exp": now + timedelta(minutes=settings.password_reset_expire_minutes),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def read_password_reset_token(token: str) -> tuple[int, str]:
+    """מחזיר (user_id, טביעת הסיסמה). זורק InvalidTokenError אם לא תקין/פג תוקף."""
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except jwt.PyJWTError as exc:
+        raise InvalidTokenError(str(exc)) from exc
+    if payload.get("type") != "reset" or not payload.get("pwd"):
+        raise InvalidTokenError("Unexpected token type")
+    try:
+        return int(payload["sub"]), payload["pwd"]
+    except (KeyError, ValueError) as exc:
+        raise InvalidTokenError("Malformed subject") from exc
+
+
+def password_fingerprint_matches(password_hash: str, fingerprint: str) -> bool:
+    return hmac.compare_digest(_password_fingerprint(password_hash), fingerprint)
 
 
 def decode_token(token: str, expected_type: Literal["access", "refresh"]) -> int:

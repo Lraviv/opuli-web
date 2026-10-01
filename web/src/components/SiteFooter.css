@@ -1,0 +1,70 @@
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+.site-footer--auth {
+  border-top: none;
+}
+.site-footer__inner {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-four);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-two) var(--space-four);
+}
+.site-footer--auth .site-footer__inner {
+  justify-content: center;
+  padding: 0;
+}
+.site-footer__brand {
+  font-weight: 600;
+}
+.site-footer__link {
+  font-weight: 600;
+  color: var(--color-text);
+}
+.site-footer__link:hover,
+.site-footer__link:focus-visible {
+  color: var(--color-primary);
+}
+/* הקישור ל-LinkedIn: "גלולה" עם הסמל, בצבע של LinkedIn רק במעבר עכבר */
+.site-footer__linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background-element);
+  color: var(--color-text);
+  font-weight: 600;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.site-footer--auth .site-footer__linkedin {
+  margin-inline-start: 0;
+}
+.site-footer__linkedin svg {
+  color: #0a66c2;
+  flex-shrink: 0;
+}
+.site-footer__linkedin:hover,
+.site-footer__linkedin:focus-visible {
+  border-color: #0a66c2;
+  color: #0a66c2;
+}
+.site-footer a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .site-footer__linkedin svg {
+    color: #4a9fe8;
+  }
+}
+:root[data-theme='dark'] .site-footer__linkedin svg {
+  color: #4a9fe8;
+}

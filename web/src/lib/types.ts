@@ -14,6 +14,8 @@ export interface UserRead {
   theme_mode: string | null
   avatar_icon: string | null
   calendar_token: string | null
+  /** האם חלון ההסבר של ההתחברות הראשונה כבר הוצג */
+  intro_seen: boolean
   created_at: string
 }
 

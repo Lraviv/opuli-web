@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     feedback_to_email: str = ""
     feedback_from_email: str = "OpuLi Feedback <onboarding@resend.dev>"
 
+    # מיילים למשתמשים (איפוס סיסמה). חשוב: בלי דומיין מאומת ב-Resend אפשר לשלוח
+    # רק לכתובת של בעל החשבון - כדי לשלוח לכל המשתמשים צריך לאמת דומיין שם.
+    mail_from_email: str = "OpuLi <onboarding@resend.dev>"
+    # כתובת האתר (Vercel) - לקישור שבמייל איפוס הסיסמה
+    frontend_url: str = "http://localhost:5173"
+    password_reset_expire_minutes: int = 30
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("database_url")
@@ -70,6 +77,14 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
+
+    @property
+    def app_url(self) -> str:
+        """כתובת האתר לקישורים במיילים: FRONTEND_URL אם הוגדר, אחרת האתר הראשון ב-CORS_ORIGINS."""
+        if self.frontend_url and "localhost" not in self.frontend_url:
+            return self.frontend_url.rstrip("/")
+        origins = [o for o in self.cors_origin_list if o.startswith("https://")]
+        return (origins[0] if origins else self.frontend_url).rstrip("/")
 
     @property
     def cors_origin_list(self) -> list[str]:

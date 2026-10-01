@@ -1,3 +1,7 @@
+import html
+import time
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, func, select
 
@@ -5,12 +9,27 @@ from ..db import get_session
 from ..deps import get_current_user
 from ..models import User
 from ..google_auth import GoogleAuthError, verify_google_id_token
-from ..schemas import GoogleLoginRequest, LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserRead, UserUpdate
+from ..config import settings
+from ..mailer import mail_enabled, send_email
+from ..schemas import (
+    ForgotPasswordRequest,
+    GoogleLoginRequest,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UserRead,
+    UserUpdate,
+)
 from ..security import (
     InvalidTokenError,
     create_access_token,
+    create_password_reset_token,
     create_refresh_token,
     decode_token,
+    password_fingerprint_matches,
+    read_password_reset_token,
     UNUSABLE_PASSWORD,
     hash_password,
     verify_password,
@@ -50,6 +69,72 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)):
         access_token=create_access_token(user.id),
         refresh_token=create_refresh_token(user.id),
     )
+
+
+# ---------------------------------------------------------------------------
+# שכחתי סיסמה
+# ---------------------------------------------------------------------------
+
+# הגבלה פשוטה: מייל איפוס אחד לכתובת בדקה. בזיכרון התהליך - מספיק כי השרת רץ
+# עם worker יחיד (ראו Dockerfile).
+RESET_COOLDOWN_SECONDS = 60
+_last_reset_sent: dict[str, float] = {}
+
+FORGOT_RESPONSE = {"status": "ok", "detail": "אם יש חשבון עם הכתובת הזו, שלחנו אליה קישור לאיפוס הסיסמה"}
+
+
+def _reset_email_html(name: str, link: str) -> str:
+    esc = html.escape
+    minutes = settings.password_reset_expire_minutes
+    return (
+        "<div dir='rtl' style='font-family:sans-serif;font-size:15px;line-height:1.6'>"
+        f"<p>היי {esc(name)},</p>"
+        "<p>ביקשת לאפס את הסיסמה ב-OpuLi. אפשר לבחור סיסמה חדשה בקישור הזה:</p>"
+        f"<p><a href='{esc(link)}' style='display:inline-block;padding:10px 18px;border-radius:10px;"
+        "background:#3C87F7;color:#fff;text-decoration:none;font-weight:600'>בחירת סיסמה חדשה</a></p>"
+        f"<p style='color:#666;font-size:13px'>הקישור תקף ל-{minutes} דקות ולשימוש אחד. "
+        "אם לא ביקשת לאפס סיסמה, אפשר להתעלם מהמייל הזה.</p>"
+        "</div>"
+    )
+
+
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(payload: ForgotPasswordRequest, session: Session = Depends(get_session)):
+    """שולח קישור לאיפוס סיסמה. התשובה זהה תמיד - כדי לא לחשוף אילו כתובות רשומות."""
+    if not mail_enabled():
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "איפוס סיסמה לא זמין כרגע")
+
+    email = payload.email.strip().lower()
+    now = time.monotonic()
+    if now - _last_reset_sent.get(email, -RESET_COOLDOWN_SECONDS) < RESET_COOLDOWN_SECONDS:
+        return FORGOT_RESPONSE
+    _last_reset_sent[email] = now
+
+    user = session.exec(select(User).where(func.lower(User.email) == email)).first()
+    if user is not None:
+        token = create_password_reset_token(user.id, user.password_hash)
+        link = f"{settings.app_url}/reset-password?token={quote(token)}"
+        send_email(user.email, "איפוס סיסמה ב-OpuLi", _reset_email_html(user.display_name or user.email, link))
+    return FORGOT_RESPONSE
+
+
+@router.post("/reset-password", response_model=TokenResponse)
+def reset_password(payload: ResetPasswordRequest, session: Session = Depends(get_session)):
+    """קובע סיסמה חדשה לפי הטוקן מהמייל, ומחבר את המשתמש/ת מיד."""
+    invalid = HTTPException(status.HTTP_400_BAD_REQUEST, "הקישור לא תקין או שפג תוקפו. אפשר לבקש קישור חדש.")
+    try:
+        user_id, fingerprint = read_password_reset_token(payload.token)
+    except InvalidTokenError:
+        raise invalid
+    user = session.get(User, user_id)
+    if user is None or not password_fingerprint_matches(user.password_hash, fingerprint):
+        raise invalid
+
+    user.password_hash = hash_password(payload.password)
+    session.add(user)
+    session.commit()
+    _last_reset_sent.pop(user.email.lower(), None)
+    return TokenResponse(access_token=create_access_token(user.id), refresh_token=create_refresh_token(user.id))
 
 
 @router.post("/google", response_model=TokenResponse)
@@ -123,6 +208,8 @@ def update_me(
 ):
     """עדכון הגדרות המשתמש/ת (שם תצוגה / צבע ראשי / מצב תצוגה) - ראו מסך הפרופיל."""
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "intro_seen" and value is None:
+            continue  # עמודה לא-nullable
         setattr(current_user, field, value)
     session.add(current_user)
     session.commit()

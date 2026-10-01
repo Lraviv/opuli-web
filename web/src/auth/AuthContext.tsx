@@ -10,6 +10,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
   loginWithGoogle: (credential: string) => Promise<void>
+  /** התחברות עם טוקנים שכבר התקבלו (למשל אחרי איפוס סיסמה) */
+  loginWithTokens: (tokens: TokenResponse) => Promise<void>
   logout: () => void
   updateUser: (user: UserRead) => void
 }
@@ -82,6 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadMe()
   }
 
+  async function loginWithTokens(tokens: TokenResponse) {
+    setTokens(tokens.access_token, tokens.refresh_token)
+    await loadMe()
+  }
+
   function logout() {
     clearTokens()
     setUser(null)
@@ -89,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout, updateUser: setUser }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginWithTokens, logout, updateUser: setUser }}>{children}</AuthContext.Provider>
   )
 }
 

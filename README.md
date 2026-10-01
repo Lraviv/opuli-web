@@ -75,6 +75,21 @@ npm run dev                          # http://localhost:5173
 
 פרטים נוספים ב-[backend/README.md](backend/README.md) וב-[web/README.md](web/README.md).
 
+### משתני סביבה
+
+| איפה | משתנה | למה |
+|---|---|---|
+| Render | `DATABASE_URL`, `JWT_SECRET`, `INTERNAL_SECRET` | מסד הנתונים וחתימת טוקנים |
+| Render | `CORS_ORIGINS` | כתובת האתר ב-Vercel |
+| Render | `RESEND_API_KEY` | שליחת מיילים: משוב ואיפוס סיסמה |
+| Render | `FEEDBACK_TO_EMAIL` | הכתובת שאליה מגיע המשוב |
+| Render | `FRONTEND_URL` | לא חובה. הכתובת לקישורים במיילים (ברירת המחדל: האתר הראשון ב-`CORS_ORIGINS`) |
+| Render | `GOOGLE_CLIENT_ID` | התחברות עם Google |
+| Vercel | `VITE_API_URL` | כתובת השרת ב-Render |
+| Vercel | `VITE_GOOGLE_CLIENT_ID` | התחברות עם Google |
+| Vercel | `VITE_LINKEDIN_URL`, `VITE_AUTHOR_NAME` | הקישור ל-LinkedIn בפוטר (ריק = לא מוצג) |
+| Vercel | `VITE_FEEDBACK_EMAIL` | לא חובה. כפתור הגיבוי "פתיחה באפליקציית המייל" במשוב |
+
 ### בדיקות
 
 ```bash

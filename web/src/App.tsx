@@ -12,6 +12,8 @@ import CourseDetail from '@/pages/CourseDetail'
 import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
 import Schedule from '@/pages/Schedule'
+import ForgotPassword from '@/pages/ForgotPassword'
+import ResetPassword from '@/pages/ResetPassword'
 import { PageSkeleton } from '@/components/Skeleton'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -32,6 +34,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/"
         element={

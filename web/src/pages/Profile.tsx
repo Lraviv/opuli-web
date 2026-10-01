@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
 import { CalendarExport } from '@/components/CalendarExport'
+import { openWelcomeTour } from '@/lib/tour'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
@@ -114,6 +116,18 @@ export default function Profile() {
         <CalendarExport />
       </div>
 
+      <div className="profile-section">
+        <h2>היכרות עם האתר</h2>
+        <Card>
+          <div className="profile-tour-row">
+            <p>ההסבר הקצר שמופיע בהתחברות הראשונה: מה יש באתר ואיך מתחילים.</p>
+            <Button variant="secondary" onClick={openWelcomeTour}>
+              הצגת ההסבר
+            </Button>
+          </div>
+        </Card>
+      </div>
+
       <FeedbackSection />
 
       <div className="profile-section">
@@ -145,6 +159,16 @@ function mailtoHref(category: FeedbackCategory, message: string): string {
 
 function FeedbackSection() {
   const sendFeedback = useSendFeedback()
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const messageRef = useRef<HTMLTextAreaElement>(null)
+  const { hash } = useLocation()
+
+  // הגעה מ"צרו קשר" בפוטר (/profile#feedback): גוללים לטופס ושמים בו את הסמן
+  useEffect(() => {
+    if (hash !== '#feedback') return
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    messageRef.current?.focus({ preventScroll: true })
+  }, [hash])
   const [category, setCategory] = useState<FeedbackCategory>('bug')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
@@ -162,7 +186,7 @@ function FeedbackSection() {
   }
 
   return (
-    <div className="profile-section">
+    <div className="profile-section" id="feedback" ref={sectionRef}>
       <h2>משוב ודיווח על באגים</h2>
       <Card>
         <form className="feedback-form" onSubmit={handleSubmit}>
@@ -181,6 +205,7 @@ function FeedbackSection() {
             ))}
           </div>
           <textarea
+            ref={messageRef}
             className="ui-input feedback-message"
             rows={4}
             maxLength={5000}

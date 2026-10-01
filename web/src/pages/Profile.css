@@ -110,3 +110,20 @@
   text-decoration: none;
   display: inline-block;
 }
+
+.profile-tour-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-three);
+}
+.profile-tour-row p {
+  margin: 0;
+  flex: 1 1 240px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+#feedback {
+  scroll-margin-top: 90px;
+}

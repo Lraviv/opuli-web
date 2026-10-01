@@ -34,6 +34,8 @@ class User(SQLModel, table=True):
     avatar_icon: Optional[str] = None
     # טוקן סודי לכתובת מנוי היומן (/calendar/feed/{token}.ics). ריק = אין מנוי פעיל
     calendar_token: Optional[str] = Field(default=None, index=True, unique=True)
+    # האם כבר הוצג חלון ההסבר ("סיור") של ההתחברות הראשונה
+    intro_seen: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

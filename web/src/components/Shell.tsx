@@ -1,6 +1,13 @@
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
+import { SiteFooter } from '@/components/SiteFooter'
+import { WelcomeTour } from '@/components/WelcomeTour'
+import { api } from '@/lib/api'
+import { useDegrees } from '@/lib/queries'
+import { OPEN_TOUR_EVENT } from '@/lib/tour'
+import type { UserRead } from '@/lib/types'
 import './Shell.css'
 
 const NAV_ITEMS = [
@@ -13,7 +20,27 @@ const NAV_ITEMS = [
 ]
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
+  const { data: degrees } = useDegrees()
+  // ההסבר נפתח לבד פעם אחת (עד שהשרת יודע שהוא הוצג), וגם לפי בקשה מהפרופיל
+  const [tourRequested, setTourRequested] = useState(false)
+  const tourOpen = tourRequested || (!!user && !user.intro_seen)
+
+  useEffect(() => {
+    const open = () => setTourRequested(true)
+    window.addEventListener(OPEN_TOUR_EVENT, open)
+    return () => window.removeEventListener(OPEN_TOUR_EVENT, open)
+  }, [])
+
+  const closeTour = useCallback(() => {
+    setTourRequested(false)
+    if (user && !user.intro_seen) {
+      updateUser({ ...user, intro_seen: true })
+      api.patch<UserRead>('/me', { intro_seen: true }).catch(() => {
+        // לא קריטי - במקרה הגרוע ההסבר יופיע שוב בכניסה הבאה
+      })
+    }
+  }, [user, updateUser])
   return (
     <div className="shell">
       <header className="shell__topbar">
@@ -34,6 +61,8 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="shell__content">{children}</main>
+      <SiteFooter />
+      <WelcomeTour open={tourOpen} hasDegree={(degrees?.length ?? 0) > 0} onClose={closeTour} />
     </div>
   )
 }
