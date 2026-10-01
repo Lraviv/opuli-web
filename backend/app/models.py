@@ -32,6 +32,8 @@ class User(SQLModel, table=True):
     theme_mode: Optional[str] = None
     # אייקון פרופיל (אימוג'י, למשל "🦊") שנבחר במסך הפרופיל. ריק = האות הראשונה של השם
     avatar_icon: Optional[str] = None
+    # טוקן סודי לכתובת מנוי היומן (/calendar/feed/{token}.ics). ריק = אין מנוי פעיל
+    calendar_token: Optional[str] = Field(default=None, index=True, unique=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -79,7 +81,23 @@ class Course(SQLModel, table=True):
     status: CourseStatus = Field(default=CourseStatus.planned)
     category: Optional[str] = None
     grade: Optional[float] = None
+    # ---- כללי הציון של הקורס (מחשבון ציון + זכאות לבחינה) - הכול אופציונלי ----
+    # משקל הבחינה באחוזים. ריק = 100 פחות סכום משקלי המטלות
+    exam_weight: Optional[float] = None
+    # ציון מינימום בבחינה כדי לעבור את הקורס. ריק = 60 בצד הלקוח
+    min_exam_grade: Optional[float] = None
+    # זכאות לבחינה: מספר מטלות מינימלי שהוגשו ו/או משקל מינימלי שהוגש
+    min_assignments_count: Optional[int] = None
+    min_assignments_weight: Optional[float] = None
+    # מטלות "מגן": ציון המטלות נכלל רק אם הוא משפר את הציון
+    assignments_shield: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AssignmentKind(str, Enum):
+    mmn = "mmn"  # ממ"ן - מטלת מנחה
+    mmh = "mmh"  # ממ"ח - מטלת מחשב
+    other = "other"
 
 
 class CourseItem(SQLModel, table=True):
@@ -104,6 +122,9 @@ class CourseItem(SQLModel, table=True):
     notes: Optional[str] = None
     # רלוונטי לשיעורים (type=lesson): מתי השיעור נצפה בפועל
     watched_at: Optional[datetime] = None
+    # רלוונטי למטלות: ממ"ן / ממ"ח / אחר, והאם המטלה חובה
+    kind: Optional[AssignmentKind] = None
+    is_mandatory: bool = Field(default=False)
 
 
 class StudyTopic(SQLModel, table=True):
@@ -170,4 +191,53 @@ class Semester(SQLModel, table=True):
     degree_id: int = Field(foreign_key="degrees.id", index=True)
     name: str
     sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class DegreeRequirement(SQLModel, table=True):
+    """יעד נ"ז לקטגוריה בתואר (למשל "חובה - מדעי המחשב": 42). ההתאמה לקורסים לפי Course.category."""
+
+    __tablename__ = "degree_requirements"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    degree_id: int = Field(foreign_key="degrees.id", index=True)
+    category: str
+    min_credits: Optional[float] = None
+    sort_order: int = Field(default=0)
+
+
+class Link(SQLModel, table=True):
+    """קישור אישי - כללי (course_id ריק, מוצג בבית) או של קורס מסוים."""
+
+    __tablename__ = "links"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    course_id: Optional[int] = Field(default=None, foreign_key="courses.id", index=True)
+    title: str
+    url: str
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ClassSession(SQLModel, table=True):
+    """מפגש קבוע של קורס (מפגש הנחיה / הרצאה / תרגול) - חוזר כל interval_weeks שבועות.
+
+    weekday: 0=ראשון ... 6=שבת. השעות הן שעון קיר מקומי ("18:00"), לא UTC.
+    start_date/end_date (YYYY-MM-DD, אופציונליים) תוחמים את הסמסטר; start_date
+    הוא גם העוגן לחישוב "כל שבועיים".
+    """
+
+    __tablename__ = "class_sessions"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    course_id: int = Field(foreign_key="courses.id", index=True)
+    weekday: int
+    start_time: str
+    end_time: str
+    title: Optional[str] = None
+    location: Optional[str] = None
+    interval_weeks: int = Field(default=1)
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
