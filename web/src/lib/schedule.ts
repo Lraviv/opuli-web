@@ -94,7 +94,7 @@ export interface AgendaSources {
   exams: { id: number; course_id: number; date_time: string; location: string | null }[]
   assignments: { id: number; course_id: number; title: string; due_date: string | null; is_done: boolean; is_mandatory?: boolean }[]
   lessons?: { id: number; course_id: number; title: string; due_date: string | null; is_done: boolean }[]
-  reminders: { id: number; title: string; due_date: string | null | undefined; is_done: boolean }[]
+  reminders: { id: number; title: string; due_date?: string | null; is_done: boolean }[]
   courseName: (courseId: number) => string | null
 }
 
