@@ -40,6 +40,7 @@ export interface DegreeCreatePayload {
   name: string
   institution?: string | null
   target_credits?: number | null
+  icon?: string | null
   template?: string | null
 }
 
@@ -47,6 +48,15 @@ export function useCreateDegree() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: DegreeCreatePayload) => api.post<DegreeRead>('/degrees', payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['degrees'] }),
+  })
+}
+
+export function useUpdateDegree() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<Omit<DegreeCreatePayload, 'template'>> }) =>
+      api.put<DegreeRead>(`/degrees/${id}`, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['degrees'] }),
   })
 }
@@ -321,6 +331,7 @@ export interface UserSettingsUpdate {
   display_name?: string
   accent_color?: string
   theme_mode?: ThemeModePreference
+  avatar_icon?: string | null
 }
 
 export function useUpdateSettings() {

@@ -10,6 +10,7 @@ export interface UserRead {
   display_name: string | null
   accent_color: string | null
   theme_mode: string | null
+  avatar_icon: string | null
   created_at: string
 }
 
@@ -24,6 +25,7 @@ export interface DegreeRead {
   name: string
   institution: string | null
   target_credits: number | null
+  icon: string | null
   created_at: string
 }
 

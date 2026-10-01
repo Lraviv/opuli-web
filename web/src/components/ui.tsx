@@ -66,3 +66,48 @@ export function EmptyState({ title, subtitle }: { title: string; subtitle?: stri
 export function Pill({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'success' | 'warning' | 'danger' }) {
   return <span className={`ui-pill ui-pill--${tone}`}>{children}</span>
 }
+
+/** בחירת אייקון (אימוג'י) מתוך רשת. extra - אפשרות נוספת בתחילת הרשת (למשל "אות ראשונה"). */
+export function IconPicker({
+  icons,
+  value,
+  onChange,
+  label,
+  extra,
+}: {
+  icons: readonly string[]
+  value: string | null
+  onChange: (icon: string | null) => void
+  label: string
+  extra?: { content: ReactNode; label: string }
+}) {
+  return (
+    <div className="ui-icon-picker" role="radiogroup" aria-label={label}>
+      {extra && (
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === null}
+          aria-label={extra.label}
+          title={extra.label}
+          className={`ui-icon-picker__option${value === null ? ' ui-icon-picker__option--selected' : ''}`}
+          onClick={() => onChange(null)}
+        >
+          {extra.content}
+        </button>
+      )}
+      {icons.map((icon) => (
+        <button
+          key={icon}
+          type="button"
+          role="radio"
+          aria-checked={value === icon}
+          className={`ui-icon-picker__option${value === icon ? ' ui-icon-picker__option--selected' : ''}`}
+          onClick={() => onChange(icon)}
+        >
+          <span aria-hidden>{icon}</span>
+        </button>
+      ))}
+    </div>
+  )
+}

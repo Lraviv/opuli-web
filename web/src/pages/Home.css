@@ -110,3 +110,66 @@
   justify-content: flex-start;
   cursor: pointer;
 }
+.home-welcome {
+  text-align: center;
+  padding: var(--space-six) var(--space-four);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.home-welcome__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  margin-bottom: var(--space-three);
+}
+.home-welcome__title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0 0 var(--space-two);
+}
+.home-welcome__text {
+  margin: 0 0 var(--space-four);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  max-width: 420px;
+}
+.home-welcome__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-five);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+  width: 100%;
+  max-width: 420px;
+  text-align: start;
+}
+.home-welcome__steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  padding: var(--space-three);
+  border-radius: 12px;
+  background: var(--color-background);
+  font-size: 14px;
+  font-weight: 600;
+}
+.home-welcome__steps li > span:first-child {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.home-welcome__cta {
+  text-decoration: none;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  font-size: 16px;
+  padding: 14px 20px;
+}

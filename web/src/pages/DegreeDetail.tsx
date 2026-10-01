@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, EmptyState, Input, Pill } from '@/components/ui'
-import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse } from '@/lib/queries'
+import { Button, Card, EmptyState, IconPicker, Input, Pill } from '@/components/ui'
+import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
+import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
 import type { CourseStatus } from '@/lib/types'
 import './DegreeDetail.css'
 
@@ -25,6 +26,8 @@ export default function DegreeDetail() {
 
   const selectCatalogCourse = useSelectCatalogCourse(id)
   const deleteDegree = useDeleteDegree()
+  const updateDegree = useUpdateDegree()
+  const [pickingIcon, setPickingIcon] = useState(false)
 
   const [search, setSearch] = useState('')
   const [addStatus, setAddStatus] = useState<CourseStatus>('planned')
@@ -57,17 +60,45 @@ export default function DegreeDetail() {
   return (
     <div>
       <div className="dd-header">
-        <div>
+        <div className="dd-header__main">
           <Link to="/degrees?all=1" className="dd-all-degrees-link">
             ← כל התארים
           </Link>
-          <h1>{degree.name}</h1>
-          {degree.institution && <p>{degree.institution}</p>}
+          <div className="dd-title-row">
+            <button
+              type="button"
+              className="dd-icon"
+              aria-label="שינוי אייקון התואר"
+              aria-expanded={pickingIcon}
+              title="שינוי אייקון"
+              onClick={() => setPickingIcon((v) => !v)}
+            >
+              <span aria-hidden>{degree.icon || DEFAULT_DEGREE_ICON}</span>
+            </button>
+            <div>
+              <h1>{degree.name}</h1>
+              {degree.institution && <p>{degree.institution}</p>}
+            </div>
+          </div>
         </div>
         <Button variant="danger" onClick={handleDeleteDegree}>
           מחיקת תואר
         </Button>
       </div>
+
+      {pickingIcon && (
+        <Card style={{ marginBottom: 'var(--space-four)' }}>
+          <IconPicker
+            icons={DegreeIcons}
+            value={degree.icon || DEFAULT_DEGREE_ICON}
+            label="אייקון התואר"
+            onChange={(icon) => {
+              updateDegree.mutate({ id, payload: { icon } })
+              setPickingIcon(false)
+            }}
+          />
+        </Card>
+      )}
 
       <div className="dd-section">
         <div className="dd-section-header">

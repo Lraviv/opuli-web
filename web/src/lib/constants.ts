@@ -11,3 +11,8 @@ export const AccentColorPresets = [
   { label: 'טורקיז', value: '#14B8A6' },
   { label: 'תכלת', value: '#0EA5E9' },
 ] as const
+
+// אייקונים לבחירה - אימוג'י (נשמרים כמחרוזת בשרת, מוצגים זהה בכל מכשיר בלי ספריית אייקונים)
+export const DEFAULT_DEGREE_ICON = '🎓'
+export const DegreeIcons = ['🎓', '💻', '🧮', '📐', '🧪', '🔬', '🧬', '🩺', '🧠', '⚖️', '📊', '🏛️', '🌍', '🎨', '🎵', '📚'] as const
+export const AvatarIcons = ['🦊', '🐱', '🐶', '🐼', '🦉', '🐸', '🦄', '🐙', '🐝', '🌸', '🌻', '⭐', '🚀', '🎧', '☕', '🧠'] as const

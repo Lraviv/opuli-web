@@ -37,17 +37,19 @@ class UserRead(BaseModel):
     display_name: str | None
     accent_color: str | None
     theme_mode: str | None
+    avatar_icon: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdate(BaseModel):
-    """עדכון פרטי/הגדרות המשתמש/ת - PATCH /me (שם תצוגה, צבע ראשי, מצב תצוגה)."""
+    """עדכון פרטי/הגדרות המשתמש/ת - PATCH /me (שם תצוגה, צבע ראשי, מצב תצוגה, אייקון)."""
 
     display_name: str | None = None
     accent_color: str | None = None
     theme_mode: str | None = None
+    avatar_icon: str | None = Field(default=None, max_length=16)
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ class DegreeCreate(BaseModel):
     name: str
     institution: str | None = None
     target_credits: float | None = None
+    icon: str | None = Field(default=None, max_length=16)
     # מפתח תבנית אופציונלי (ראו GET /degree-templates) - אם מסופק, קטלוג
     # הקורסים של התבנית נטען אוטומטית לתואר החדש בזמן היצירה.
     template: str | None = None
@@ -68,6 +71,7 @@ class DegreeUpdate(BaseModel):
     name: str | None = None
     institution: str | None = None
     target_credits: float | None = None
+    icon: str | None = Field(default=None, max_length=16)
 
 
 class DegreeRead(BaseModel):
@@ -75,6 +79,7 @@ class DegreeRead(BaseModel):
     name: str
     institution: str | None
     target_credits: float | None
+    icon: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthContext'
 import './Shell.css'
 
 const NAV_ITEMS = [
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
 ]
 
 export function Shell({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   return (
     <div className="shell">
       <header className="shell__topbar">
@@ -23,7 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 end={item.to === '/'}
                 className={({ isActive }) => `shell__nav-link${isActive ? ' shell__nav-link--active' : ''}`}
               >
-                <span aria-hidden>{item.icon}</span>
+                <span aria-hidden>{item.to === '/profile' && user?.avatar_icon ? user.avatar_icon : item.icon}</span>
                 <span>{item.label}</span>
               </NavLink>
             ))}

@@ -30,6 +30,8 @@ class User(SQLModel, table=True):
     accent_color: Optional[str] = None
     # מצב תצוגה מועדף: "system" (ברירת מחדל, לפי המכשיר/דפדפן) / "light" / "dark"
     theme_mode: Optional[str] = None
+    # אייקון פרופיל (אימוג'י, למשל "🦊") שנבחר במסך הפרופיל. ריק = האות הראשונה של השם
+    avatar_icon: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -41,6 +43,8 @@ class Degree(SQLModel, table=True):
     name: str
     institution: Optional[str] = None
     target_credits: Optional[float] = None
+    # אייקון התואר (אימוג'י, למשל "💻"). ריק = ברירת מחדל בצד הלקוח
+    icon: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

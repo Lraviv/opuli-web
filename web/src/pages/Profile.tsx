@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
-import { Button, Card, Input } from '@/components/ui'
-import { AccentColorPresets } from '@/lib/constants'
+import { Button, Card, IconPicker, Input } from '@/components/ui'
+import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
 import type { ThemeModePreference } from '@/lib/types'
@@ -19,6 +19,7 @@ export default function Profile() {
 
   const accent = user.accent_color ?? AccentColorPresets[0].value
   const themeMode = (user.theme_mode as ThemeModePreference) ?? 'system'
+  const initial = (user.display_name || user.email)[0]?.toUpperCase() ?? '?'
 
   // עדכון אופטימי: הבחירה נצבעת ומוחלת מיד, ואם השמירה בשרת נכשלת - חוזרים לערך הקודם.
   async function saveSettings(payload: UserSettingsUpdate) {
@@ -39,11 +40,26 @@ export default function Profile() {
   return (
     <div>
       <div className="profile-header">
-        <div className="profile-avatar">{(user.display_name || user.email)[0]?.toUpperCase()}</div>
+        <div className={`profile-avatar${user.avatar_icon ? ' profile-avatar--icon' : ''}`}>
+          {user.avatar_icon || initial}
+        </div>
         <div>
           <h1>{user.display_name || user.email}</h1>
           <p>{user.email}</p>
         </div>
+      </div>
+
+      <div className="profile-section">
+        <h2>אייקון פרופיל</h2>
+        <Card>
+          <IconPicker
+            icons={AvatarIcons}
+            value={user.avatar_icon}
+            label="אייקון פרופיל"
+            onChange={(icon) => saveSettings({ avatar_icon: icon })}
+            extra={{ content: initial, label: 'האות הראשונה של השם' }}
+          />
+        </Card>
       </div>
 
       <div className="profile-section">

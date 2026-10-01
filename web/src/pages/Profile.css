@@ -16,6 +16,10 @@
   font-size: 22px;
   font-weight: 700;
 }
+.profile-avatar--icon {
+  font-size: 30px;
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
 .profile-header h1 {
   margin: 0;
   font-size: 22px;

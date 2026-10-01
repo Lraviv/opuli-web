@@ -1,0 +1,49 @@
+.nd-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-four);
+}
+.nd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nd-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+.nd-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.nd-select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+}
+.nd-select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+.nd-template-summary {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.nd-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+.nd-actions {
+  display: flex;
+  gap: var(--space-two);
+}

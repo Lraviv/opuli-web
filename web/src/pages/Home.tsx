@@ -51,6 +51,42 @@ export default function Home() {
   const remainingCredits = targetCredits ? Math.max(targetCredits - earnedCredits, 0) : null
   const progressPercent = targetCredits ? Math.min((earnedCredits / targetCredits) * 100, 100) : 0
 
+  // משתמש/ת חדש/ה בלי תואר - במקום לוח ריק, מזמינים להוסיף תואר
+  if (degrees && degrees.length === 0) {
+    return (
+      <div>
+        <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
+        <p className="home-subgreeting">ברוכים הבאים! בואו נסדר את התואר שלך</p>
+        <Card className="home-welcome">
+          <div className="home-welcome__icon" aria-hidden>
+            🎓
+          </div>
+          <h2 className="home-welcome__title">הוסיפו את התואר שלכם</h2>
+          <p className="home-welcome__text">
+            ברגע שיש תואר, כאן יופיעו ההתקדמות בנ״ז, הממוצע, המטלות והמבחנים הקרובים.
+          </p>
+          <ol className="home-welcome__steps">
+            <li>
+              <span aria-hidden>📋</span>
+              <span>בוחרים תואר מתבנית - קטלוג הקורסים נטען אוטומטית</span>
+            </li>
+            <li>
+              <span aria-hidden>✅</span>
+              <span>מסמנים קורסים שהושלמו, שבתהליך ושמתוכננים</span>
+            </li>
+            <li>
+              <span aria-hidden>📈</span>
+              <span>עוקבים אחרי ההתקדמות, המטלות והמבחנים</span>
+            </li>
+          </ol>
+          <Link to="/degrees?new=1" className="ui-button ui-button--primary home-welcome__cta">
+            + הוספת תואר עכשיו
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div>
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>

@@ -126,3 +126,34 @@
   font-size: 14px;
   text-align: center;
 }
+
+.ui-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 8px;
+}
+.ui-icon-picker__option {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--color-background-selected);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+.ui-icon-picker__option:active {
+  transform: scale(0.94);
+}
+.ui-icon-picker__option--selected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+.ui-icon-picker__option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

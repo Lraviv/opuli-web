@@ -1,35 +1,31 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
-import { useCreateDegree, useDegrees, useDegreeTemplates } from '@/lib/queries'
+import { NewDegreeForm } from '@/components/NewDegreeForm'
+import { DEFAULT_DEGREE_ICON } from '@/lib/constants'
+import { useDegrees } from '@/lib/queries'
 import './Degrees.css'
 
 export default function Degrees() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const showAll = searchParams.get('all') === '1'
+  // ?new=1 - הגעה מכפתור "הוספת תואר" (למשל במסך הבית) פותחת ישר את הטופס
+  const showForm = searchParams.get('new') === '1'
   const { data: degrees, isLoading } = useDegrees()
-  const { data: templates } = useDegreeTemplates()
-  const createDegree = useCreateDegree()
-
-  const [showForm, setShowForm] = useState(false)
-  const [name, setName] = useState('')
-  const [template, setTemplate] = useState('')
   const [search, setSearch] = useState('')
 
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    await createDegree.mutateAsync({ name, template: template || null })
-    setName('')
-    setTemplate('')
-    setShowForm(false)
+  function setShowForm(open: boolean) {
+    const next = new URLSearchParams(searchParams)
+    if (open) next.set('new', '1')
+    else next.delete('new')
+    setSearchParams(next, { replace: true })
   }
 
   // אם יש בדיוק תואר אחד - נכנסים ישר אליו, בלי להציג קודם רשימה עם פריט
   // יחיד. אפשר להגיע בכל זאת לרשימה (כדי להוסיף תואר שני) דרך קישור עם
   // ?all=1 - ראו הקישור "כל התארים" במסך התואר.
-  if (degrees && degrees.length === 1 && !showAll) {
+  if (degrees && degrees.length === 1 && !showAll && !showForm) {
     return <Navigate to={`/degrees/${degrees[0].id}`} replace />
   }
 
@@ -37,37 +33,28 @@ export default function Degrees() {
   const filteredDegrees = degrees?.filter(
     (d) => !query || d.name.toLowerCase().includes(query) || d.institution?.toLowerCase().includes(query),
   )
+  const hasDegrees = !!degrees && degrees.length > 0
 
   return (
     <div>
       <div className="degrees-header">
-        <h1>התארים שלי</h1>
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'ביטול' : '+ תואר חדש'}</Button>
+        <h1>{showForm ? 'תואר חדש' : 'התארים שלי'}</h1>
+        {!showForm && <Button onClick={() => setShowForm(true)}>+ תואר חדש</Button>}
       </div>
 
       {showForm && (
         <Card style={{ marginBottom: 'var(--space-four)' }}>
-          <form className="new-degree-form" onSubmit={handleCreate}>
-            <Input placeholder="שם התואר" value={name} onChange={(e) => setName(e.target.value)} required />
-            <select value={template} onChange={(e) => setTemplate(e.target.value)}>
-              <option value="">בלי תבנית (קטלוג ריק)</option>
-              {templates?.map((t) => (
-                <option key={t.key} value={t.key}>
-                  {t.name} · {t.course_count} קורסים
-                </option>
-              ))}
-            </select>
-            <Button type="submit" disabled={createDegree.isPending}>
-              {createDegree.isPending ? 'יוצרת…' : 'יצירת תואר'}
-            </Button>
-          </form>
+          <NewDegreeForm
+            onCreated={(degree) => navigate(`/degrees/${degree.id}`, { replace: true })}
+            onCancel={hasDegrees ? () => setShowForm(false) : () => navigate('/')}
+          />
         </Card>
       )}
 
-      {isLoading ? (
+      {showForm ? null : isLoading ? (
         <p>טוען…</p>
-      ) : !degrees || degrees.length === 0 ? (
-        <EmptyState title="עוד אין תארים" subtitle="הוסיפי תואר כדי להתחיל לעקוב אחרי הקורסים שלך" />
+      ) : !hasDegrees ? (
+        <EmptyState title="עוד אין תארים" subtitle="הוסיפו תואר כדי להתחיל לעקוב אחרי הקורסים" />
       ) : (
         <div className="degrees-grid">
           <Input
@@ -80,7 +67,10 @@ export default function Degrees() {
           {filteredDegrees!.map((degree) => (
             <Link key={degree.id} to={`/degrees/${degree.id}`}>
               <Card className="degree-card">
-                <div>
+                <span className="degree-card__icon" aria-hidden>
+                  {degree.icon || DEFAULT_DEGREE_ICON}
+                </span>
+                <div className="degree-card__body">
                   <h3>{degree.name}</h3>
                   {degree.institution && <p>{degree.institution}</p>}
                 </div>
