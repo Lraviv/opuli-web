@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Card, EmptyState, Pill } from '@/components/ui'
+import { LinksBar } from '@/components/LinksBar'
+import { PageSkeleton, SkeletonList } from '@/components/Skeleton'
 import { useAllCourseItems, useCourses, useDegrees, useExams, useReminders, useUpdateReminder } from '@/lib/queries'
 import './Home.css'
 
@@ -16,8 +18,8 @@ export default function Home() {
   const { user } = useAuth()
   const { data: items, isLoading: itemsLoading } = useAllCourseItems({ is_done: false })
   const { data: exams, isLoading: examsLoading } = useExams()
-  const { data: courses } = useCourses()
-  const { data: degrees } = useDegrees()
+  const { data: courses, isLoading: coursesLoading } = useCourses()
+  const { data: degrees, isLoading: degreesLoading } = useDegrees()
   const { data: reminders, isLoading: remindersLoading } = useReminders()
   const updateReminder = useUpdateReminder()
 
@@ -50,6 +52,8 @@ export default function Home() {
   const targetCredits = degrees?.find((d) => d.target_credits)?.target_credits ?? null
   const remainingCredits = targetCredits ? Math.max(targetCredits - earnedCredits, 0) : null
   const progressPercent = targetCredits ? Math.min((earnedCredits / targetCredits) * 100, 100) : 0
+
+  if (degreesLoading || coursesLoading) return <PageSkeleton variant="home" />
 
   // משתמש/ת חדש/ה בלי תואר - במקום לוח ריק, מזמינים להוסיף תואר
   if (degrees && degrees.length === 0) {
@@ -91,6 +95,8 @@ export default function Home() {
     <div>
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
       <p className="home-subgreeting">הנה מה שמחכה לך בקרוב</p>
+
+      <LinksBar courseId={null} title="קישורים מהירים" />
 
       <div className="home-section">
         <h2>הסטטיסטיקות שלי</h2>
@@ -144,7 +150,7 @@ export default function Home() {
         </div>
         <Card>
           {remindersLoading ? (
-            <p>טוען…</p>
+            <SkeletonList rows={2} check />
           ) : openReminders.length === 0 ? (
             <EmptyState title="אין תזכורות פתוחות" />
           ) : (
@@ -172,10 +178,15 @@ export default function Home() {
       </div>
 
       <div className="home-section">
-        <h2>מטלות קרובות</h2>
+        <div className="home-section__header">
+          <h2>מטלות קרובות</h2>
+          <Link to="/schedule" className="home-section__link">
+            ללו״ז השבועי ←
+          </Link>
+        </div>
         <Card>
           {itemsLoading ? (
-            <p>טוען…</p>
+            <SkeletonList rows={3} />
           ) : upcomingItems.length === 0 ? (
             <EmptyState title="אין מטלות פתוחות" subtitle="את/ה מעודכנת עם הכול כרגע" />
           ) : (
@@ -198,7 +209,7 @@ export default function Home() {
         <h2>מבחנים קרובים</h2>
         <Card>
           {examsLoading ? (
-            <p>טוען…</p>
+            <SkeletonList rows={2} />
           ) : upcomingExams.length === 0 ? (
             <EmptyState title="אין מבחנים קרובים" />
           ) : (

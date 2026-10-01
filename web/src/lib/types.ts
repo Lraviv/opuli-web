@@ -3,6 +3,8 @@
 export type CourseStatus = 'done' | 'current' | 'planned'
 export type CourseItemType = 'lesson' | 'assignment'
 export type ThemeModePreference = 'system' | 'light' | 'dark'
+/** ממ"ן = מטלת מנחה, ממ"ח = מטלת מחשב */
+export type AssignmentKind = 'mmn' | 'mmh' | 'other'
 
 export interface UserRead {
   id: number
@@ -11,6 +13,7 @@ export interface UserRead {
   accent_color: string | null
   theme_mode: string | null
   avatar_icon: string | null
+  calendar_token: string | null
   created_at: string
 }
 
@@ -59,6 +62,12 @@ export interface CourseRead {
   status: CourseStatus
   category: string | null
   grade: number | null
+  /** כללי הציון של הקורס - ריק = ברירת מחדל (ראו lib/grades.ts) */
+  exam_weight: number | null
+  min_exam_grade: number | null
+  min_assignments_count: number | null
+  min_assignments_weight: number | null
+  assignments_shield: boolean
   created_at: string
 }
 
@@ -74,6 +83,8 @@ export interface CourseItemRead {
   grade: number | null
   notes: string | null
   watched_at: string | null
+  kind: AssignmentKind | null
+  is_mandatory: boolean
 }
 
 export interface ExamReminderRead {
@@ -115,4 +126,35 @@ export interface StudyTopicRead {
   title: string
   is_done: boolean
   order: number
+}
+
+export interface DegreeRequirementRead {
+  id: number
+  degree_id: number
+  category: string
+  min_credits: number | null
+  sort_order: number
+}
+
+export interface LinkRead {
+  id: number
+  course_id: number | null
+  title: string
+  url: string
+  sort_order: number
+  created_at: string
+}
+
+/** מפגש קבוע. weekday: 0=ראשון. שעות בשעון קיר ("18:00"), תאריכים YYYY-MM-DD. */
+export interface ClassSessionRead {
+  id: number
+  course_id: number
+  weekday: number
+  start_time: string
+  end_time: string
+  title: string | null
+  location: string | null
+  interval_weeks: number
+  start_date: string | null
+  end_date: string | null
 }

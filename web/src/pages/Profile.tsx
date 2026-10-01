@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
+import { CalendarExport } from '@/components/CalendarExport'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
@@ -106,6 +107,11 @@ export default function Profile() {
             ))}
           </div>
         </Card>
+      </div>
+
+      <div className="profile-section">
+        <h2>ייצוא ליומן</h2>
+        <CalendarExport />
       </div>
 
       <FeedbackSection />

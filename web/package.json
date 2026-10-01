@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "for tz in Asia/Jerusalem America/New_York UTC; do TZ=$tz node --experimental-strip-types --no-warnings tests/logic.test.ts || exit 1; done"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
+import { SkeletonList } from '@/components/Skeleton'
 import { NewDegreeForm } from '@/components/NewDegreeForm'
 import { DEFAULT_DEGREE_ICON } from '@/lib/constants'
 import { useDegrees } from '@/lib/queries'
@@ -52,7 +53,9 @@ export default function Degrees() {
       )}
 
       {showForm ? null : isLoading ? (
-        <p>טוען…</p>
+        <Card>
+          <SkeletonList rows={2} pill={false} />
+        </Card>
       ) : !hasDegrees ? (
         <EmptyState title="עוד אין תארים" subtitle="הוסיפו תואר כדי להתחיל לעקוב אחרי הקורסים" />
       ) : (

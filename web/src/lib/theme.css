@@ -94,3 +94,10 @@ a {
   justify-content: center;
   color: var(--color-text-secondary);
 }
+
+/* טעינה ראשונית (לפני שיודעים מי מחובר) - שלד בגודל עמוד, בלי סרגל ניווט */
+.app-boot {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-six) var(--space-four);
+}

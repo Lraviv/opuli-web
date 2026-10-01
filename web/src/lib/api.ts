@@ -1,7 +1,7 @@
 // קליינט API דק - קורא ל-backend (FastAPI) בלבד. שום גישה ישירה ל-SQL
 // מהדפדפן: כל השאילתות/כתיבות עוברות דרך ה-REST API הזה.
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 const ACCESS_KEY = 'opuli_access_token'
 const REFRESH_KEY = 'opuli_refresh_token'
@@ -61,6 +61,8 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   auth?: boolean
+  /** 'blob' - מחזיר את גוף התשובה כקובץ (למשל .ics), בלי פענוח JSON */
+  as?: 'json' | 'blob'
 }
 
 // ה-backend שומר ומחזיר זמנים ב-UTC בלי אזור זמן (למשל "2026-10-05T09:30:00").
@@ -71,7 +73,7 @@ function markUtc(_key: string, value: unknown) {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
-  const { method = 'GET', body, auth = true } = options
+  const { method = 'GET', body, auth = true, as = 'json' } = options
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (auth) {
     const token = getAccessToken()
@@ -105,7 +107,21 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     throw new ApiError(res.status, detail)
   }
 
+  if (as === 'blob') return (await res.blob()) as T
   return JSON.parse(await res.text(), markUtc) as T
+}
+
+/** מוריד קובץ מה-API (עם התחברות) ושומר אותו בדפדפן בשם filename. */
+async function download(path: string, filename: string): Promise<void> {
+  const blob = await request<Blob>(path, { method: 'GET', as: 'blob' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export const api = {
@@ -114,4 +130,5 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  download,
 }
