@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, Card, EmptyState, IconButton, Input, Pill } from '@/components/ui'
+import { Button, Card, DateInput, EmptyState, IconButton, Input, Pill } from '@/components/ui'
 import { useAddReminder, useDeleteReminder, useReminders, useUpdateReminder } from '@/lib/queries'
 import type { UserReminderRead } from '@/lib/types'
 import '@/pages/CourseDetail.css'
@@ -42,14 +42,13 @@ export default function Reminders() {
       <Card style={{ marginBottom: 'var(--space-three)' }}>
         <form className="cd-inline-form cd-inline-form--stack" onSubmit={handleAdd}>
           <Input placeholder="תזכורת חדשה" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <label className="cd-item-edit__date">
-            מועד יעד (לא חובה)
-            <Input
-              type="datetime-local"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </label>
+          <DateInput
+            type="datetime-local"
+            label="מועד יעד"
+            placeholder="מועד יעד (לא חובה)"
+            value={dueDate}
+            onChange={setDueDate}
+          />
           <Button type="submit" disabled={addReminder.isPending}>
             הוספה
           </Button>
@@ -118,7 +117,7 @@ function ReminderRow({ reminder: r, overdue }: { reminder: UserReminderRead; ove
         <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="כותרת התזכורת" required autoFocus />
         <label className="cd-item-edit__date">
           מועד יעד
-          <Input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
+          <DateInput type="datetime-local" label="מועד יעד" value={due} onChange={setDue} />
         </label>
         <div className="cd-item-edit__actions">
           <Button type="submit" disabled={updateReminder.isPending}>

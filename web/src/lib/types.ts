@@ -108,3 +108,11 @@ export interface SemesterRead {
   sort_order: number
   created_at: string
 }
+
+export interface StudyTopicRead {
+  id: number
+  course_id: number
+  title: string
+  is_done: boolean
+  order: number
+}

@@ -82,7 +82,12 @@
   flex: 1;
   min-width: 120px;
 }
-.cd-inline-form > .cd-item-edit__date {
+.cd-inline-form > .cd-item-edit__date,
+.cd-inline-form > .ui-date {
+  flex: 1;
+  min-width: 180px;
+}
+.cd-item-edit > .cd-item-edit__date {
   flex: 1;
   min-width: 180px;
 }
@@ -91,7 +96,8 @@
     flex-direction: column;
     align-items: stretch;
   }
-  .cd-inline-form--stack > .cd-item-edit__date {
+  .cd-inline-form--stack > .cd-item-edit__date,
+  .cd-inline-form--stack > .ui-date {
     min-width: 0;
   }
 }

@@ -315,3 +315,33 @@ class MoveCourseToSemester(BaseModel):
     """גוף הבקשה ל-PUT /courses/{id}/semester - הזזת קורס בין סמסטרים בלוח התכנון."""
 
     semester_id: int | None = None
+
+
+# ---------------------------------------------------------------------------
+# חומר לימוד (נושאים לסימון בכל קורס)
+# ---------------------------------------------------------------------------
+
+
+class StudyTopicCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+
+
+class StudyTopicBatchCreate(BaseModel):
+    """הדבקת רשימה - כל מחרוזת היא נושא. שורות ריקות מסוננות בשרת."""
+
+    titles: list[str] = Field(min_length=1, max_length=200)
+
+
+class StudyTopicUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    is_done: bool | None = None
+
+
+class StudyTopicRead(BaseModel):
+    id: int
+    course_id: int
+    title: str
+    is_done: bool
+    order: int
+
+    model_config = ConfigDict(from_attributes=True)

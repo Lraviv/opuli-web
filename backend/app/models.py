@@ -106,6 +106,20 @@ class CourseItem(SQLModel, table=True):
     watched_at: Optional[datetime] = None
 
 
+class StudyTopic(SQLModel, table=True):
+    """נושא בחומר הלימוד של קורס (למשל "פרק 3 - מטריצות") - רשימת סימון להכנה למבחן."""
+
+    __tablename__ = "study_topics"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    course_id: int = Field(foreign_key="courses.id", index=True)
+    title: str
+    is_done: bool = Field(default=False)
+    # סדר התצוגה - נשמר כפי שהוזן (סדר הסילבוס)
+    order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class Exam(SQLModel, table=True):
     __tablename__ = "exams"
 

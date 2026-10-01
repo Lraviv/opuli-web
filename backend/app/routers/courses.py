@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from ..authz import get_owned_course, get_owned_course_item
 from ..db import get_session
 from ..deps import get_current_user
-from ..models import Course, CourseItem, CourseItemType, CourseStatus, Exam, ExamReminder, User
+from ..models import Course, CourseItem, CourseItemType, CourseStatus, Exam, ExamReminder, StudyTopic, User
 from ..schemas import (
     CourseCreate,
     CourseItemCreate,
@@ -83,6 +83,9 @@ def delete_course(
     # מוחקים בעלי-תלות: פריטי התקדמות, ומבחנים יחד עם התזכורות שלהם
     for item in session.exec(select(CourseItem).where(CourseItem.course_id == course_id)).all():
         session.delete(item)
+
+    for topic in session.exec(select(StudyTopic).where(StudyTopic.course_id == course_id)).all():
+        session.delete(topic)
 
     for exam in session.exec(select(Exam).where(Exam.course_id == course_id)).all():
         for reminder in session.exec(

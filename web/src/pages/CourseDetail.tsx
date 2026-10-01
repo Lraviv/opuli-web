@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, EmptyState, IconButton, Input, Pill } from '@/components/ui'
+import { Button, Card, DateInput, EmptyState, IconButton, Input, Pill } from '@/components/ui'
 import { GradeInput } from '@/components/GradeInput'
 import { CourseItemRow } from '@/components/CourseItemRow'
+import { StudyTopics } from '@/components/StudyTopics'
 import {
   useAddCourseItem,
   useBatchAddLessons,
@@ -126,12 +127,11 @@ export default function CourseDetail() {
               <option value="lesson">שיעור</option>
             </select>
             <Input placeholder="כותרת" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
-            <Input
-              type="date"
-              aria-label={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
-              title={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
+            <DateInput
+              label={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
+              placeholder={itemType === 'lesson' ? 'תאריך צפייה' : 'תאריך הגשה'}
               value={itemDue}
-              onChange={(e) => setItemDue(e.target.value)}
+              onChange={setItemDue}
             />
             <Button type="submit" disabled={addItem.isPending}>
               הוספה
@@ -175,13 +175,15 @@ export default function CourseDetail() {
         </Card>
       </div>
 
+      <StudyTopics courseId={id} />
+
       <div className="cd-section">
         <div className="cd-section-header">
           <h2>מבחנים</h2>
         </div>
         <Card style={{ marginBottom: 'var(--space-three)' }}>
           <form className="cd-inline-form" onSubmit={handleAddExam}>
-            <Input type="datetime-local" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+            <DateInput type="datetime-local" label="מועד המבחן" placeholder="מועד המבחן" value={examDate} onChange={setExamDate} />
             <Button type="submit" disabled={createExam.isPending}>
               הוספת מבחן
             </Button>

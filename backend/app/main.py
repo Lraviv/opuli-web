@@ -14,6 +14,7 @@ from .routers.internal import router as internal_router
 from .routers.push_tokens import router as push_tokens_router
 from .routers.semesters import router as semesters_router
 from .routers.reminders import router as reminders_router
+from .routers.study_topics import router as study_topics_router
 from .scheduler import start_scheduler, stop_scheduler
 
 
@@ -60,4 +61,5 @@ app.include_router(push_tokens_router)
 app.include_router(semesters_router)
 app.include_router(reminders_router)
 app.include_router(feedback_router)
+app.include_router(study_topics_router)
 app.include_router(internal_router)

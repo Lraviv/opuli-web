@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, IconButton, Input, Pill } from '@/components/ui'
+import { Button, DateInput, IconButton, Input, Pill } from '@/components/ui'
 import { useDeleteCourseItem, useUpdateCourseItem } from '@/lib/queries'
 import type { CourseItemRead } from '@/lib/types'
 
@@ -59,7 +59,7 @@ export function CourseItemRow({ item }: { item: CourseItemRead }) {
         <Input placeholder="כותרת" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
         <label className="cd-item-edit__date">
           {isLesson ? 'תאריך צפייה' : 'תאריך הגשה'}
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput label={isLesson ? 'תאריך צפייה' : 'תאריך הגשה'} value={date} onChange={setDate} />
         </label>
         <textarea
           className="ui-input cd-item-edit__notes"

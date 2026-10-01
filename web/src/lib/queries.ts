@@ -13,6 +13,7 @@ import type {
   DegreeTemplateRead,
   ExamRead,
   SemesterRead,
+  StudyTopicRead,
   ThemeModePreference,
   UserRead,
   UserReminderRead,
@@ -384,5 +385,54 @@ export function useDeleteSemester(degreeId: number) {
       qc.invalidateQueries({ queryKey: ['semesters', degreeId] })
       qc.invalidateQueries({ queryKey: ['courses'] })
     },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// חומר לימוד (נושאים לסימון בכל קורס)
+// ---------------------------------------------------------------------------
+
+export function useStudyTopics(courseId: number) {
+  return useQuery({
+    queryKey: ['topics', courseId],
+    queryFn: () => api.get<StudyTopicRead[]>(`/courses/${courseId}/topics`),
+  })
+}
+
+export function useAddStudyTopics(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    // נושא אחד -> POST רגיל; כמה (הדבקת רשימה) -> batch
+    mutationFn: async (titles: string[]): Promise<StudyTopicRead[]> =>
+      titles.length === 1
+        ? [await api.post<StudyTopicRead>(`/courses/${courseId}/topics`, { title: titles[0] })]
+        : api.post<StudyTopicRead[]>(`/courses/${courseId}/topics/batch`, { titles }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['topics', courseId] }),
+  })
+}
+
+export function useUpdateStudyTopic(courseId: number) {
+  const qc = useQueryClient()
+  const key = ['topics', courseId]
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: { title?: string; is_done?: boolean } }) =>
+      api.put<StudyTopicRead>(`/topics/${id}`, payload),
+    // עדכון אופטימי - הסימון מגיב מיד, וחוזר אחורה אם השמירה נכשלה
+    onMutate: async ({ id, payload }) => {
+      await qc.cancelQueries({ queryKey: key })
+      const previous = qc.getQueryData<StudyTopicRead[]>(key)
+      qc.setQueryData<StudyTopicRead[]>(key, (old) => old?.map((t) => (t.id === id ? { ...t, ...payload } : t)))
+      return { previous }
+    },
+    onError: (_err, _vars, ctx) => qc.setQueryData(key, ctx?.previous),
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  })
+}
+
+export function useDeleteStudyTopic(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/topics/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['topics', courseId] }),
   })
 }
