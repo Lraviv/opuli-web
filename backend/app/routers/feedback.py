@@ -29,7 +29,7 @@ def send_feedback(
     request: Request,
     current_user: User = Depends(get_current_user),
 ):
-    if not settings.resend_api_key:
+    if not settings.resend_api_key or not settings.feedback_to_email:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "שליחת משוב לא מוגדרת כרגע")
 
     label = CATEGORY_LABEL[body.category]

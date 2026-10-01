@@ -20,6 +20,11 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      - key: FEEDBACK_TO_EMAIL
+        sync: false
+      # לא חובה - ברירת המחדל לקישורים במיילים היא האתר הראשון ב-CORS_ORIGINS
+      - key: FRONTEND_URL
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: INTERNAL_SECRET

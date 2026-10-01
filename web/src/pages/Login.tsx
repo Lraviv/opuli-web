@@ -5,6 +5,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { Button, Input } from '@/components/ui'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 import { ApiError } from '@/lib/api'
+import { SiteFooter } from '@/components/SiteFooter'
 import './AuthLayout.css'
 
 export default function Login() {
@@ -48,8 +49,8 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <img src="/icon-192.png" alt="OpuLi" className="auth-logo" width={96} height={96} />
-        <h1>ברוכה הבאה</h1>
-        <p className="auth-subtitle">התחברי כדי להמשיך לנהל את התואר שלך</p>
+        <h1>ברוכים הבאים</h1>
+        <p className="auth-subtitle">מתחברים וממשיכים לנהל את התואר</p>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -57,7 +58,12 @@ export default function Login() {
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="auth-field">
-            <label htmlFor="password">סיסמה</label>
+            <div className="auth-label-row">
+              <label htmlFor="password">סיסמה</label>
+              <Link to={email ? `/forgot-password?email=${encodeURIComponent(email)}` : '/forgot-password'} className="auth-forgot">
+                שכחתי סיסמה
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"
@@ -67,7 +73,7 @@ export default function Login() {
             />
           </div>
           <Button type="submit" disabled={busy} style={{ width: '100%' }}>
-            {busy ? 'מתחברת…' : 'התחברות'}
+            {busy ? 'מתחברים…' : 'התחברות'}
           </Button>
         </form>
         <GoogleSignInButton onCredential={handleGoogle} onError={setError} />
@@ -75,6 +81,7 @@ export default function Login() {
           עוד אין לך חשבון? <Link to="/register">הרשמה</Link>
         </div>
       </div>
+      <SiteFooter variant="auth" />
     </div>
   )
 }

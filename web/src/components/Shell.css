@@ -1,5 +1,11 @@
 .shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.shell__content {
+  flex: 1;
+  width: 100%;
 }
 
 .shell__topbar {

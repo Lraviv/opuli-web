@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
 import { CalendarExport } from '@/components/CalendarExport'
+import { openWelcomeTour } from '@/lib/tour'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
@@ -114,6 +116,18 @@ export default function Profile() {
         <CalendarExport />
       </div>
 
+      <div className="profile-section">
+        <h2>היכרות עם האתר</h2>
+        <Card>
+          <div className="profile-tour-row">
+            <p>ההסבר הקצר שמופיע בהתחברות הראשונה: מה יש באתר ואיך מתחילים.</p>
+            <Button variant="secondary" onClick={openWelcomeTour}>
+              הצגת ההסבר
+            </Button>
+          </div>
+        </Card>
+      </div>
+
       <FeedbackSection />
 
       <div className="profile-section">
@@ -131,7 +145,9 @@ const FEEDBACK_CATEGORIES: { value: FeedbackCategory; label: string }[] = [
   { value: 'other', label: '💬 אחר' },
 ]
 
-const FEEDBACK_EMAIL = 'lihirweb@gmail.com'
+// כתובת לגיבוי ה-mailto - ממשתנה סביבה ולא מהקוד, כדי שלא תהיה חשופה בריפו.
+// ריק = בלי כפתור "פתיחה באפליקציית המייל" כשהשליחה דרך השרת נכשלת.
+const FEEDBACK_EMAIL: string | undefined = import.meta.env.VITE_FEEDBACK_EMAIL || undefined
 
 /** גיבוי כששליחה דרך השרת נכשלת: mailto עם נושא וגוף ממולאים מראש. */
 function mailtoHref(category: FeedbackCategory, message: string): string {
@@ -143,6 +159,16 @@ function mailtoHref(category: FeedbackCategory, message: string): string {
 
 function FeedbackSection() {
   const sendFeedback = useSendFeedback()
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const messageRef = useRef<HTMLTextAreaElement>(null)
+  const { hash } = useLocation()
+
+  // הגעה מ"צרו קשר" בפוטר (/profile#feedback): גוללים לטופס ושמים בו את הסמן
+  useEffect(() => {
+    if (hash !== '#feedback') return
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    messageRef.current?.focus({ preventScroll: true })
+  }, [hash])
   const [category, setCategory] = useState<FeedbackCategory>('bug')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
@@ -160,7 +186,7 @@ function FeedbackSection() {
   }
 
   return (
-    <div className="profile-section">
+    <div className="profile-section" id="feedback" ref={sectionRef}>
       <h2>משוב ודיווח על באגים</h2>
       <Card>
         <form className="feedback-form" onSubmit={handleSubmit}>
@@ -179,6 +205,7 @@ function FeedbackSection() {
             ))}
           </div>
           <textarea
+            ref={messageRef}
             className="ui-input feedback-message"
             rows={4}
             maxLength={5000}
@@ -194,11 +221,14 @@ function FeedbackSection() {
           {sendFeedback.isError && (
             <div className="feedback-fallback">
               <p className="feedback-status feedback-status--error">
-                {(sendFeedback.error as Error).message}. אפשר לשלוח דרך אפליקציית המייל במקום:
+                {(sendFeedback.error as Error).message}
+                {FEEDBACK_EMAIL ? '. אפשר לשלוח דרך אפליקציית המייל במקום:' : ''}
               </p>
-              <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
-                ✉️ פתיחה באפליקציית המייל
-              </a>
+              {FEEDBACK_EMAIL && (
+                <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
+                  ✉️ פתיחה באפליקציית המייל
+                </a>
+              )}
             </div>
           )}
           <Button type="submit" disabled={sendFeedback.isPending || message.trim().length < 3}>

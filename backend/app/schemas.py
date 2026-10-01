@@ -41,6 +41,7 @@ class UserRead(BaseModel):
     avatar_icon: str | None = None
     # טוקן מנוי היומן (אם נוצר) - הכתובת המלאה נבנית בצד הלקוח
     calendar_token: str | None = None
+    intro_seen: bool = False
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -53,6 +54,16 @@ class UserUpdate(BaseModel):
     accent_color: str | None = None
     theme_mode: str | None = None
     avatar_icon: str | None = Field(default=None, max_length=16)
+    intro_seen: bool | None = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=10, max_length=2000)
+    password: str = Field(min_length=8, max_length=200)
 
 
 # ---------------------------------------------------------------------------
