@@ -14,6 +14,13 @@
   border-radius: 20px;
   padding: var(--space-five);
 }
+.auth-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto var(--space-three);
+  border-radius: 22px;
+}
 
 .auth-card h1 {
   font-size: 22px;

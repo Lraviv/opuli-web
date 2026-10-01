@@ -52,6 +52,7 @@ export default function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <img src="/icon-192.png" alt="OpuLi" className="auth-logo" width={96} height={96} />
         <h1>יצירת חשבון</h1>
         <p className="auth-subtitle">בואי נתחיל לארגן את התואר שלך</p>
         {error && <div className="auth-error">{error}</div>}

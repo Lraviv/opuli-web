@@ -47,6 +47,7 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <img src="/icon-192.png" alt="OpuLi" className="auth-logo" width={96} height={96} />
         <h1>ברוכה הבאה</h1>
         <p className="auth-subtitle">התחברי כדי להמשיך לנהל את התואר שלך</p>
         {error && <div className="auth-error">{error}</div>}
