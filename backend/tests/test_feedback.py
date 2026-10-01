@@ -11,13 +11,23 @@ def test_feedback_requires_auth(client):
 
 def test_feedback_not_configured_returns_503(client, monkeypatch):
     monkeypatch.setattr(settings, "resend_api_key", "")
+    monkeypatch.setattr(settings, "feedback_to_email", "dev@example.com")
     tokens = register_and_login(client, "fb1@example.com")
+    r = client.post("/feedback", json={"category": "bug", "message": "something broke"}, headers=tokens["headers"])
+    assert r.status_code == 503
+
+
+def test_feedback_without_recipient_returns_503(client, monkeypatch):
+    monkeypatch.setattr(settings, "resend_api_key", "re_test")
+    monkeypatch.setattr(settings, "feedback_to_email", "")
+    tokens = register_and_login(client, "fb4@example.com")
     r = client.post("/feedback", json={"category": "bug", "message": "something broke"}, headers=tokens["headers"])
     assert r.status_code == 503
 
 
 def test_feedback_sends_email(client, monkeypatch):
     monkeypatch.setattr(settings, "resend_api_key", "re_test")
+    monkeypatch.setattr(settings, "feedback_to_email", "dev@example.com")
     tokens = register_and_login(client, "fb2@example.com")
     fake = MagicMock(status_code=200)
     with patch("app.routers.feedback.httpx.post", return_value=fake) as post:
@@ -28,7 +38,7 @@ def test_feedback_sends_email(client, monkeypatch):
         )
     assert r.status_code == 202, r.text
     payload = post.call_args.kwargs["json"]
-    assert payload["to"] == ["lihirweb@gmail.com"]
+    assert payload["to"] == ["dev@example.com"]
     assert payload["reply_to"] == "fb2@example.com"
     assert "&lt;b&gt;dark mode" in payload["html"]  # user input is escaped
 

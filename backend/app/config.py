@@ -41,7 +41,9 @@ class Settings(BaseSettings):
     # חוסם SMTP יוצא). ריק = הטופס מחזיר 503. בלי דומיין מאומת ב-Resend אפשר
     # לשלוח רק מ-onboarding@resend.dev ורק לכתובת של בעל החשבון ב-Resend.
     resend_api_key: str = ""
-    feedback_to_email: str = "lihirweb@gmail.com"
+    # הכתובת שאליה מגיע המשוב - רק ממשתנה סביבה (FEEDBACK_TO_EMAIL), לא בקוד,
+    # כדי שלא תהיה חשופה בריפו. ריק = הטופס מחזיר 503.
+    feedback_to_email: str = ""
     feedback_from_email: str = "OpuLi Feedback <onboarding@resend.dev>"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
