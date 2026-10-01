@@ -49,6 +49,22 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def no_shared_caching(request, call_next):
+    """תשובות ה-API אישיות לכל משתמש - אסור שדפדפן/פרוקסי/CDN ישמור אותן.
+
+    בלי זה, כל המשתמשים מבקשים את אותן כתובות (/courses, /degrees...) ומטמון
+    שמזהה תשובה רק לפי ה-URL (ולא לפי ה-Authorization) עלול להגיש לאחד את
+    הנתונים של מישהו אחר - בעיקר ב-Safari בטלפון.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("Cache-Control", "no-store, private")
+    response.headers["Vary"] = ", ".join(
+        v for v in dict.fromkeys([*filter(None, (response.headers.get("Vary") or "").split(", ")), "Authorization"])
+    )
+    return response
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
