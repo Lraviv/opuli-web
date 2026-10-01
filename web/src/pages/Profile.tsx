@@ -131,7 +131,9 @@ const FEEDBACK_CATEGORIES: { value: FeedbackCategory; label: string }[] = [
   { value: 'other', label: '💬 אחר' },
 ]
 
-const FEEDBACK_EMAIL = 'lihirweb@gmail.com'
+// כתובת לגיבוי ה-mailto - ממשתנה סביבה ולא מהקוד, כדי שלא תהיה חשופה בריפו.
+// ריק = בלי כפתור "פתיחה באפליקציית המייל" כשהשליחה דרך השרת נכשלת.
+const FEEDBACK_EMAIL: string | undefined = import.meta.env.VITE_FEEDBACK_EMAIL || undefined
 
 /** גיבוי כששליחה דרך השרת נכשלת: mailto עם נושא וגוף ממולאים מראש. */
 function mailtoHref(category: FeedbackCategory, message: string): string {
@@ -194,11 +196,14 @@ function FeedbackSection() {
           {sendFeedback.isError && (
             <div className="feedback-fallback">
               <p className="feedback-status feedback-status--error">
-                {(sendFeedback.error as Error).message}. אפשר לשלוח דרך אפליקציית המייל במקום:
+                {(sendFeedback.error as Error).message}
+                {FEEDBACK_EMAIL ? '. אפשר לשלוח דרך אפליקציית המייל במקום:' : ''}
               </p>
-              <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
-                ✉️ פתיחה באפליקציית המייל
-              </a>
+              {FEEDBACK_EMAIL && (
+                <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
+                  ✉️ פתיחה באפליקציית המייל
+                </a>
+              )}
             </div>
           )}
           <Button type="submit" disabled={sendFeedback.isPending || message.trim().length < 3}>
