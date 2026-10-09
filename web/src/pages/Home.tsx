@@ -31,8 +31,11 @@ export default function Home() {
     .slice(0, 5)
 
   const now = Date.now()
+  // מבחן של היום נשאר ברשימה עד סוף היום, גם אחרי שעת ההתחלה
+  const todayStart = new Date().setHours(0, 0, 0, 0)
   const upcomingExams = (exams ?? [])
-    .filter((e) => new Date(e.date_time).getTime() >= now)
+    .filter((e) => new Date(e.date_time).getTime() >= todayStart)
+    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
     .slice(0, 5)
 
   // תזכורות פתוחות - עם תאריך קודם (הקרוב ביותר ראשון), בלי תאריך בסוף
@@ -206,7 +209,12 @@ export default function Home() {
       </div>
 
       <div className="home-section">
-        <h2>מבחנים קרובים</h2>
+        <div className="home-section__header">
+          <h2>מבחנים קרובים</h2>
+          <Link to="/exams" className="home-section__link">
+            לכל המבחנים ←
+          </Link>
+        </div>
         <Card>
           {examsLoading ? (
             <SkeletonList rows={2} />

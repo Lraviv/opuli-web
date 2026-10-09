@@ -82,13 +82,13 @@ export default function Schedule() {
         </div>
         <nav className="sch-nav" aria-label="ניווט בין שבועות">
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, -7))} aria-label="השבוע הקודם">
-            ›
+            <Chevron direction="right" />
           </button>
           <button type="button" className="sch-nav__today" onClick={() => goToWeek(null)} disabled={isCurrentWeek}>
             השבוע
           </button>
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, 7))} aria-label="השבוע הבא">
-            ‹
+            <Chevron direction="left" />
           </button>
         </nav>
       </div>
@@ -131,6 +131,16 @@ export default function Schedule() {
         <CalendarExport />
       </section>
     </div>
+  )
+}
+
+/** חץ SVG ולא תו ‹ › - תווים כאלה מתהפכים אוטומטית בטקסט RTL, והכיוון יוצא הפוך.
+ * בעברית "הקודם" מצביע ימינה ו"הבא" שמאלה. */
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={direction === 'right' ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+    </svg>
   )
 }
 

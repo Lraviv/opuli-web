@@ -388,6 +388,15 @@ export function useCreateSemester(degreeId: number) {
   })
 }
 
+export function useUpdateSemester(degreeId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: { name?: string; sort_order?: number } }) =>
+      api.put<SemesterRead>(`/semesters/${id}`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['semesters', degreeId] }),
+  })
+}
+
 export function useDeleteSemester(degreeId: number) {
   const qc = useQueryClient()
   return useMutation({

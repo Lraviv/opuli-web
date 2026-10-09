@@ -32,6 +32,8 @@ export function Button({
 const ICON_PATHS = {
   edit: 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z',
   delete: 'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6',
+  up: 'M18 15l-6-6-6 6',
+  down: 'M6 9l6 6 6-6',
 } as const
 
 /** כפתור אייקון קומפקטי (עריכה/מחיקה) - label חובה, משמש גם כ-aria-label וגם כ-tooltip. */
