@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Card, EmptyState, Pill } from '@/components/ui'
 import { LinksBar } from '@/components/LinksBar'
+import { courseColor } from '@/lib/schedule'
+import '@/components/LinksBar.css'
 import { PageSkeleton, SkeletonList } from '@/components/Skeleton'
 import { useAllCourseItems, useCourses, useDegrees, useExams, useReminders, useUpdateReminder } from '@/lib/queries'
 import './Home.css'
@@ -47,7 +49,8 @@ export default function Home() {
   // סטטיסטיקות - ממוצע משוקלל לפי נ"ז, רק על קורסים שהושלמו ויש להם ציון
   const allCourses = courses ?? []
   const doneCourses = allCourses.filter((c) => c.status === 'done')
-  const currentCount = allCourses.filter((c) => c.status === 'current').length
+  const currentCourses = allCourses.filter((c) => c.status === 'current')
+  const currentCount = currentCourses.length
   const earnedCredits = doneCourses.reduce((sum, c) => sum + c.credits, 0)
   const graded = doneCourses.filter((c) => c.grade != null)
   const gradedCredits = graded.reduce((sum, c) => sum + c.credits, 0)
@@ -98,6 +101,30 @@ export default function Home() {
     <div>
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
       <p className="home-subgreeting">הנה מה שמחכה לך בקרוב</p>
+
+      {currentCourses.length > 0 && (
+        <section className="lb" aria-label="הקורסים שלי עכשיו">
+          <div className="lb__header">
+            <h2>הקורסים שלי עכשיו</h2>
+            <Link to="/courses" className="home-section__link">
+              לכל הקורסים ←
+            </Link>
+          </div>
+          <div className="lb__tiles">
+            {currentCourses.map((c) => (
+              <Link
+                key={c.id}
+                to={`/courses/${c.id}`}
+                className="lb__tile"
+                style={{ ['--color-primary' as string]: courseColor(c.id) }}
+              >
+                <span className="lb__tile-title">{c.name}</span>
+                <span className="lb__tile-host">{c.credits} נ״ז</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <LinksBar courseId={null} title="קישורים מהירים" />
 
