@@ -13,6 +13,7 @@ from sqlmodel import Session, select
 
 from ..config import settings
 from ..db import get_session
+from ..email_reminders import process_email_reminders
 from ..models import Course, Exam, ExamReminder, PushToken
 from ..push import build_exam_reminder_message, send_expo_push_messages
 
@@ -78,7 +79,10 @@ def check_reminders(
         session.add(reminder)
     session.commit()
 
+    email = process_email_reminders(session, now)
+
     return {
+        "email": email,
         "checked": len(due_reminders),
         "due": due_count,
         "messages_sent": len(messages),

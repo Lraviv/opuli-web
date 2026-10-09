@@ -344,6 +344,9 @@ export interface UserSettingsUpdate {
   accent_color?: string
   theme_mode?: ThemeModePreference
   avatar_icon?: string | null
+  email_notify_assignments?: boolean
+  email_notify_exams?: boolean
+  email_notify_reminders?: boolean
 }
 
 export function useUpdateSettings() {

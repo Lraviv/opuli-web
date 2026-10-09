@@ -14,6 +14,9 @@ export interface UserRead {
   theme_mode: string | null
   avatar_icon: string | null
   calendar_token: string | null
+  email_notify_assignments: boolean
+  email_notify_exams: boolean
+  email_notify_reminders: boolean
   created_at: string
 }
 

@@ -13,6 +13,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",
     "react": "^19.2.8",
+    "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4"
   },

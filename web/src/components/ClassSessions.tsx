@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, Card, DateInput, EmptyState, IconButton, Input } from '@/components/ui'
+import { Button, Card, DateInput, EmptyState, IconButton, Input, TimeInput } from '@/components/ui'
 import { useCourseSessions, useCreateSession, useDeleteSession, useUpdateSession } from '@/lib/queries'
 import type { ClassSessionPayload } from '@/lib/queries'
 import { WEEKDAY_NAMES, WEEKDAY_SHORT } from '@/lib/schedule'
@@ -151,14 +151,14 @@ function SessionForm({
             ))}
           </select>
         </label>
-        <label className="cd-field">
+        <div className="cd-field">
           משעה
-          <Input type="time" value={start} onChange={(e) => setStart(e.target.value)} required />
-        </label>
-        <label className="cd-field">
+          <TimeInput label="משעה" value={start} onChange={setStart} required />
+        </div>
+        <div className="cd-field">
           עד שעה
-          <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
-        </label>
+          <TimeInput label="עד שעה" value={end} onChange={setEnd} required />
+        </div>
         <label className="cd-field">
           תדירות
           <select value={interval} onChange={(e) => setIntervalWeeks(e.target.value)}>

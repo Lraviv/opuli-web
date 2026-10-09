@@ -110,3 +110,70 @@
   text-decoration: none;
   display: inline-block;
 }
+
+/* תזכורות במייל - שורת מתג לכל סוג */
+.profile-hint {
+  margin: 0 0 var(--space-two);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.profile-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-three);
+  padding: var(--space-two) 0;
+  cursor: pointer;
+}
+.profile-switch + .profile-switch {
+  border-top: 1px solid var(--color-border);
+}
+.profile-switch__title {
+  display: block;
+  font-weight: 600;
+}
+.profile-switch__sub {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.profile-switch input {
+  appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 13px;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.profile-switch input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: inset-inline-start 0.15s;
+}
+.profile-switch input:checked {
+  background: var(--color-primary);
+}
+.profile-switch input:checked::after {
+  inset-inline-start: 21px;
+}
+.profile-switch input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-switch input,
+  .profile-switch input::after {
+    transition: none;
+  }
+}

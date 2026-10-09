@@ -165,52 +165,6 @@
   min-width: 0;
   width: 100%;
 }
-.ui-date__input {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 46px;
-  -webkit-appearance: none;
-  appearance: none;
-  text-align: start;
-  padding-inline-end: 40px;
-  position: relative;
-}
-/* iOS Safari: הערך ממורכז כברירת מחדל ונותן לשדה רוחב מינימלי משלו (חורג מהקופסה) */
-.ui-date__input::-webkit-date-and-time-value {
-  text-align: start;
-  margin: 0;
-}
-/* כל השדה פותח את הבורר (Chrome/Edge), לא רק האייקון הקטן בצד */
-.ui-date__input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  inset: 0;
-  width: auto;
-  height: auto;
-  opacity: 0;
-  cursor: pointer;
-}
-/* ריק ולא בפוקוס - מסתירים את dd/mm/yyyy הנייטיבי ומציגים placeholder משלנו */
-.ui-date--empty .ui-date__input:not(:focus) {
-  color: transparent;
-}
-.ui-date__placeholder {
-  position: absolute;
-  inset-inline-start: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-secondary);
-  font-size: 15px;
-  pointer-events: none;
-  white-space: nowrap;
-}
-.ui-date__input:focus ~ .ui-date__placeholder {
-  display: none;
-}
 .ui-date__icon {
   font-size: 16px;
 }

@@ -34,6 +34,10 @@ class User(SQLModel, table=True):
     avatar_icon: Optional[str] = None
     # טוקן סודי לכתובת מנוי היומן (/calendar/feed/{token}.ics). ריק = אין מנוי פעיל
     calendar_token: Optional[str] = Field(default=None, index=True, unique=True)
+    # תזכורות במייל - כל סוג נשלט בנפרד ממסך הפרופיל (ברירת מחדל: פעיל)
+    email_notify_assignments: bool = Field(default=True)
+    email_notify_exams: bool = Field(default=True)
+    email_notify_reminders: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -125,6 +129,8 @@ class CourseItem(SQLModel, table=True):
     # רלוונטי למטלות: ממ"ן / ממ"ח / אחר, והאם המטלה חובה
     kind: Optional[AssignmentKind] = None
     is_mandatory: bool = Field(default=False)
+    # מתי נשלחה תזכורת במייל על המטלה (יום לפני ההגשה). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class StudyTopic(SQLModel, table=True):
@@ -149,6 +155,8 @@ class Exam(SQLModel, table=True):
     date_time: datetime
     location: Optional[str] = None
     notes: Optional[str] = None
+    # מתי נשלחה תזכורת במייל על המבחן (יום לפני). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class ExamReminder(SQLModel, table=True):
@@ -180,6 +188,8 @@ class UserReminder(SQLModel, table=True):
     is_done: bool = Field(default=False)
     completed_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # מתי נשלחה התזכורת במייל (בזמן התזכורת). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class Semester(SQLModel, table=True):
