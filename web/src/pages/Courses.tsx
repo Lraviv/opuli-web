@@ -137,7 +137,7 @@ export default function Courses() {
         degrees && degrees.length > 0 ? (
           <SemesterBoard degreeId={degrees[0].id} search={search} />
         ) : (
-          <EmptyState title="הוסיפי תואר כדי לתכנן סמסטרים" />
+          <EmptyState title="הוסיפו תואר כדי לתכנן סמסטרים" />
         )
       ) : (
         <>

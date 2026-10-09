@@ -54,7 +54,7 @@ export default function Register() {
       <div className="auth-card">
         <img src="/icon-192.png" alt="OpuLi" className="auth-logo" width={96} height={96} />
         <h1>יצירת חשבון</h1>
-        <p className="auth-subtitle">בואי נתחיל לארגן את התואר שלך</p>
+        <p className="auth-subtitle">בואו נתחיל לארגן את התואר שלך</p>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -76,7 +76,7 @@ export default function Register() {
             />
           </div>
           <Button type="submit" disabled={busy} style={{ width: '100%' }}>
-            {busy ? 'יוצרת חשבון…' : 'הרשמה'}
+            {busy ? 'יוצרים חשבון…' : 'הרשמה'}
           </Button>
         </form>
         <GoogleSignInButton onCredential={handleGoogle} onError={setError} />

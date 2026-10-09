@@ -48,8 +48,8 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <img src="/icon-192.png" alt="OpuLi" className="auth-logo" width={96} height={96} />
-        <h1>ברוכה הבאה</h1>
-        <p className="auth-subtitle">התחברי כדי להמשיך לנהל את התואר שלך</p>
+        <h1>ברוכים הבאים</h1>
+        <p className="auth-subtitle">התחברו כדי להמשיך לנהל את התואר שלך</p>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -67,7 +67,7 @@ export default function Login() {
             />
           </div>
           <Button type="submit" disabled={busy} style={{ width: '100%' }}>
-            {busy ? 'מתחברת…' : 'התחברות'}
+            {busy ? 'מתחברים…' : 'התחברות'}
           </Button>
         </form>
         <GoogleSignInButton onCredential={handleGoogle} onError={setError} />

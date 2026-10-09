@@ -191,7 +191,7 @@ export default function Home() {
           {itemsLoading ? (
             <SkeletonList rows={3} />
           ) : upcomingItems.length === 0 ? (
-            <EmptyState title="אין מטלות פתוחות" subtitle="את/ה מעודכנת עם הכול כרגע" />
+            <EmptyState title="אין מטלות פתוחות" subtitle="הכול מעודכן כרגע" />
           ) : (
             <div className="home-list">
               {upcomingItems.map((item) => (

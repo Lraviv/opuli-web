@@ -49,6 +49,24 @@ export default function Schedule() {
     })
   }, [days, courses, sessions, exams, assignments, reminders])
 
+  // תזכורות פתוחות בלי תאריך - אין להן יום בלו"ז, אז הן מוצגות ברשימה נפרדת מתחת לשבוע
+  const undatedReminders = useMemo<AgendaItem[]>(
+    () =>
+      (reminders ?? [])
+        .filter((r) => !r.due_date && !r.is_done)
+        .map((r) => ({
+          key: `reminder-${r.id}`,
+          kind: 'reminder' as const,
+          title: r.title,
+          courseId: null,
+          courseName: null,
+          time: null,
+          done: false,
+          sourceId: r.id,
+        })),
+    [reminders],
+  )
+
   const summary = useMemo(() => {
     const all = [...agenda.values()].flat()
     return {
@@ -120,6 +138,17 @@ export default function Schedule() {
         })}
       </ol>
 
+      {undatedReminders.length > 0 && (
+        <section className="sch-undated" aria-labelledby="sch-undated-title">
+          <h2 id="sch-undated-title">תזכורות בלי תאריך</h2>
+          <div className="sch-undated__list">
+            {undatedReminders.map((item) => (
+              <AgendaRow key={item.key} item={item} timeLabel="בלי תאריך" />
+            ))}
+          </div>
+        </section>
+      )}
+
       {(sessions ?? []).length === 0 && (
         <p className="sch-hint">
           מפגשי הנחיה והרצאות קבועות מוסיפים בעמוד של כל קורס, במדור "מפגשים קבועים", והם יופיעו כאן בכל שבוע.
@@ -144,7 +173,7 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
   )
 }
 
-function AgendaRow({ item }: { item: AgendaItem }) {
+function AgendaRow({ item, timeLabel = 'כל היום' }: { item: AgendaItem; timeLabel?: string }) {
   const color = courseColor(item.courseId)
   const body = (
     <>
@@ -155,7 +184,7 @@ function AgendaRow({ item }: { item: AgendaItem }) {
             {item.endTime && <span className="sch-item__end">{item.endTime}</span>}
           </>
         ) : (
-          <span className="sch-item__allday">כל היום</span>
+          <span className="sch-item__allday">{timeLabel}</span>
         )}
       </span>
       <span className="sch-item__main">

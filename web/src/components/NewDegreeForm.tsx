@@ -99,7 +99,7 @@ export function NewDegreeForm({ onCreated, onCancel }: { onCreated: (degree: Deg
 
       <div className="nd-actions">
         <Button type="submit" disabled={createDegree.isPending || !template || !name.trim()}>
-          {createDegree.isPending ? 'יוצרת…' : 'יצירת תואר'}
+          {createDegree.isPending ? 'יוצרים…' : 'יצירת תואר'}
         </Button>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
