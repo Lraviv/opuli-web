@@ -102,6 +102,8 @@ export default function Home() {
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
       <p className="home-subgreeting">הנה מה שמחכה לך בקרוב</p>
 
+      <LinksBar courseId={null} title="קישורים מהירים" />
+
       {currentCourses.length > 0 && (
         <section className="lb" aria-label="הקורסים שלי עכשיו">
           <div className="lb__header">
@@ -126,19 +128,21 @@ export default function Home() {
         </section>
       )}
 
-      <LinksBar courseId={null} title="קישורים מהירים" />
-
       <div className="home-section">
         <h2>הסטטיסטיקות שלי</h2>
         <div className="home-stats">
-          <Card className="home-stat">
-            <p className="home-stat__value">{doneCourses.length}</p>
-            <p className="home-stat__label">קורסים שהושלמו</p>
-          </Card>
-          <Card className="home-stat">
-            <p className="home-stat__value">{currentCount}</p>
-            <p className="home-stat__label">קורסים בתהליך</p>
-          </Card>
+          <Link to="/courses?tab=done" className="home-stat-link">
+            <Card className="home-stat">
+              <p className="home-stat__value">{doneCourses.length}</p>
+              <p className="home-stat__label">קורסים שהושלמו</p>
+            </Card>
+          </Link>
+          <Link to="/courses?tab=current" className="home-stat-link">
+            <Card className="home-stat">
+              <p className="home-stat__value">{currentCount}</p>
+              <p className="home-stat__label">קורסים בתהליך</p>
+            </Card>
+          </Link>
           <Card className="home-stat">
             <p className="home-stat__value">{average != null ? average.toFixed(1) : '—'}</p>
             <p className="home-stat__label">ממוצע משוקלל</p>

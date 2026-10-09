@@ -177,6 +177,7 @@ function FeedbackSection() {
   const [category, setCategory] = useState<FeedbackCategory>('bug')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
+  const [viaMail, setViaMail] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -186,7 +187,10 @@ function FeedbackSection() {
       setMessage('')
       setSent(true)
     } catch {
-      // השגיאה מוצגת מתוך sendFeedback.error
+      // שליחה מהשרת לא זמינה (למשל אין מפתח מייל) - פותחים את אפליקציית המייל
+      // עם ההודעה מוכנה, בלי להציג למשתמש שגיאה
+      setViaMail(true)
+      window.location.href = mailtoHref(category, message)
     }
   }
 
@@ -219,16 +223,15 @@ function FeedbackSection() {
             onChange={(e) => {
               setMessage(e.target.value)
               setSent(false)
+              setViaMail(false)
             }}
           />
           {sent && <p className="feedback-status feedback-status--ok">תודה! המשוב נשלח 💌</p>}
-          {sendFeedback.isError && (
+          {viaMail && (
             <div className="feedback-fallback">
-              <p className="feedback-status feedback-status--error">
-                {(sendFeedback.error as Error).message}. אפשר לשלוח דרך אפליקציית המייל במקום:
-              </p>
+              <p className="feedback-status">ההודעה מוכנה באפליקציית המייל - נשאר רק ללחוץ שליחה ✉️</p>
               <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
-                ✉️ פתיחה באפליקציית המייל
+                לא נפתח? לחצו כאן
               </a>
             </div>
           )}
