@@ -166,6 +166,7 @@ class CourseCreate(BaseModel):
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool = False
+    course_code: str | None = Field(default=None, max_length=20)
 
 
 class CourseUpdate(BaseModel):
@@ -181,6 +182,7 @@ class CourseUpdate(BaseModel):
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool | None = None
+    course_code: str | None = Field(default=None, max_length=20)
 
 
 class CourseRead(BaseModel):
@@ -199,6 +201,7 @@ class CourseRead(BaseModel):
     min_assignments_count: int | None = None
     min_assignments_weight: float | None = None
     assignments_shield: bool = False
+    course_code: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

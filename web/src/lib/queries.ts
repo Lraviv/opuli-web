@@ -19,6 +19,9 @@ import type {
   SemesterRead,
   StudyTopicRead,
   ThemeModePreference,
+  TipRead,
+  TipSort,
+  TipsPage,
   UserRead,
   UserReminderRead,
 } from './types'
@@ -136,6 +139,7 @@ export interface CourseCreatePayload {
   min_assignments_count?: number | null
   min_assignments_weight?: number | null
   assignments_shield?: boolean
+  course_code?: string | null
 }
 
 export function useCreateCourse() {
@@ -608,5 +612,74 @@ export function useRotateCalendarToken() {
 export function useRevokeCalendarToken() {
   return useMutation({
     mutationFn: () => api.delete<void>('/me/calendar-token'),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// עצות מסטודנטים
+// ---------------------------------------------------------------------------
+
+export function useCourseTips(courseId: number, sort: TipSort, limit: number) {
+  return useQuery({
+    queryKey: ['tips', courseId, sort, limit],
+    queryFn: () => api.get<TipsPage>(`/courses/${courseId}/tips?sort=${sort}&limit=${limit}`),
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useTipReplies(postId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['tip-replies', postId],
+    queryFn: () => api.get<TipRead[]>(`/tips/${postId}/replies`),
+    enabled,
+  })
+}
+
+function useInvalidateTips(courseId: number) {
+  const qc = useQueryClient()
+  return () => {
+    qc.invalidateQueries({ queryKey: ['tips', courseId] })
+    qc.invalidateQueries({ queryKey: ['tip-replies'] })
+  }
+}
+
+export function useCreateTip(courseId: number) {
+  const invalidate = useInvalidateTips(courseId)
+  return useMutation({
+    mutationFn: (payload: { body: string; parent_id?: number | null }) =>
+      api.post<TipRead>(`/courses/${courseId}/tips`, payload),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUpdateTip(courseId: number) {
+  const invalidate = useInvalidateTips(courseId)
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: string }) => api.patch<TipRead>(`/tips/${id}`, { body }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteTip(courseId: number) {
+  const invalidate = useInvalidateTips(courseId)
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/tips/${id}`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useVoteTip(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, value }: { id: number; value: -1 | 0 | 1 }) => api.put<TipRead>(`/tips/${id}/vote`, { value }),
+    // מעדכנים את התגובה במקום בלי לטעון מחדש, כדי שהרשימה לא "תקפוץ" בזמן הצבעה
+    onSuccess: (updated) => {
+      const patch = (t: TipRead): TipRead =>
+        t.id === updated.id
+          ? { ...t, score: updated.score, my_vote: updated.my_vote }
+          : { ...t, replies: t.replies.map(patch) }
+      qc.setQueriesData<TipsPage>({ queryKey: ['tips', courseId] }, (old) => old && { ...old, items: old.items.map(patch) })
+      qc.setQueriesData<TipRead[]>({ queryKey: ['tip-replies'] }, (old) => old?.map(patch))
+    },
   })
 }

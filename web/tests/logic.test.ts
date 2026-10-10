@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict'
 import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight } from '../src/lib/grades.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
+import { relativeTime } from '../src/lib/tips.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
 
 const rules = { examWeight: null, minExamGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
@@ -75,3 +76,14 @@ const agenda = buildAgenda(days, {
 })
 assert.deepEqual(agenda.get('2026-10-07')!.map(i => i.kind), ['exam', 'session', 'assignment'])
 console.log('all logic tests passed')
+
+// זמן יחסי בתגובות העצות
+{
+  const now = Date.parse('2026-10-10T12:00:00Z')
+  assert.equal(relativeTime('2026-10-10T11:30:00Z', now), 'עכשיו')
+  assert.equal(relativeTime('2026-10-10T11:00:00Z', now), 'לפני שעה')
+  assert.equal(relativeTime('2026-10-10T07:00:00Z', now), 'לפני 5 שעות')
+  assert.equal(relativeTime('2026-10-09T12:00:00Z', now), 'אתמול')
+  assert.equal(relativeTime('2026-10-07T12:00:00Z', now), 'לפני 3 ימים')
+  assert.match(relativeTime('2026-09-01T12:00:00Z', now), /2026/)
+}
