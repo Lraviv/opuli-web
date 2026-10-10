@@ -19,6 +19,7 @@ from ..models import (
     StudyTopic,
     User,
 )
+from ..tips import normalize_course_code, resolve_shared_course
 from ..schemas import (
     BatchAssignmentCreate,
     CourseCreate,
@@ -62,10 +63,13 @@ def create_course(
     session: Session = Depends(get_session),
 ):
     """הוספת קורס ידנית (לא מהקטלוג) - למשל קורס מוכר מתואר קודם."""
-    course = Course(user_id=current_user.id, **payload.model_dump())
+    data = payload.model_dump()
+    data["course_code"] = normalize_course_code(data.get("course_code"))
+    course = Course(user_id=current_user.id, **data)
     session.add(course)
     session.commit()
     session.refresh(course)
+    resolve_shared_course(course, session)
     return course
 
 
@@ -80,10 +84,13 @@ def update_course(
     for field, value in payload.model_dump(exclude_unset=True).items():
         if field == "assignments_shield" and value is None:
             continue  # עמודה לא-nullable - null מפורש פשוט מתעלמים ממנו
+        if field == "course_code":
+            value = normalize_course_code(value)
         setattr(course, field, value)
     session.add(course)
     session.commit()
     session.refresh(course)
+    resolve_shared_course(course, session)
     return course
 
 

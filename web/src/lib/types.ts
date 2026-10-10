@@ -71,6 +71,8 @@ export interface CourseRead {
   min_assignments_count: number | null
   min_assignments_weight: number | null
   assignments_shield: boolean
+  /** מספר הקורס במוסד (למשל "20407") - מחבר ללשונית העצות המשותפת */
+  course_code: string | null
   created_at: string
 }
 
@@ -160,4 +162,36 @@ export interface ClassSessionRead {
   interval_weeks: number
   start_date: string | null
   end_date: string | null
+}
+
+// ---------------------------------------------------------------------------
+// עצות מסטודנטים (לשונית בקורס)
+// ---------------------------------------------------------------------------
+
+export type TipSort = 'top' | 'new' | 'old'
+
+export interface TipRead {
+  id: number
+  parent_id: number | null
+  /** null = התגובה נמחקה */
+  author: { display_name: string; avatar_icon: string | null } | null
+  reply_to_name: string | null
+  body: string
+  created_at: string
+  edited: boolean
+  deleted: boolean
+  score: number
+  /** ההצבעה של המשתמש/ת המחובר/ת בלבד: 1, -1 או 0 */
+  my_vote: number
+  is_mine: boolean
+  reply_count: number
+  replies: TipRead[]
+}
+
+export interface TipsPage {
+  /** false = לקורס אין מספר קורס, ולכן אין לו דיון משותף */
+  linked: boolean
+  course: { code: string; institution: string; name: string; participants: number } | null
+  total: number
+  items: TipRead[]
 }

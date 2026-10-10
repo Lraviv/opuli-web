@@ -6,6 +6,7 @@ from ..catalog_templates import TEMPLATES, get_template
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import CatalogCourse, Course, Degree, DegreeRequirement, User
+from ..tips import code_from_catalog_notes, resolve_shared_course
 from ..schemas import (
     CatalogCourseCreate,
     CatalogCourseRead,
@@ -264,8 +265,10 @@ def select_catalog_course(
         status=payload.status,
         semester=payload.semester,
         grade=payload.grade,
+        course_code=code_from_catalog_notes(catalog_course.notes),
     )
     session.add(course)
     session.commit()
     session.refresh(course)
+    resolve_shared_course(course, session)
     return course
