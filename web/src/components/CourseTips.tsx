@@ -119,15 +119,21 @@ function TipBody({
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     if (!draft.trim()) return
-    await updateTip.mutateAsync({ id: tip.id, body: draft.trim() })
-    setEditing(false)
+    try {
+      await updateTip.mutateAsync({ id: tip.id, body: draft.trim() })
+      setEditing(false)
+    } catch {
+      // ההודעה מוצגת מתחת לתגובה (updateTip.error)
+    }
   }
 
   async function handleDelete() {
     setMenuOpen(false)
     if (!confirm('למחוק את התגובה?')) return
-    await deleteTip.mutateAsync(tip.id)
+    deleteTip.mutate(tip.id)
   }
+
+  const actionError = updateTip.error ?? deleteTip.error
 
   if (tip.deleted) {
     return (
@@ -213,6 +219,8 @@ function TipBody({
           {linkify(tip.body)}
         </p>
       )}
+
+      {actionError && <p className="tp-error">{actionError.message}</p>}
 
       <div className="tp-actions">
         <Votes tip={tip} courseId={courseId} />

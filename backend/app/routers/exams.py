@@ -112,5 +112,7 @@ def delete_exam(
     exam = get_owned_exam(exam_id, current_user.id, session)
     for reminder in session.exec(select(ExamReminder).where(ExamReminder.exam_id == exam_id)).all():
         session.delete(reminder)
+    # קודם מוחקים את התזכורות במסד, ורק אז את המבחן (מפתח זר ב-Postgres)
+    session.flush()
     session.delete(exam)
     session.commit()
