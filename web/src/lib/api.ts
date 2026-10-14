@@ -91,7 +91,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     if (refreshed) return request<T>(path, options, true)
     clearTokens()
     window.location.href = '/login'
-    throw new ApiError(401, 'לא מחוברת')
+    throw new ApiError(401, 'לא מחובר/ת')
   }
 
   if (res.status === 204) return undefined as T

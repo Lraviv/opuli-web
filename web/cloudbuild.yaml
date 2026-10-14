@@ -1,0 +1,10 @@
+# בנייה ב-Cloud Build עם build args (gcloud run deploy --source לא מעביר אותם).
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg=VITE_API_URL=${_VITE_API_URL}
+      - --build-arg=VITE_GOOGLE_CLIENT_ID=${_VITE_GOOGLE_CLIENT_ID}
+      - -t=${_IMAGE}
+      - .
+images: ['${_IMAGE}']

@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -34,6 +35,10 @@ class User(SQLModel, table=True):
     avatar_icon: Optional[str] = None
     # טוקן סודי לכתובת מנוי היומן (/calendar/feed/{token}.ics). ריק = אין מנוי פעיל
     calendar_token: Optional[str] = Field(default=None, index=True, unique=True)
+    # תזכורות במייל - כל סוג נשלט בנפרד ממסך הפרופיל (ברירת מחדל: פעיל)
+    email_notify_assignments: bool = Field(default=True)
+    email_notify_exams: bool = Field(default=True)
+    email_notify_reminders: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -91,6 +96,10 @@ class Course(SQLModel, table=True):
     min_assignments_weight: Optional[float] = None
     # מטלות "מגן": ציון המטלות נכלל רק אם הוא משפר את הציון
     assignments_shield: bool = Field(default=False)
+    # מספר הקורס במוסד (למשל "20407") - יחד עם המוסד של התואר מזהה את הקורס
+    # המשותף לכל הסטודנטים (ראו SharedCourse ולשונית העצות)
+    course_code: Optional[str] = None
+    shared_course_id: Optional[int] = Field(default=None, foreign_key="shared_courses.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -125,6 +134,8 @@ class CourseItem(SQLModel, table=True):
     # רלוונטי למטלות: ממ"ן / ממ"ח / אחר, והאם המטלה חובה
     kind: Optional[AssignmentKind] = None
     is_mandatory: bool = Field(default=False)
+    # מתי נשלחה תזכורת במייל על המטלה (יום לפני ההגשה). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class StudyTopic(SQLModel, table=True):
@@ -149,6 +160,8 @@ class Exam(SQLModel, table=True):
     date_time: datetime
     location: Optional[str] = None
     notes: Optional[str] = None
+    # מתי נשלחה תזכורת במייל על המבחן (יום לפני). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class ExamReminder(SQLModel, table=True):
@@ -180,6 +193,8 @@ class UserReminder(SQLModel, table=True):
     is_done: bool = Field(default=False)
     completed_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # מתי נשלחה התזכורת במייל (בזמן התזכורת). ריק = עוד לא נשלחה
+    email_sent_at: Optional[datetime] = None
 
 
 class Semester(SQLModel, table=True):
@@ -240,4 +255,58 @@ class ClassSession(SQLModel, table=True):
     interval_weeks: int = Field(default=1)
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SharedCourse(SQLModel, table=True):
+    """קורס "אמיתי" במוסד, משותף לכל הסטודנטים שלומדים אותו - מזוהה לפי מוסד + מספר קורס.
+
+    כל Course אישי עם course_code מקושר לכאן (shared_course_id), וזה מה שמחבר
+    סטודנטים שונים לאותו דיון עצות.
+    """
+
+    __tablename__ = "shared_courses"
+    __table_args__ = (UniqueConstraint("institution", "code", name="uq_shared_courses_institution_code"),)
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    # שם מוסד מנורמל (ראו tips.normalize_institution). ריק = לא צוין מוסד בתואר
+    institution: str = Field(default="")
+    code: str
+    # שם הקורס כפי שהופיע אצל הסטודנט/ית הראשון/ה שקישר/ה אותו
+    name: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class CoursePost(SQLModel, table=True):
+    """תגובה בלשונית העצות של קורס משותף. parent_id ריק = תגובה ראשית, אחרת תשובה בשרשור.
+
+    השרשור הוא ברמה אחת: תשובה לתשובה נשמרת תחת אותה תגובה ראשית, עם
+    reply_to_user_id כדי להציג "בתגובה ל־שם".
+    """
+
+    __tablename__ = "course_posts"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    shared_course_id: int = Field(foreign_key="shared_courses.id", index=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    parent_id: Optional[int] = Field(default=None, foreign_key="course_posts.id", index=True)
+    reply_to_user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    body: str
+    # מחושבים מראש כדי שהמיון יהיה שאילתה פשוטה - מתעדכנים יחד עם הצבעה/תשובה
+    score: int = Field(default=0)
+    reply_count: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    edited_at: Optional[datetime] = None
+    # תגובה ראשית שנמחקה ויש לה תשובות נשארת כ"התגובה נמחקה" כדי לשמור על השרשור
+    deleted_at: Optional[datetime] = None
+
+
+class CoursePostVote(SQLModel, table=True):
+    """הצבעה אנונימית על תגובה: user_id נשמר רק כדי למנוע הצבעה כפולה, ולא נחשף ב-API."""
+
+    __tablename__ = "course_post_votes"
+
+    post_id: int = Field(foreign_key="course_posts.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    value: int  # 1 או -1
     created_at: datetime = Field(default_factory=datetime.utcnow)

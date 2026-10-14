@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Card, EmptyState, Pill } from '@/components/ui'
 import { LinksBar } from '@/components/LinksBar'
+import { courseColor } from '@/lib/schedule'
+import '@/components/LinksBar.css'
 import { PageSkeleton, SkeletonList } from '@/components/Skeleton'
 import { useAllCourseItems, useCourses, useDegrees, useExams, useReminders, useUpdateReminder } from '@/lib/queries'
 import './Home.css'
@@ -31,8 +33,11 @@ export default function Home() {
     .slice(0, 5)
 
   const now = Date.now()
+  // מבחן של היום נשאר ברשימה עד סוף היום, גם אחרי שעת ההתחלה
+  const todayStart = new Date().setHours(0, 0, 0, 0)
   const upcomingExams = (exams ?? [])
-    .filter((e) => new Date(e.date_time).getTime() >= now)
+    .filter((e) => new Date(e.date_time).getTime() >= todayStart)
+    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
     .slice(0, 5)
 
   // תזכורות פתוחות - עם תאריך קודם (הקרוב ביותר ראשון), בלי תאריך בסוף
@@ -44,7 +49,8 @@ export default function Home() {
   // סטטיסטיקות - ממוצע משוקלל לפי נ"ז, רק על קורסים שהושלמו ויש להם ציון
   const allCourses = courses ?? []
   const doneCourses = allCourses.filter((c) => c.status === 'done')
-  const currentCount = allCourses.filter((c) => c.status === 'current').length
+  const currentCourses = allCourses.filter((c) => c.status === 'current')
+  const currentCount = currentCourses.length
   const earnedCredits = doneCourses.reduce((sum, c) => sum + c.credits, 0)
   const graded = doneCourses.filter((c) => c.grade != null)
   const gradedCredits = graded.reduce((sum, c) => sum + c.credits, 0)
@@ -98,17 +104,45 @@ export default function Home() {
 
       <LinksBar courseId={null} title="קישורים מהירים" />
 
+      {currentCourses.length > 0 && (
+        <section className="lb" aria-label="הקורסים שלי עכשיו">
+          <div className="lb__header">
+            <h2>הקורסים שלי עכשיו</h2>
+            <Link to="/courses" className="home-section__link">
+              לכל הקורסים ←
+            </Link>
+          </div>
+          <div className="lb__tiles">
+            {currentCourses.map((c) => (
+              <Link
+                key={c.id}
+                to={`/courses/${c.id}`}
+                className="lb__tile"
+                style={{ ['--color-primary' as string]: courseColor(c.id) }}
+              >
+                <span className="lb__tile-title">{c.name}</span>
+                <span className="lb__tile-host">{c.credits} נ״ז</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="home-section">
         <h2>הסטטיסטיקות שלי</h2>
         <div className="home-stats">
-          <Card className="home-stat">
-            <p className="home-stat__value">{doneCourses.length}</p>
-            <p className="home-stat__label">קורסים שהושלמו</p>
-          </Card>
-          <Card className="home-stat">
-            <p className="home-stat__value">{currentCount}</p>
-            <p className="home-stat__label">קורסים בתהליך</p>
-          </Card>
+          <Link to="/courses?tab=done" className="home-stat-link">
+            <Card className="home-stat">
+              <p className="home-stat__value">{doneCourses.length}</p>
+              <p className="home-stat__label">קורסים שהושלמו</p>
+            </Card>
+          </Link>
+          <Link to="/courses?tab=current" className="home-stat-link">
+            <Card className="home-stat">
+              <p className="home-stat__value">{currentCount}</p>
+              <p className="home-stat__label">קורסים בתהליך</p>
+            </Card>
+          </Link>
           <Card className="home-stat">
             <p className="home-stat__value">{average != null ? average.toFixed(1) : '—'}</p>
             <p className="home-stat__label">ממוצע משוקלל</p>
@@ -188,7 +222,7 @@ export default function Home() {
           {itemsLoading ? (
             <SkeletonList rows={3} />
           ) : upcomingItems.length === 0 ? (
-            <EmptyState title="אין מטלות פתוחות" subtitle="את/ה מעודכנת עם הכול כרגע" />
+            <EmptyState title="אין מטלות פתוחות" subtitle="הכול מעודכן כרגע" />
           ) : (
             <div className="home-list">
               {upcomingItems.map((item) => (
@@ -206,7 +240,12 @@ export default function Home() {
       </div>
 
       <div className="home-section">
-        <h2>מבחנים קרובים</h2>
+        <div className="home-section__header">
+          <h2>מבחנים קרובים</h2>
+          <Link to="/exams" className="home-section__link">
+            לכל המבחנים ←
+          </Link>
+        </div>
         <Card>
           {examsLoading ? (
             <SkeletonList rows={2} />

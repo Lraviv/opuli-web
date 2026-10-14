@@ -32,6 +32,8 @@ export function Button({
 const ICON_PATHS = {
   edit: 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z',
   delete: 'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6',
+  up: 'M18 15l-6-6-6 6',
+  down: 'M6 9l6 6 6-6',
 } as const
 
 /** כפתור אייקון קומפקטי (עריכה/מחיקה) - label חובה, משמש גם כ-aria-label וגם כ-tooltip. */
@@ -112,49 +114,4 @@ export function IconPicker({
   )
 }
 
-/** שדה תאריך / תאריך+שעה. ריק - מציג placeholder עם אייקון (ב-iOS השדה הנייטיבי ריק
- * לגמרי עד שלוחצים עליו). מלא - כפתור ✕ לניקוי. כל השדה פותח את בורר התאריך. */
-export function DateInput({
-  type = 'date',
-  value,
-  onChange,
-  label,
-  placeholder,
-  required,
-  autoFocus,
-}: {
-  type?: 'date' | 'datetime-local'
-  value: string
-  onChange: (value: string) => void
-  label: string
-  placeholder?: string
-  required?: boolean
-  autoFocus?: boolean
-}) {
-  const empty = !value
-  return (
-    <div className={`ui-date${empty ? ' ui-date--empty' : ''}`}>
-      <input
-        type={type}
-        className="ui-input ui-date__input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        title={label}
-        required={required}
-        autoFocus={autoFocus}
-      />
-      {empty && (
-        <span className="ui-date__placeholder" aria-hidden>
-          <span className="ui-date__icon">📅</span>
-          {placeholder ?? (type === 'date' ? 'בחרו תאריך' : 'בחרו תאריך ושעה')}
-        </span>
-      )}
-      {!empty && !required && (
-        <button type="button" className="ui-date__clear" aria-label={`ניקוי ${label}`} onClick={() => onChange('')}>
-          ✕
-        </button>
-      )}
-    </div>
-  )
-}
+export { DateInput, TimeInput } from './DateField'

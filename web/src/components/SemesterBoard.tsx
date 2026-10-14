@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import type { DragEvent, FormEvent } from 'react'
+import type { DragEvent, FormEvent, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { EmptyState } from '@/components/ui'
-import { useCourses, useCreateSemester, useMoveCourseToSemester, useSemesters } from '@/lib/queries'
+import { EmptyState, IconButton } from '@/components/ui'
+import { useCourses, useCreateSemester, useDeleteSemester, useMoveCourseToSemester, useSemesters, useUpdateSemester } from '@/lib/queries'
 import type { CourseRead, SemesterRead } from '@/lib/types'
 import './SemesterBoard.css'
 
@@ -16,6 +16,8 @@ export function SemesterBoard({ degreeId, search = '' }: { degreeId: number; sea
   const { data: semesters } = useSemesters(degreeId)
   const { data: courses } = useCourses({ degree_id: degreeId })
   const moveCourse = useMoveCourseToSemester()
+  const updateSemester = useUpdateSemester(degreeId)
+  const deleteSemester = useDeleteSemester(degreeId)
 
   const query = search.trim().toLowerCase()
   const matches = (...fields: (string | null)[]) => !query || fields.some((f) => f?.toLowerCase().includes(query))
@@ -27,10 +29,27 @@ export function SemesterBoard({ degreeId, search = '' }: { degreeId: number; sea
 
   const move = (courseId: number, semesterId: number | null) => moveCourse.mutate({ courseId, semesterId })
 
+  // הזזת סמסטר מקום אחד למעלה/למטה: כותבים מחדש sort_order רציף לכולם (ייתכנו
+  // כפילויות ישנות), ושולחים עדכון רק לסמסטרים שהמיקום שלהם השתנה
+  const reorder = (index: number, delta: -1 | 1) => {
+    const target = index + delta
+    if (target < 0 || target >= semesterList.length) return
+    const next = [...semesterList]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    next.forEach((sem, i) => {
+      if (sem.sort_order !== i + 1) updateSemester.mutate({ id: sem.id, payload: { sort_order: i + 1 } })
+    })
+  }
+
+  const remove = (sem: SemesterRead) => {
+    if (!confirm(`למחוק את "${sem.name}"? הקורסים שבו יחזרו ל"לא משובץ".`)) return
+    deleteSemester.mutate(sem.id)
+  }
+
   return (
     <div className="sb-board">
       <Section title="לא משובץ" semesterId={null} courses={unassigned} semesters={semesterList} onMove={move} />
-      {semesterList.map((sem) => (
+      {semesterList.map((sem, i) => (
         <Section
           key={sem.id}
           title={sem.name}
@@ -38,6 +57,18 @@ export function SemesterBoard({ degreeId, search = '' }: { degreeId: number; sea
           courses={planned.filter((c) => c.semester_id === sem.id)}
           semesters={semesterList}
           onMove={move}
+          actions={
+            <span className="sb-section__actions">
+              <IconButton icon="up" label={`הזזת ${sem.name} למעלה`} disabled={i === 0} onClick={() => reorder(i, -1)} />
+              <IconButton
+                icon="down"
+                label={`הזזת ${sem.name} למטה`}
+                disabled={i === semesterList.length - 1}
+                onClick={() => reorder(i, 1)}
+              />
+              <IconButton icon="delete" tone="danger" label={`מחיקת ${sem.name}`} onClick={() => remove(sem)} />
+            </span>
+          }
         />
       ))}
     </div>
@@ -50,12 +81,14 @@ function Section({
   courses,
   semesters,
   onMove,
+  actions,
 }: {
   title: string
   semesterId: number | null
   courses: CourseRead[]
   semesters: SemesterRead[]
   onMove: (courseId: number, semesterId: number | null) => void
+  actions?: ReactNode
 }) {
   const [dragOver, setDragOver] = useState(false)
   const credits = courses.reduce((sum, c) => sum + c.credits, 0)
@@ -95,6 +128,7 @@ function Section({
         <h3>{title}</h3>
         <span className="sb-section__count">{courses.length === 1 ? 'קורס אחד' : `${courses.length} קורסים`}</span>
         <span className="sb-section__load">{credits} נ״ז</span>
+        {actions}
       </header>
 
       {courses.length === 0 ? (
@@ -145,28 +179,45 @@ function Section({
   )
 }
 
-/** הוספת סמסטר - מוצג במסך הקורסים מעל החיפוש, יחד עם שאר פעולות היצירה. */
+const SEASONS = ['סתיו', 'חורף', 'אביב', 'קיץ'] as const
+
+/** הוספת סמסטר - מוצג במסך הקורסים מעל החיפוש, יחד עם שאר פעולות היצירה.
+ * בוחרים עונה ושנה, והשם נבנה מהם (למשל "סמסטר אביב 2027"). */
 export function NewSemesterForm({ degreeId }: { degreeId: number }) {
   const createSemester = useCreateSemester(degreeId)
-  const [name, setName] = useState('')
+  const [season, setSeason] = useState('')
+  const [year, setYear] = useState(() => String(new Date().getFullYear()))
+
+  const validYear = /^\d{4}$/.test(year.trim())
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!name.trim()) return
-    await createSemester.mutateAsync({ name: name.trim() })
-    setName('')
+    if (!season || !validYear) return
+    await createSemester.mutateAsync({ name: `סמסטר ${season} ${year.trim()}` })
+    setSeason('')
   }
 
   return (
     <form className="sb-new" onSubmit={handleSubmit}>
+      <select className="ui-input sb-new__season" aria-label="עונת הסמסטר" value={season} onChange={(e) => setSeason(e.target.value)}>
+        <option value="" disabled>
+          בחרו עונה
+        </option>
+        {SEASONS.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
       <input
-        className="ui-input"
-        aria-label="שם הסמסטר החדש"
-        placeholder="סמסטר חדש, למשל סמסטר ב׳ 2027"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        className="ui-input sb-new__year"
+        aria-label="שנה"
+        inputMode="numeric"
+        maxLength={4}
+        value={year}
+        onChange={(e) => setYear(e.target.value.replace(/\D/g, ''))}
       />
-      <button type="submit" className="ui-button ui-button--secondary" disabled={createSemester.isPending || !name.trim()}>
+      <button type="submit" className="ui-button ui-button--secondary" disabled={createSemester.isPending || !season || !validYear}>
         + הוספת סמסטר
       </button>
     </form>

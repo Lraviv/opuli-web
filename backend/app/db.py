@@ -1,3 +1,4 @@
+from sqlalchemy import event
 from sqlmodel import SQLModel, Session, create_engine
 
 from .config import settings
@@ -11,6 +12,13 @@ _connect_args = {"check_same_thread": False} if settings.database_url.startswith
 # pool_pre_ping: חיבורים דרך ה-pooler של Supabase יכולים להיסגר מהצד שלהם בזמן
 # שהשרת רדום - בודקים חיבור לפני שימוש במקום להיכשל בבקשה הראשונה.
 engine = create_engine(settings.database_url, echo=False, connect_args=_connect_args, pool_pre_ping=True)
+
+if settings.database_url.startswith("sqlite"):
+    # SQLite לא אוכף מפתחות זרים כברירת מחדל, ו-Postgres בייצור כן - מפעילים
+    # כדי שבדיקות ופיתוח מקומי יתפסו את אותן שגיאות (למשל מחיקה בסדר לא נכון)
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_foreign_keys(dbapi_connection, _record):
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
 
 
 def create_db_and_tables() -> None:

@@ -49,6 +49,24 @@ export default function Schedule() {
     })
   }, [days, courses, sessions, exams, assignments, reminders])
 
+  // תזכורות פתוחות בלי תאריך - אין להן יום בלו"ז, אז הן מוצגות ברשימה נפרדת מתחת לשבוע
+  const undatedReminders = useMemo<AgendaItem[]>(
+    () =>
+      (reminders ?? [])
+        .filter((r) => !r.due_date && !r.is_done)
+        .map((r) => ({
+          key: `reminder-${r.id}`,
+          kind: 'reminder' as const,
+          title: r.title,
+          courseId: null,
+          courseName: null,
+          time: null,
+          done: false,
+          sourceId: r.id,
+        })),
+    [reminders],
+  )
+
   const summary = useMemo(() => {
     const all = [...agenda.values()].flat()
     return {
@@ -82,13 +100,13 @@ export default function Schedule() {
         </div>
         <nav className="sch-nav" aria-label="ניווט בין שבועות">
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, -7))} aria-label="השבוע הקודם">
-            ›
+            <Chevron direction="right" />
           </button>
           <button type="button" className="sch-nav__today" onClick={() => goToWeek(null)} disabled={isCurrentWeek}>
             השבוע
           </button>
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, 7))} aria-label="השבוע הבא">
-            ‹
+            <Chevron direction="left" />
           </button>
         </nav>
       </div>
@@ -120,6 +138,17 @@ export default function Schedule() {
         })}
       </ol>
 
+      {undatedReminders.length > 0 && (
+        <section className="sch-undated" aria-labelledby="sch-undated-title">
+          <h2 id="sch-undated-title">תזכורות בלי תאריך</h2>
+          <div className="sch-undated__list">
+            {undatedReminders.map((item) => (
+              <AgendaRow key={item.key} item={item} timeLabel="בלי תאריך" />
+            ))}
+          </div>
+        </section>
+      )}
+
       {(sessions ?? []).length === 0 && (
         <p className="sch-hint">
           מפגשי הנחיה והרצאות קבועות מוסיפים בעמוד של כל קורס, במדור "מפגשים קבועים", והם יופיעו כאן בכל שבוע.
@@ -134,7 +163,17 @@ export default function Schedule() {
   )
 }
 
-function AgendaRow({ item }: { item: AgendaItem }) {
+/** חץ SVG ולא תו ‹ › - תווים כאלה מתהפכים אוטומטית בטקסט RTL, והכיוון יוצא הפוך.
+ * בעברית "הקודם" מצביע ימינה ו"הבא" שמאלה. */
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={direction === 'right' ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+    </svg>
+  )
+}
+
+function AgendaRow({ item, timeLabel = 'כל היום' }: { item: AgendaItem; timeLabel?: string }) {
   const color = courseColor(item.courseId)
   const body = (
     <>
@@ -145,7 +184,7 @@ function AgendaRow({ item }: { item: AgendaItem }) {
             {item.endTime && <span className="sch-item__end">{item.endTime}</span>}
           </>
         ) : (
-          <span className="sch-item__allday">כל היום</span>
+          <span className="sch-item__allday">{timeLabel}</span>
         )}
       </span>
       <span className="sch-item__main">

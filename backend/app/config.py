@@ -44,6 +44,18 @@ class Settings(BaseSettings):
     feedback_to_email: str = "lihirweb@gmail.com"
     feedback_from_email: str = "OpuLi Feedback <onboarding@resend.dev>"
 
+    # תזכורות במייל למשתמשים - נשלחות ב-SMTP (למשל Gmail עם App Password, או
+    # Brevo). Resend לא מתאים כאן: בלי דומיין מאומת הוא שולח רק לבעל החשבון.
+    # smtp_host ריק = תזכורות המייל כבויות (שום דבר לא נשלח ולא מסומן כנשלח).
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    # כתובת השולח, למשל "OpuLi <opuli.app@gmail.com>". ריק = smtp_user
+    email_from: str = ""
+    # כתובת האתר לקישורים בתוך המיילים
+    web_url: str = "https://opuli.web.app"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("database_url")

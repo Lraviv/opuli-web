@@ -1,59 +1,62 @@
-# עוזר הסטודנט — Web
+# OpuLi — Web
 
-גרסת ה-web של האפליקציה: React רגיל (Vite, בלי Expo/React Native), מדבר עם
-ה-backend (FastAPI, בתיקיית `../backend`) דרך REST API בלבד - אין שום גישה
-ישירה ל-SQL מהדפדפן.
+The web version of the app: plain React (Vite, no Expo/React Native). It talks to
+the backend (FastAPI, in `../backend`) only through the REST API; the browser
+never touches SQL directly.
 
-## הרצה מקומית
+## Running locally
 
-צריך להריץ שני שרתים במקביל, בשני טרמינלים נפרדים:
+Run two servers side by side, in two terminals:
 
-**1. Backend** (מתיקיית `backend/`):
+**1. Backend** (from `backend/`):
 
 ```bash
 cd backend
-source .venv/bin/activate   # ה-venv כבר מוכן עם כל התלויות מותקנות
+source .venv/bin/activate
 uvicorn app.main:app --reload
 ```
 
-עולה על http://localhost:8000 . משתמש כרגע ב-SQLite מקומי (`backend/dev.db`) -
-לא צריך Docker/Postgres כדי לפתח.
+Runs on http://localhost:8000. It uses a local SQLite database (`backend/dev.db`),
+so you don't need Docker/Postgres for development.
 
-**2. Web** (מתיקיית `web/`):
+**2. Web** (from `web/`):
 
 ```bash
 cd web
-npm install   # פעם ראשונה בלבד
+npm install   # first time only
 npm run dev
 ```
 
-עולה על http://localhost:5173 ומצפה שה-backend רץ על http://localhost:8000
-(אפשר לשנות ב-`.env`, מפתח `VITE_API_URL`).
+Runs on http://localhost:5173 and expects the backend on http://localhost:8000
+(change it with `VITE_API_URL` in `.env`).
 
-## מבנה
+## Structure
 
 ```
 src/
   lib/
-    api.ts        # קליינט REST דק (fetch) - הרשאות JWT, refresh אוטומטי
-    queries.ts     # React Query hooks
-    types.ts       # טיפוסי TS תואמים לסכמות ה-Pydantic של ה-backend
-    theme.css      # טוקני עיצוב - הועתקו מ-mobile/src/constants/theme.ts
-    grades.ts / schedule.ts / requirements.ts / links.ts  # לוגיקה טהורה, זהה לאפליקציה
+    api.ts        # thin REST client (fetch): JWT auth, automatic refresh
+    queries.ts    # React Query hooks
+    types.ts      # TS types matching the backend's Pydantic schemas
+    theme.css     # design tokens, copied from mobile/src/constants/theme.ts
+    grades.ts / schedule.ts / requirements.ts / links.ts / tips.ts  # pure logic, same as the mobile app
   auth/
-    AuthContext.tsx  # התחברות/הרשמה/התנתקות, שמירת טוקנים ב-localStorage
-  components/      # Shell, רכיבי UI, Skeleton, מחשבון ציון, מטלות, מפגשים, קישורים, דרישות תואר
+    AuthContext.tsx  # sign-in/sign-up/sign-out, tokens kept in localStorage
+  components/      # Shell, UI pieces, Skeleton, grade calculator, assignments, sessions, links, degree requirements, course tips
   pages/           # Login, Register, Home, Schedule, Degrees, DegreeDetail, Courses, CourseDetail, Reminders, Profile
 tests/
-  logic.test.ts    # npm test - בלי framework, רץ בכמה אזורי זמן
+  logic.test.ts    # npm test, no framework, runs in several time zones
 ```
 
-## בנייה לפרודקשן
+## Production build
 
 ```bash
 npm run build
 ```
 
-יוצר `dist/` - קבצים סטטיים שאפשר להעלות לכל שירות אחסון סטטי (Netlify,
-Vercel, Cloudflare Pages וכו'). האתר עצמו פרוס ב-Vercel, ומשתנה הסביבה
-`VITE_API_URL` שם מצביע לשרת ב-Render.
+Creates `dist/`, static files you can upload to any static host.
+
+The live site is https://opuli.web.app (Firebase Hosting). Deploy it with
+`sh scripts/deploy-hosting.sh` from `web/`: it builds with `VITE_API_URL`
+pointing at the Cloud Run backend and uploads the result. It needs `gcloud`
+on your PATH and signed in.

@@ -9,6 +9,16 @@ import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
 import type { ThemeModePreference } from '@/lib/types'
 import './Profile.css'
 
+const EMAIL_SWITCHES: {
+  key: 'email_notify_assignments' | 'email_notify_exams' | 'email_notify_reminders'
+  title: string
+  sub: string
+}[] = [
+  { key: 'email_notify_assignments', title: 'מטלות', sub: 'יום לפני מועד ההגשה' },
+  { key: 'email_notify_exams', title: 'מבחנים', sub: 'יום לפני המבחן' },
+  { key: 'email_notify_reminders', title: 'תזכורות', sub: 'בזמן שנקבע לתזכורת' },
+]
+
 const THEME_LABEL: Record<ThemeModePreference, string> = { system: 'מערכת', light: 'בהיר', dark: 'כהה' }
 
 export default function Profile() {
@@ -110,6 +120,27 @@ export default function Profile() {
       </div>
 
       <div className="profile-section">
+        <h2>תזכורות במייל</h2>
+        <Card>
+          <p className="profile-hint">נשלחות אל {user.email}</p>
+          {EMAIL_SWITCHES.map((s) => (
+            <label key={s.key} className="profile-switch">
+              <span>
+                <span className="profile-switch__title">{s.title}</span>
+                <span className="profile-switch__sub">{s.sub}</span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={user[s.key] ?? true}
+                onChange={(e) => saveSettings({ [s.key]: e.target.checked })}
+              />
+            </label>
+          ))}
+        </Card>
+      </div>
+
+      <div className="profile-section">
         <h2>ייצוא ליומן</h2>
         <CalendarExport />
       </div>
@@ -146,6 +177,7 @@ function FeedbackSection() {
   const [category, setCategory] = useState<FeedbackCategory>('bug')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
+  const [viaMail, setViaMail] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -155,7 +187,10 @@ function FeedbackSection() {
       setMessage('')
       setSent(true)
     } catch {
-      // השגיאה מוצגת מתוך sendFeedback.error
+      // שליחה מהשרת לא זמינה (למשל אין מפתח מייל) - פותחים את אפליקציית המייל
+      // עם ההודעה מוכנה, בלי להציג למשתמש שגיאה
+      setViaMail(true)
+      window.location.href = mailtoHref(category, message)
     }
   }
 
@@ -188,16 +223,15 @@ function FeedbackSection() {
             onChange={(e) => {
               setMessage(e.target.value)
               setSent(false)
+              setViaMail(false)
             }}
           />
           {sent && <p className="feedback-status feedback-status--ok">תודה! המשוב נשלח 💌</p>}
-          {sendFeedback.isError && (
+          {viaMail && (
             <div className="feedback-fallback">
-              <p className="feedback-status feedback-status--error">
-                {(sendFeedback.error as Error).message}. אפשר לשלוח דרך אפליקציית המייל במקום:
-              </p>
+              <p className="feedback-status">ההודעה מוכנה באפליקציית המייל - נשאר רק ללחוץ שליחה ✉️</p>
               <a className="ui-button ui-button--secondary" href={mailtoHref(category, message)}>
-                ✉️ פתיחה באפליקציית המייל
+                לא נפתח? לחצו כאן
               </a>
             </div>
           )}

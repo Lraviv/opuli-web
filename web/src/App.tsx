@@ -12,6 +12,7 @@ import CourseDetail from '@/pages/CourseDetail'
 import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
 import Schedule from '@/pages/Schedule'
+import Exams from '@/pages/Exams'
 import { PageSkeleton } from '@/components/Skeleton'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -69,6 +70,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <CourseDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/exams"
+        element={
+          <ProtectedRoute>
+            <Exams />
           </ProtectedRoute>
         }
       />

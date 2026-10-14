@@ -41,6 +41,9 @@ class UserRead(BaseModel):
     avatar_icon: str | None = None
     # טוקן מנוי היומן (אם נוצר) - הכתובת המלאה נבנית בצד הלקוח
     calendar_token: str | None = None
+    email_notify_assignments: bool = True
+    email_notify_exams: bool = True
+    email_notify_reminders: bool = True
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -53,6 +56,9 @@ class UserUpdate(BaseModel):
     accent_color: str | None = None
     theme_mode: str | None = None
     avatar_icon: str | None = Field(default=None, max_length=16)
+    email_notify_assignments: bool | None = None
+    email_notify_exams: bool | None = None
+    email_notify_reminders: bool | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +166,7 @@ class CourseCreate(BaseModel):
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool = False
+    course_code: str | None = Field(default=None, max_length=20)
 
 
 class CourseUpdate(BaseModel):
@@ -175,6 +182,7 @@ class CourseUpdate(BaseModel):
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool | None = None
+    course_code: str | None = Field(default=None, max_length=20)
 
 
 class CourseRead(BaseModel):
@@ -193,6 +201,7 @@ class CourseRead(BaseModel):
     min_assignments_count: int | None = None
     min_assignments_weight: float | None = None
     assignments_shield: bool = False
+    course_code: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

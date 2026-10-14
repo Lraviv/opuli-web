@@ -1,0 +1,155 @@
+/* כפתור השדה - נראה כמו ui-input רגיל */
+.ui-date__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  padding-inline-end: 40px;
+  text-align: start;
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.ui-date__trigger--empty {
+  color: var(--color-text-secondary);
+}
+.ui-date__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* ולידציית required: השדה קיים בשביל הטופס בלבד, מתחת לכפתור */
+.ui-date__validator {
+  position: absolute;
+  inset-inline-start: 50%;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- חלון הבורר ---- */
+.dp-dialog {
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-background-element);
+  color: var(--color-text);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.25);
+  max-width: calc(100vw - 32px);
+}
+.dp-dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.dp-panel {
+  padding: var(--space-three);
+}
+.dp-title {
+  margin: 0 0 var(--space-two);
+  font-weight: 700;
+}
+.dp-dialog .rdp-root {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  --rdp-day-height: 42px;
+  --rdp-day-width: 42px;
+  --rdp-day_button-height: 40px;
+  --rdp-day_button-width: 40px;
+  --rdp-today-color: var(--color-primary);
+  margin: 0 auto;
+}
+.dp-dialog .rdp-selected .rdp-day_button {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.dp-dialog .rdp-dropdowns select,
+.dp-dialog .rdp-dropdown {
+  font: inherit;
+}
+.dp-dialog .rdp-chevron {
+  fill: var(--color-text-secondary);
+}
+
+.dp-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+  margin-top: var(--space-two);
+  padding-top: var(--space-two);
+  border-top: 1px solid var(--color-border);
+}
+.dp-time__label {
+  font-weight: 600;
+}
+.dp-actions {
+  display: flex;
+  gap: var(--space-two);
+  margin-top: var(--space-three);
+}
+.dp-actions__spacer {
+  flex: 1;
+}
+.dp-actions .ui-button {
+  padding: 8px 14px;
+}
+
+/* בטלפון: החלון נפתח כגיליון מלמטה */
+@media (max-width: 480px) {
+  .dp-dialog {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    border-bottom: none;
+  }
+  .dp-panel {
+    padding-bottom: calc(var(--space-three) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---- שדה שעה: שתי רשימות (שעות : דקות) בתוך מסגרת אחת ---- */
+.ui-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background-element);
+}
+.ui-time:focus-within {
+  border-color: var(--color-primary);
+}
+.ui-time__part {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 4px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 6px;
+}
+/* הבורר יושב בתוך טפסים (למשל .cd-inline-form) שנותנים ל-input/select רוחב מינימלי - מבטלים כאן */
+.ui-time .ui-time__part,
+.dp-dialog .rdp-root select {
+  flex: none;
+  min-width: 0;
+}
+.ui-time .ui-time__part {
+  width: 2.6em;
+}
+.ui-time__part:focus-visible {
+  outline: 2px solid var(--color-primary);
+}
+.ui-time__sep {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}

@@ -110,6 +110,41 @@
   justify-content: flex-start;
   cursor: pointer;
 }
+/* ריחוף מעל תזכורת - קו חוצה מראה שלחיצה תסמן אותה כבוצעה */
+.home-reminder .home-row__title {
+  text-decoration: line-through transparent;
+  transition: text-decoration-color 0.15s, color 0.15s;
+}
+.home-reminder:hover .home-row__title,
+.home-reminder:focus-within .home-row__title {
+  text-decoration-color: currentColor;
+  color: var(--color-text-secondary);
+}
+/* כרטיסי הסטטיסטיקה שנפתחים ללשונית המתאימה במסך הקורסים */
+.home-stat-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.home-stat-link .home-stat {
+  height: 100%;
+  transition: border-color 0.15s;
+}
+.home-stat-link:hover .home-stat,
+.home-stat-link:focus-visible .home-stat {
+  border-color: var(--color-primary);
+}
+.home-stat-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-reminder .home-row__title,
+  .home-stat-link .home-stat {
+    transition: none;
+  }
+}
 .home-welcome {
   text-align: center;
   padding: var(--space-six) var(--space-four);

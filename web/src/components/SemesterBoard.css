@@ -142,6 +142,11 @@
   border-style: solid;
   background: var(--color-background-element);
 }
+.sb-new .sb-new__year {
+  flex: 0 0 5.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 .sb-new .ui-button {
   padding: 8px 14px;
   font-size: 14px;
@@ -164,4 +169,14 @@
   .sb-course__move {
     border-color: var(--color-border);
   }
+}
+
+/* הזזה למעלה/למטה ומחיקה של סמסטר - בסוף שורת הכותרת */
+.sb-section__actions {
+  display: inline-flex;
+  align-self: center;
+  gap: 2px;
+}
+.sb-section__header:has(.sb-section__actions) {
+  align-items: center;
 }
