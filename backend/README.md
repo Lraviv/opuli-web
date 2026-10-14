@@ -1,133 +1,133 @@
-# Student App — Backend (FastAPI)
+# OpuLi — Backend (FastAPI)
 
-מימוש מלא של ה-API לפי מסמך האיפיון: הרשמה/התחברות (JWT), תארים וקטלוג קורסים, בחירת קורס מהקטלוג, קורסים אישיים ידניים, פריטי התקדמות (שיעורים/מטלות), מבחנים עם תזכורות, רישום טוקני Push, ו-endpoint פנימי ששולח את התזכורות שהגיע זמנן. מכוסה בסוויטת בדיקות (`pytest`) שרצה על כל הזרימה המרכזית.
+The full API from the app spec: sign-up/sign-in (JWT, plus Google sign-in), degrees and course catalogs, picking a course from the catalog, manual personal courses, progress items (lessons/assignments), exams with reminders, push token registration, and an internal endpoint that sends the reminders that are due. The main flows are covered by a `pytest` suite.
 
-**מה עוד לא כלול כאן:** אפליקציית ה-React Native עצמה (מתוכננת בשלב הבא).
+**Not included here:** the mobile app itself (it isn't in this repository).
 
-> **הערה:** אם אין לך Docker/Postgres מותקן מקומית, אפשר לדלג על שלב 1 (docker
-> compose) ופשוט לשנות ב-`.env` את `DATABASE_URL` ל-`sqlite:///./dev.db` -
-> זה מספיק לגמרי לפיתוח ה-web (כרגע זו ברירת המחדל שהוגדרה). לפני עלייה
-> לאוויר/פרודקשן כדאי לחזור למחרוזת Postgres אמיתית.
+> **Note:** if you don't have Docker/Postgres installed locally, you can skip step 1
+> (docker compose) and just set `DATABASE_URL` in `.env` to `sqlite:///./dev.db`.
+> That's enough for web development (it's the current default). Production
+> uses a real Postgres connection string.
 
-## הרצה מקומית
+## Running locally
 
-1. **מסד נתונים** — מפעילים Postgres מקומי עם Docker (מתיקיית השורש של הפרויקט, לא `backend/`):
+1. **Database**: start a local Postgres with Docker (from the project root, not `backend/`):
 
    ```bash
    docker compose up -d
    ```
 
-2. **סביבת פייתון**:
+2. **Python environment**:
 
    ```bash
    cd backend
    python3 -m venv .venv
-   source .venv/bin/activate   # ב-Windows: .venv\Scripts\activate
+   source .venv/bin/activate   # on Windows: .venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. **קובץ סביבה**:
+3. **Environment file**:
 
    ```bash
    cp .env.example .env
-   # ואז לערוך את .env ולהחליף את JWT_SECRET לערך אקראי, למשל:
+   # then edit .env and set JWT_SECRET to a random value, for example:
    python3 -c "import secrets; print(secrets.token_hex(32))"
    ```
 
-4. **הרצת השרת**:
+4. **Start the server**:
 
    ```bash
    uvicorn app.main:app --reload
    ```
 
-   השרת עולה על http://localhost:8000 . תיעוד ה-API האינטראקטיבי (Swagger) זמין ב-http://localhost:8000/docs — נוח לבדוק endpoints בלי לכתוב קוד קליינט.
+   The server runs on http://localhost:8000. Interactive API docs (Swagger) are at http://localhost:8000/docs, handy for trying endpoints without writing client code.
 
-   בהפעלה הראשונה השרת יוצר את כל הטבלאות אוטומטית (`create_all`). זה נוח לפיתוח; לניהול שינויי סכימה מסודר בהמשך (כשיהיו נתונים אמיתיים שלא רוצים לאבד) עוברים למיגרציות Alembic — ראו למטה.
+   Outside production, the server creates any missing tables on startup (`create_all`, see `app/db.py`), so local development works without running migrations.
 
-## מיגרציות (Alembic)
+## Migrations (Alembic)
 
-יש כבר מיגרציה ראשונית (`alembic/versions/..._init.py`) שיוצרת את כל הטבלאות. כרגע, לנוחות הפיתוח המקומי, השרת עדיין יוצר טבלאות אוטומטית עם `create_all` באתחול (ראו `app/db.py`) - זה עובד גם בלי להריץ מיגרציות בכלל.
+In production the schema is managed only by Alembic migrations: the Docker image runs `alembic upgrade head` before starting the server (see `Dockerfile`), and `create_all` is skipped.
 
-**לפני חיבור למסד "אמיתי" (Neon בענן וכו')** עדיף לעבור לזרימת עבודה מסודרת של מיגרציות:
-
-```bash
-alembic upgrade head        # מפעיל את המיגרציה הראשונית
-```
-
-וכל שינוי עתידי במודלים (`app/models.py`) מקבל מיגרציה חדשה עם:
+To apply migrations by hand:
 
 ```bash
-alembic revision --autogenerate -m "תיאור השינוי"
 alembic upgrade head
 ```
 
-## הרצת בדיקות
+Every change to the models (`app/models.py`) gets a new migration:
+
+```bash
+alembic revision --autogenerate -m "describe the change"
+alembic upgrade head
+```
+
+## Running the tests
 
 ```bash
 pip install -r requirements-dev.txt
 pytest -q
 ```
 
-הבדיקות (`tests/test_api.py`) רצות על מסד SQLite זמני ומכסות: הרשמה/התחברות/רענון טוקן, יצירת תואר וקטלוג קורסים, בחירת קורס מהקטלוג (כולל "כבר נבחר"), קורס ידני, פריטי התקדמות, מבחנים עם תזכורות ברירת מחדל ומותאמות אישית, שליחת Push דרך `/internal/check-reminders` (עם Mock לקריאת הרשת בפועל), ובידוד בין משתמשים (משתמש/ת לא יכולים לגעת בנתונים של אחר/ת).
+The tests run against a temporary SQLite database (with foreign keys enforced) and cover: sign-up/sign-in/token refresh, creating a degree and its course catalog, picking a catalog course (including "already picked"), manual courses, progress items, exams with default and custom reminders, push sending through `/internal/check-reminders` (with the network call mocked), course tips, and isolation between users (one user can't touch another user's data).
 
-## בדיקה מהירה שהכול עובד
+## Quick check that everything works
 
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"supersecret1","display_name":"בדיקה"}'
+  -d '{"email":"test@example.com","password":"supersecret1","display_name":"Test"}'
 ```
 
-אמורה לחזור תשובת JSON עם `access_token` ו-`refresh_token`.
+You should get back JSON with an `access_token` and a `refresh_token`.
 
-## מבנה תיקיות
+## Folder structure
 
 ```
 backend/
   app/
-    main.py         # יצירת ה-FastAPI app, CORS, lifespan, חיבור ה-routers
-    config.py       # הגדרות מתוך משתני סביבה / .env
-    db.py           # חיבור למסד הנתונים
-    models.py       # כל טבלאות ה-SQLModel (User, Degree, CatalogCourse, Course, ...)
-    security.py     # הצפנת סיסמאות + יצירה ופענוח של JWT
-    schemas.py      # מודלי בקשה/תשובה (Pydantic) ל-API
-    deps.py         # dependency שמזהה את המשתמש המחובר מתוך הטוקן
-    authz.py        # עזרים שמוודאים בעלות על משאב (תואר/קורס/מבחן/פריט)
-    push.py         # שליחת Push דרך Expo (בלי תלות חיצונית, httpx ישיר)
+    main.py         # creates the FastAPI app: CORS, lifespan, routers
+    config.py       # settings from environment variables / .env
+    db.py           # database connection
+    models.py       # all SQLModel tables (User, Degree, CatalogCourse, Course, ...)
+    security.py     # password hashing + creating and decoding JWTs
+    schemas.py      # request/response models (Pydantic) for the API
+    deps.py         # dependency that identifies the signed-in user from the token
+    authz.py        # helpers that check ownership of a resource (degree/course/exam/item)
+    push.py         # push sending via Expo (no extra dependency, plain httpx)
     routers/
-      auth.py        # /auth/register, /auth/login, /auth/refresh, /me
-      degrees.py      # /degrees, /degrees/{id}/catalog, /catalog-courses/...
-      courses.py      # /courses, /courses/{id}/items, /items/{id}
+      auth.py          # /auth/register, /auth/login, /auth/refresh, /me
+      degrees.py       # /degrees, /degrees/{id}/catalog, /catalog-courses/...
+      courses.py       # /courses, /courses/{id}/items, /items/{id}
       exams.py         # /exams, /courses/{id}/exams, /exams/{id}
+      tips.py          # /courses/{id}/tips (shared course tips and votes)
       push_tokens.py   # /push-tokens
-      internal.py      # /internal/check-reminders (לטריגר החיצוני)
-  alembic/            # מיגרציות (יש מיגרציה ראשונית, ראו מעלה)
-  tests/
-    conftest.py       # fixtures לבדיקות (client, הרשמה+התחברות)
-    test_api.py        # בדיקות end-to-end על כל הזרימה המרכזית
+      internal.py      # /internal/check-reminders (for the external trigger)
+      ...              # calendar, feedback, planner, reminders, semesters, study_topics
+  alembic/            # migrations
+  tests/              # pytest suite (conftest.py has the client and sign-up fixtures)
   requirements.txt
   requirements-dev.txt # requirements.txt + pytest
   .env.example
 ```
 
-## Endpoints הקיימים
+## Endpoints
 
-ראו את מסמך האיפיון (`app-spec.md`) לרשימה המלאה, או פשוט את http://localhost:8000/docs אחרי הרצת השרת - Swagger עם כל ה-endpoints, כולל אפשרות לנסות אותם ישירות מהדפדפן.
+See the app spec (`app-spec.md`) for the full list, or open http://localhost:8000/docs after starting the server: Swagger lists every endpoint and lets you try them from the browser.
 
-## תבניות תואר (`app/catalog_templates.py`)
+## Degree templates (`app/catalog_templates.py`)
 
-קטלוג קורסים קבוע וזהה לכל המשתמשים (כרגע: "תואר ראשון במדעי המחשב, האוניברסיטה הפתוחה" - 72 קורסים, לפי התכנית הרשמית העדכנית) מוגדר במקום אחד ב-`app/catalog_templates.py`, ונחשף ב-API:
+A fixed course catalog, the same for every user (currently "B.Sc. in Computer Science, Open University of Israel": 72 courses, following the latest official program), is defined in one place in `app/catalog_templates.py` and exposed through the API:
 
-- `GET /degree-templates` - רשימת התבניות הזמינות.
-- `POST /degrees` עם `template: "cs_open_university"` בגוף הבקשה - יוצר תואר וטוען אליו אוטומטית את כל קטלוג הקורסים של התבנית. זו הדרך המומלצת ליצור תואר במדעי המחשב מהאפליקציה - אין יותר צורך בהרצת סקריפט.
+- `GET /degree-templates`: the available templates.
+- `POST /degrees` with `template: "cs_open_university"` in the body creates a degree and loads the template's whole course catalog into it. This is the recommended way to create a CS degree from the app; no script needed.
 
-## סקריפטים (`scripts/`)
+## Scripts (`scripts/`)
 
 ### `seed_cs_catalog.py`
 
-**כלי גיבוי/תיקון בלבד** - לרוב אין צורך בו, כי `POST /degrees` עם `template` (למעלה) עושה את אותו הדבר אוטומטית מהאפליקציה. שימושי בעיקר לתואר שכבר נוצר ידנית לפני שהתבנית הייתה קיימת, או כדי למלא מחדש קטלוג שנמחק בטעות. שואב את הנתונים מאותו מקור (`app/catalog_templates.py`) כדי שלא יהיו שני מקורות שיכולים "להתפצל". מסמן אוטומטית גם את שלושת הקורסים שכבר צוינו כהושלמו/בתהליך (אפשר לדלג עם `--skip-progress`). אידמפוטנטי - אפשר להריץ שוב בבטחה, הוא רק ידלג על קורסים שכבר קיימים.
+**A backup/repair tool only.** Usually not needed, since `POST /degrees` with `template` (above) does the same thing from the app. Mostly useful for a degree that was created manually before the template existed, or to refill a catalog that was deleted by mistake. It reads from the same source (`app/catalog_templates.py`) so the two can't drift apart. It also marks the three courses already noted as completed/in progress (skip with `--skip-progress`). It's idempotent: safe to run again, it just skips courses that already exist.
 
-**חשוב:** קודם צריך להירשם פעם אחת דרך האפליקציה (מסך הרשמה) - הסקריפט מוצא את המשתמש/ת לפי האימייל, לא יוצר חשבון חדש.
+**Important:** sign up once through the app first. The script finds the user by email; it doesn't create an account.
 
 ```bash
 cd backend
@@ -135,10 +135,9 @@ source .venv/bin/activate
 python scripts/seed_cs_catalog.py --email your@email.com
 ```
 
-(ודאו ש-`docker compose up -d` רץ ו-`.env` מוגדר, בדיוק כמו להרצת השרת עצמו.)
+(Make sure `docker compose up -d` is running and `.env` is set up, just like for running the server.)
 
-## מה עדיין חסר
+## Still missing
 
-- אפליקציית React Native / Expo (השלב הבא)
-- טיפול פר-טוקן בתשובת Expo (כרגע `app/push.py` בודק רק הצלחה/כישלון של הבאץ' כולו - שיפור עתידי: לזהות טוקנים לא תקפים ולמחוק אותם)
-- אימות אימייל, rate limiting, ומדיניות אבטחה מורחבת (הוזכר כנושא פתוח במסמך האיפיון)
+- Per-token handling of the Expo response (right now `app/push.py` only checks whether the whole batch succeeded; a future improvement is to detect invalid tokens and delete them)
+- Email verification, rate limiting and a broader security policy (listed as an open topic in the app spec)
