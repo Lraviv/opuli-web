@@ -120,8 +120,11 @@ def delete_course(
             select(ExamReminder).where(ExamReminder.exam_id == exam.id)
         ).all():
             session.delete(reminder)
+        session.flush()
         session.delete(exam)
 
+    # כל התלויות נמחקות במסד לפני הקורס עצמו (מפתחות זרים ב-Postgres)
+    session.flush()
     session.delete(course)
     session.commit()
 

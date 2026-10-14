@@ -142,6 +142,18 @@ def test_edit_and_delete(client):
     assert client.get(f"/courses/{c2}/tips", headers=h2).json()["total"] == 0
 
 
+def test_delete_tip_with_votes(client):
+    h1, c1, h2, c2 = _two_students(client)
+    root = _post(client, h1, c1, "עם הצבעות")
+    reply = _post(client, h1, c1, "תשובה עם הצבעות", parent_id=root["id"])
+    client.put(f"/tips/{reply['id']}/vote", json={"value": 1}, headers=h2)
+    client.put(f"/tips/{root['id']}/vote", json={"value": -1}, headers=h2)
+
+    assert client.delete(f"/tips/{reply['id']}", headers=h1).status_code == 204
+    assert client.delete(f"/tips/{root['id']}", headers=h1).status_code == 204
+    assert client.get(f"/courses/{c2}/tips", headers=h2).json()["total"] == 0
+
+
 def test_validation(client):
     h = register_and_login(client, "v@example.com")["headers"]
     cid = _course(client, h)

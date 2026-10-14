@@ -322,6 +322,8 @@ def update_tip(
 def _hard_delete(post: CoursePost, session: Session) -> None:
     for vote in session.exec(select(CoursePostVote).where(CoursePostVote.post_id == post.id)).all():
         session.delete(vote)
+    # קודם מוחקים את ההצבעות במסד, ורק אז את התגובה (מפתח זר ב-Postgres)
+    session.flush()
     session.delete(post)
 
 
