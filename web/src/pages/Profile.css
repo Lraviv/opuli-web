@@ -188,3 +188,14 @@
   color: var(--color-primary);
   font-weight: 600;
 }
+
+.profile-info-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two) var(--space-four);
+  margin: 0 0 var(--space-five);
+  font-size: 14px;
+}
+.profile-info-links a {
+  color: var(--color-text-secondary);
+}

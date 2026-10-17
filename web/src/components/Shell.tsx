@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { NavIcon } from '@/components/NavIcon'
 import type { NavIconName } from '@/components/NavIcon'
-import { CONTACT_PATH, LINKEDIN_URL } from '@/lib/site'
+import { CONTACT_PATH, INFO_LINKS, LINKEDIN_URL } from '@/lib/site'
 import './Shell.css'
 
 const NAV_ITEMS: { to: string; label: string; icon: NavIconName }[] = [
@@ -67,6 +67,13 @@ export function Shell({ children }: { children: ReactNode }) {
             <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
               LinkedIn
             </a>
+          </nav>
+          <nav className="shell__footer-links shell__footer-links--muted" aria-label="מידע">
+            {INFO_LINKS.map((l) => (
+              <Link key={l.id} to={l.path}>
+                {l.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <p className={`shell__footer-copy${wide ? ' shell__footer-copy--wide' : ''}`}>© {YEAR} OpuLi</p>

@@ -4,7 +4,8 @@ import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
 import { CalendarExport } from '@/components/CalendarExport'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
-import { LINKEDIN_URL } from '@/lib/site'
+import { Link } from 'react-router-dom'
+import { FEEDBACK_EMAIL, INFO_LINKS, LINKEDIN_URL } from '@/lib/site'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
 import type { ThemeModePreference } from '@/lib/types'
@@ -155,6 +156,15 @@ export default function Profile() {
         </a>
       </p>
 
+      {/* בטלפון אין footer, אז דפי המידע מקושרים מכאן */}
+      <nav className="profile-info-links" aria-label="דפי מידע">
+        {INFO_LINKS.map((l) => (
+          <Link key={l.id} to={l.path}>
+            {l.label}
+          </Link>
+        ))}
+      </nav>
+
       <div className="profile-section">
         <Button variant="danger" onClick={logout} style={{ width: '100%' }}>
           התנתקות
@@ -170,7 +180,6 @@ const FEEDBACK_CATEGORIES: { value: FeedbackCategory; label: string }[] = [
   { value: 'other', label: '💬 אחר' },
 ]
 
-const FEEDBACK_EMAIL = 'lihirweb@gmail.com'
 
 /** גיבוי כששליחה דרך השרת נכשלת: mailto עם נושא וגוף ממולאים מראש. */
 function mailtoHref(category: FeedbackCategory, message: string): string {

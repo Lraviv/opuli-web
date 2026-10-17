@@ -83,6 +83,9 @@ export default function Register() {
         <div className="auth-switch">
           כבר יש לך חשבון? <Link to="/login">התחברות</Link>
         </div>
+        <p className="auth-legal">
+          ההרשמה מהווה הסכמה ל<Link to="/terms">תנאי השימוש</Link> ול<Link to="/privacy">מדיניות הפרטיות</Link>
+        </p>
       </div>
     </div>
   )
