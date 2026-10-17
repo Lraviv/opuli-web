@@ -48,9 +48,13 @@ export interface CourseInfo {
   /** אותיות הסמסטרים שבהם הקורס נפתח כל שנה, ריק אם אין דפוס קבוע */
   semesters: string[]
   every_year: boolean
+  /** ריק לקורס שלא ברשימת הקורסים של המחלקה */
   schedule_label: string
   has_prerequisites: boolean
   subjects: string[]
+  /** הידע הקודם מדף הקורס באתר האו"פ */
+  required_knowledge: string[]
+  recommended_knowledge: string[]
 }
 
 export interface CatalogCourseRead {

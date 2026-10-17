@@ -6,12 +6,17 @@
 כלל הסמסטרים: אם קורס נפתח באותם סמסטרים גם ב-2027 וגם ב-2028, מניחים שזה קבוע
 וכך הוא נפתח בכל שנה. אחרת מציגים את הסמסטרים בדיוק כפי שהם ברשימה.
 
+הידע הקודם (דרוש ומומלץ) נלקח מדף הקורס באתר האו"פ (www.openu.ac.il/courses/<מספר>.htm),
+ראו app/ou_prerequisites.py.
+
 המידע מחושב לפי מספר הקורס בזמן הקריאה (אין עמודה בבסיס הנתונים), כך שעדכון
 הרשימה כאן מתעדכן מיד בכל התארים הקיימים.
 """
 
 import re
 from dataclasses import dataclass
+
+from .ou_prerequisites import PREREQUISITES
 
 SEMESTER_LETTERS = ("א", "ב", "ג")
 _TOKEN_RE = re.compile(r"^([אבג])(\d{4})$")
@@ -26,6 +31,9 @@ class CourseInfo:
     schedule_label: str
     has_prerequisites: bool
     subjects: tuple[str, ...]
+    # הידע הקודם כפי שמופיע בדף הקורס באתר האו"פ (ריק אם אין או שלא נמצא)
+    required_knowledge: tuple[str, ...] = ()
+    recommended_knowledge: tuple[str, ...] = ()
 
 
 # (מספר קורס, שם, סמסטרים כפי שברשימה, נושאים, יש דרישות קדם)
@@ -243,7 +251,32 @@ def _build(semesters_text: str, subjects: tuple[str, ...], has_prerequisites: bo
     return CourseInfo((), False, label, has_prerequisites, subjects)
 
 
-COURSE_INFO: dict[str, CourseInfo] = {code: _build(sems, subjects, pre) for code, _name, sems, subjects, pre in _RAW}
+def _with_prerequisites(code: str, info: CourseInfo | None) -> CourseInfo | None:
+    """משלים את הידע הקודם מדף הקורס. כשיש דף, הוא קובע אם הקורס דורש ידע קודם."""
+    knowledge = PREREQUISITES.get(code)
+    if knowledge is None:
+        return info
+    required, recommended = knowledge
+    if info is None:
+        # קורס שלא ברשימת המחלקה (למשל קורסי כלכלה) - יש רק ידע קודם, בלי סמסטרים ונושא
+        info = CourseInfo((), False, "", False, ())
+    return CourseInfo(
+        info.semesters,
+        info.every_year,
+        info.schedule_label,
+        bool(required),
+        info.subjects,
+        required,
+        recommended,
+    )
+
+
+_LISTED = {code: _build(sems, subjects, pre) for code, _name, sems, subjects, pre in _RAW}
+COURSE_INFO: dict[str, CourseInfo] = {
+    code: info
+    for code in _LISTED.keys() | PREREQUISITES.keys()
+    if (info := _with_prerequisites(code, _LISTED.get(code))) is not None
+}
 
 
 def get_course_info(code: str | None) -> CourseInfo | None:

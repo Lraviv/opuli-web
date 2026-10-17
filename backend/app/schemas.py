@@ -133,6 +133,8 @@ class CourseInfoRead(BaseModel):
     schedule_label: str
     has_prerequisites: bool
     subjects: list[str]
+    required_knowledge: list[str]
+    recommended_knowledge: list[str]
 
 
 def _course_info(code: str | None) -> CourseInfoRead | None:
@@ -145,6 +147,8 @@ def _course_info(code: str | None) -> CourseInfoRead | None:
         schedule_label=info.schedule_label,
         has_prerequisites=info.has_prerequisites,
         subjects=list(info.subjects),
+        required_knowledge=list(info.required_knowledge),
+        recommended_knowledge=list(info.recommended_knowledge),
     )
 
 
