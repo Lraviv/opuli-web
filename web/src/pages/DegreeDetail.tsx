@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, EmptyState, IconPicker, Input, Pill } from '@/components/ui'
 import { DegreeRequirements } from '@/components/DegreeRequirements'
 import { CourseInfoTags } from '@/components/CourseInfoTags'
+import { SemesterPlanner } from '@/components/SemesterPlanner'
 import { PageSkeleton } from '@/components/Skeleton'
 import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
@@ -149,6 +150,8 @@ export default function DegreeDetail() {
       </div>
 
       <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} />
+
+      {catalog && catalog.some((c) => c.info) && <SemesterPlanner degreeId={id} catalog={catalog} courses={myCourses} />}
 
       <div className="dd-section" id="catalog">
         <div className="dd-section-header">
