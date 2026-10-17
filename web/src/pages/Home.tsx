@@ -9,6 +9,7 @@ import '@/components/LinksBar.css'
 import '@/components/Upcoming.css'
 import { PageSkeleton, SkeletonList } from '@/components/Skeleton'
 import { useAllCourseItems, useCourses, useDegrees, useExams, useReminders, useUpdateReminder } from '@/lib/queries'
+import { countsTowardDegree } from '@/lib/grades'
 import { collectUpcoming, groupByHorizon, HORIZON_LABEL, relativeDays, UPCOMING_KIND_LABEL, weekSummary } from '@/lib/upcoming'
 import type { UpcomingEntry, UpcomingKind } from '@/lib/upcoming'
 import type { CourseItemRead, CourseRead } from '@/lib/types'
@@ -51,9 +52,9 @@ export default function Home() {
   const upcoming = collectUpcoming({ assignments, exams: exams ?? [], reminders: reminders ?? [] }, now)
   const shown = upcoming.filter((e) => filter === 'all' || e.kind === filter).slice(0, AGENDA_LIMIT)
 
-  // סטטיסטיקות - ממוצע משוקלל לפי נ"ז, רק על קורסים שהושלמו ויש להם ציון
+  // סטטיסטיקות - ממוצע משוקלל לפי נ"ז, רק על קורסים שהושלמו (ועברו) ויש להם ציון
   const allCourses = courses ?? []
-  const doneCourses = allCourses.filter((c) => c.status === 'done')
+  const doneCourses = allCourses.filter(countsTowardDegree)
   const currentCourses = allCourses.filter((c) => c.status === 'current')
   const earnedCredits = doneCourses.reduce((sum, c) => sum + c.credits, 0)
   const graded = doneCourses.filter((c) => c.grade != null)
@@ -223,7 +224,7 @@ function AgendaRow({ entry: e, course, now }: { entry: UpcomingEntry; course: Co
   const meta = [e.kind === 'exam' ? null : course?.name, e.date ? relativeDays(e.date, now) : null, e.date && e.hasTime ? formatTime(e.date) : null, e.location]
     .filter(Boolean)
     .join(' · ')
-  const title = e.kind === 'assignment' ? `הגשת ${e.title}` : e.kind === 'exam' ? `מבחן${course ? ` ב${course.name}` : ''}` : e.title
+  const title = e.kind === 'assignment' ? `הגשת ${e.title}` : e.kind === 'exam' ? `${e.title}${course ? ` ב${course.name}` : ''}` : e.title
   const body = (
     <>
       {e.date ? <DateBox date={e.date} /> : <span className="date-box home-agenda__nodate" aria-hidden>—</span>}

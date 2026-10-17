@@ -66,6 +66,7 @@ def create_exam(
         date_time=payload.date_time,
         location=payload.location,
         notes=payload.notes,
+        term=payload.term,
     )
     session.add(exam)
     session.commit()

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
@@ -276,6 +276,13 @@ def assignment_title(kind: AssignmentKind, number: int) -> str:
     return f"מטלה {number}"
 
 
+def _series_due_date(payload: BatchAssignmentCreate, index: int) -> datetime | None:
+    """תאריך ההגשה של המטלה ה-index בסדרה: הראשונה + index * המרווח (ברירת מחדל 3 שבועות)."""
+    if payload.first_due_date is None:
+        return None
+    return payload.first_due_date + timedelta(weeks=index * (payload.interval_weeks or 3))
+
+
 @router.post(
     "/courses/{course_id}/items/batch-assignments",
     response_model=list[CourseItemRead],
@@ -299,6 +306,7 @@ def batch_add_assignments(
             weight_percent=payload.weight_percent,
             is_mandatory=payload.is_mandatory,
             order=start + i,
+            due_date=_series_due_date(payload, i),
         )
         for i in range(payload.count)
     ]

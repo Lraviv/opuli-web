@@ -23,6 +23,13 @@ function nextTitle(kind: AssignmentKind, assignments: CourseItemRead[]): string 
   return kind === 'mmn' ? `ממ"ן ${next}` : `ממ"ח ${String(next).padStart(2, '0')}`
 }
 
+/** תאריך ההגשה של המטלה ה-i בסדרה, לתצוגה המקדימה: "21.10" */
+function seriesDate(first: string, index: number, intervalWeeks: number): string {
+  const d = new Date(first)
+  d.setDate(d.getDate() + index * intervalWeeks * 7)
+  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
+}
+
 /** מדור המטלות במסך הקורס: סטטוס זכאות לבחינה, הוספה (בודדת / סדרה), ורשימה. */
 export function AssignmentsPanel({ course, assignments, onEditRules }: { course: CourseRead; assignments: CourseItemRead[]; onEditRules: () => void }) {
   const addItem = useAddCourseItem(course.id)
@@ -36,6 +43,8 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
   const [mandatory, setMandatory] = useState(false)
   const [count, setCount] = useState('4')
   const [startNumber, setStartNumber] = useState('')
+  const [firstDue, setFirstDue] = useState('')
+  const [intervalWeeks, setIntervalWeeks] = useState('3')
   const [error, setError] = useState<string | null>(null)
 
   const rules = rulesFromCourse(course)
@@ -54,6 +63,7 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
     setWeight('')
     setMandatory(false)
     setStartNumber('')
+    setFirstDue('')
     setError(null)
   }
 
@@ -82,7 +92,17 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
     if (weightValue === undefined) return setError('משקל הוא מספר בין 0 ל-100')
     const start = startNumber.trim() ? Number(startNumber) : null
     if (start !== null && (!Number.isInteger(start) || start < 0 || start > 99)) return setError('מספר התחלה בין 0 ל-99')
-    await batchAdd.mutateAsync({ kind, count: n, start_number: start, weight_percent: weightValue, is_mandatory: mandatory })
+    const interval = Number(intervalWeeks)
+    if (firstDue && (!Number.isInteger(interval) || interval < 1 || interval > 12)) return setError('המרווח הוא בין 1 ל-12 שבועות')
+    await batchAdd.mutateAsync({
+      kind,
+      count: n,
+      start_number: start,
+      weight_percent: weightValue,
+      is_mandatory: mandatory,
+      first_due_date: firstDue ? new Date(firstDue).toISOString() : null,
+      interval_weeks: firstDue ? interval : null,
+    })
     resetForm()
     setMode(null)
   }
@@ -188,6 +208,13 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
                     onChange={(e) => setStartNumber(e.target.value)}
                   />
                 </label>
+                <DateInput label="הגשה ראשונה (לא חובה)" placeholder="הגשה ראשונה" value={firstDue} onChange={setFirstDue} />
+                {firstDue && (
+                  <label className="cd-field">
+                    כל כמה שבועות
+                    <Input type="number" min={1} max={12} value={intervalWeeks} onChange={(e) => setIntervalWeeks(e.target.value)} />
+                  </label>
+                )}
               </div>
             )}
 
@@ -208,7 +235,8 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
                 {Array.from({ length: Math.min(Number(count) || 0, 20) }, (_, i) => {
                   const start = startNumber.trim() ? Number(startNumber) : kind === 'mmn' ? 11 : 1
                   const n = start + i
-                  return kind === 'mmn' ? `ממ"ן ${n}` : kind === 'mmh' ? `ממ"ח ${String(n).padStart(2, '0')}` : `מטלה ${n}`
+                  const name = kind === 'mmn' ? `ממ"ן ${n}` : kind === 'mmh' ? `ממ"ח ${String(n).padStart(2, '0')}` : `מטלה ${n}`
+                  return firstDue ? `${name} (${seriesDate(firstDue, i, Number(intervalWeeks) || 3)})` : name
                 }).join(', ')}
               </p>
             )}

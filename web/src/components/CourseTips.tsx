@@ -402,6 +402,11 @@ function CourseCodeForm({ course }: { course: CourseRead }) {
 }
 
 /** לשונית "עצות מסטודנטים" במסך הקורס: דיון משותף לכל מי שלומד/ת את הקורס. */
+/** "באוניברסיטה הפתוחה" - ב' היידוע מחליפה את ה"ה" בתחילת השם */
+function inInstitution(name: string): string {
+  return name.startsWith('ה') ? `ב${name.slice(1)}` : `ב${name}`
+}
+
 export function CourseTips({ course }: { course: CourseRead }) {
   const [params, setParams] = useSearchParams()
   const sortParam = params.get('sort')
@@ -425,8 +430,8 @@ export function CourseTips({ course }: { course: CourseRead }) {
       {data.course && (
         <p className="tp-intro">
           דיון משותף לכל מי שלומד/ת את {data.course.code}
-          {data.course.institution && ` ב${data.course.institution}`} ·{' '}
-          {data.course.participants === 1 ? 'סטודנט/ית אחד/ת' : `${data.course.participants} סטודנטים`}
+          {data.course.institution && ` ${inInstitution(data.course.institution)}`} ·{' '}
+          {data.course.participants === 1 ? 'משתתף אחד' : `${data.course.participants} משתתפים`}
         </p>
       )}
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button, IconButton, Input } from '@/components/ui'
 import { Skeleton } from '@/components/Skeleton'
@@ -139,6 +139,7 @@ function LinkForm({
 }) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [url, setUrl] = useState(initial?.url ?? '')
+  const urlRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
@@ -165,7 +166,9 @@ function LinkForm({
               className="lb__preset"
               onClick={() => {
                 setTitle(p.title)
+                // הצעה בלי כתובת - עוברים ישר לשדה הכתובת להדבקה
                 if (p.url) setUrl(p.url)
+                else urlRef.current?.focus()
               }}
             >
               {p.title}
@@ -176,6 +179,7 @@ function LinkForm({
       <div className="lb__fields">
         <Input placeholder="כותרת" aria-label="כותרת הקישור" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} autoFocus />
         <Input
+          ref={urlRef}
           placeholder="כתובת (https://…)"
           aria-label="כתובת הקישור"
           value={url}

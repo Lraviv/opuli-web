@@ -7,6 +7,7 @@ import {
   finalGrade,
   formatGrade,
   minExamGrade,
+  passGrade,
   requiredExamGrade,
   rulesFromCourse,
   totalAssignmentWeight,
@@ -40,8 +41,9 @@ export function GradeCalculator({
   const avg = averageGradedAssignments(weighted)
 
   const [mode, setMode] = useState<Mode>('target')
-  const [target, setTarget] = useState('85')
-  const [exam, setExam] = useState('80')
+  // מתחילים ריק: מספר שלא הוזן נראה כמו נתון של הסטודנט
+  const [target, setTarget] = useState('')
+  const [exam, setExam] = useState('')
   const [defaultExpected, setDefaultExpected] = useState(String(avg ?? 80))
   const [expected, setExpected] = useState<Record<number, string>>({})
   const [skipped, setSkipped] = useState<Record<number, boolean>>({})
@@ -93,6 +95,7 @@ export function GradeCalculator({
               min={0}
               max={100}
               inputMode="numeric"
+              placeholder={mode === 'target' ? 'למשל 85' : 'למשל 80'}
               value={mode === 'target' ? target : exam}
               onChange={(e) => (mode === 'target' ? setTarget : setExam)(e.target.value)}
             />
@@ -105,6 +108,7 @@ export function GradeCalculator({
           {assignmentsWeight > 0 && ` · מטלות ${formatGrade(assignmentsWeight)}%`}
           {rules.shield && ' · מגן'}
           {examWeight > 0 && ` · סף מעבר בבחינה ${formatGrade(minExamGrade(rules))}`}
+          {` · ציון עובר ${formatGrade(passGrade(rules))}`}
         </p>
 
         {weighted.length === 0 ? (
@@ -169,7 +173,7 @@ function ResultView({ mode, target, exam, parts, rules }: { mode: Mode; target: 
   if (raw.trim() === '' || !Number.isFinite(value) || value < 0 || value > 100) {
     return (
       <div className="gc__result gc__result--muted" aria-live="polite">
-        <p className="gc__caption">הזינו מספר בין 0 ל-100</p>
+        <p className="gc__caption">{raw.trim() === '' ? (mode === 'target' ? 'הזינו את הציון הסופי שאתם רוצים' : 'הזינו ציון בבחינה') : 'הזינו מספר בין 0 ל-100'}</p>
       </div>
     )
   }
@@ -184,11 +188,13 @@ function ResultView({ mode, target, exam, parts, rules }: { mode: Mode; target: 
       )
     }
     return (
-      <div className={`gc__result${r.failedExam ? ' gc__result--bad' : ''}`} aria-live="polite">
+      <div className={`gc__result${r.failedExam || r.failedCourse ? ' gc__result--bad' : ''}`} aria-live="polite">
         <p className="gc__caption">הציון הסופי</p>
         <p className="gc__number">{formatGrade(Math.round(r.grade * 10) / 10)}</p>
         {r.failedExam ? (
           <p className="gc__sub">מתחת ל-{formatGrade(minExamGrade(rules))} בבחינה הקורס לא עובר</p>
+        ) : r.failedCourse ? (
+          <p className="gc__sub">מתחת ל-{formatGrade(passGrade(rules))} הקורס לא עובר</p>
         ) : rules.shield ? (
           <p className="gc__sub">{r.shieldUsed ? 'המטלות שיפרו את הציון' : 'נספרת הבחינה בלבד (מגן)'}</p>
         ) : null}
@@ -219,7 +225,11 @@ function ResultView({ mode, target, exam, parts, rules }: { mode: Mode; target: 
     <div className="gc__result" aria-live="polite">
       <p className="gc__caption">צריך בבחינה לפחות</p>
       <p className="gc__number">{r.grade}</p>
-      {r.atMinimum && <p className="gc__sub">מספיק לעבור את סף הבחינה</p>}
+      {value < passGrade(rules) ? (
+        <p className="gc__sub">שימו לב: הציון העובר בקורס הוא {formatGrade(passGrade(rules))}</p>
+      ) : (
+        r.atMinimum && <p className="gc__sub">מספיק לעבור את סף הבחינה</p>
+      )}
     </div>
   )
 }

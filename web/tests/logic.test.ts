@@ -1,18 +1,33 @@
 // בדיקות לוגיקה טהורה (ציונים / לו"ז / קישורים) - בלי framework: npm test
 // מריצים בכמה אזורי זמן כדי לתפוס באגים של UTC מול שעון מקומי.
 import assert from 'node:assert/strict'
-import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight } from '../src/lib/grades.ts'
+import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight, isFailedCourse, countsTowardDegree } from '../src/lib/grades.ts'
+import { statsFor } from '../src/lib/requirements.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { relativeTime } from '../src/lib/tips.ts'
 import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
 
-const rules = { examWeight: null, minExamGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
+const rules = { examWeight: null, minExamGrade: null, passGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
 const parts = [{ weight: 10, value: 90 }, { weight: 10, value: 80 }]
 assert.equal(effectiveExamWeight(rules, parts), 80)
 // (900+800+80*70)/100 = 73
 assert.equal(finalGrade(70, parts, rules).grade, 73)
 assert.equal(finalGrade(50, parts, rules).failedExam, true)
+// ציון עובר בקורס: 73 עובר ב-60, לא עובר כשהציון העובר הוא 75
+assert.equal(finalGrade(70, parts, rules).failedCourse, false)
+assert.equal(finalGrade(70, parts, { ...rules, passGrade: 75 }).failedCourse, true)
+// קורס שהושלם מתחת לציון העובר לא נספר בנ"ז
+const doneCourse = { status: 'done', grade: 58, pass_grade: null }
+assert.equal(isFailedCourse(doneCourse), true)
+assert.equal(countsTowardDegree(doneCourse), false)
+assert.equal(countsTowardDegree({ ...doneCourse, pass_grade: 55 }), true)
+assert.equal(countsTowardDegree({ ...doneCourse, grade: null }), true)
+assert.equal(isFailedCourse({ status: 'current', grade: 40, pass_grade: null }), false)
+{
+  const mk = (credits: number, grade: number | null) => ({ category: 'חובה', status: 'done', credits, grade, pass_grade: null }) as any
+  assert.equal(statsFor('חובה', [mk(6, 90), mk(4, 50)], []).done, 6)
+}
 // target 85: (85*100 - 1700)/80 = 85
 assert.deepEqual(requiredExamGrade(85, parts, rules), { kind: 'ok', grade: 85, atMinimum: false })
 // target 60: (6000-1700)/80 = 53.75 -> floor 60

@@ -72,6 +72,11 @@ export function DateInput({
     close()
   }
 
+  // עם שעה: כל בחירה נשמרת מיד (כמו בתאריך בלבד), והחלון נשאר פתוח לכיוון השעה
+  function saveDraft(date: Date | undefined, time: string) {
+    if (date) onChange(`${toDateKey(date)}T${time}`)
+  }
+
   const today = new Date()
   const empty = !value
 
@@ -127,12 +132,20 @@ export function DateInput({
             onSelect={(d) => {
               setDraftDate(d)
               if (!withTime && d) commit(d, draftTime)
+              else saveDraft(d, draftTime)
             }}
           />
           {withTime && (
             <div className="dp-time">
               <span className="dp-time__label">שעה</span>
-              <TimeInput label="שעה" value={draftTime} onChange={setDraftTime} />
+              <TimeInput
+                label="שעה"
+                value={draftTime}
+                onChange={(t) => {
+                  setDraftTime(t)
+                  saveDraft(draftDate, t)
+                }}
+              />
             </div>
           )}
           <div className="dp-actions">
@@ -143,22 +156,19 @@ export function DateInput({
                 setMonth(today)
                 setDraftDate(today)
                 if (!withTime) commit(today, draftTime)
+                else saveDraft(today, draftTime)
               }}
             >
               היום
             </button>
             <span className="dp-actions__spacer" />
-            <button type="button" className="ui-button ui-button--secondary" onClick={close}>
-              ביטול
-            </button>
-            {withTime && (
-              <button
-                type="button"
-                className="ui-button ui-button--primary"
-                disabled={!draftDate}
-                onClick={() => commit(draftDate, draftTime)}
-              >
-                אישור
+            {withTime ? (
+              <button type="button" className="ui-button ui-button--primary" onClick={close}>
+                סיום
+              </button>
+            ) : (
+              <button type="button" className="ui-button ui-button--secondary" onClick={close}>
+                ביטול
               </button>
             )}
           </div>
