@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, EmptyState, IconPicker, Input, Pill } from '@/components/ui'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Card, EmptyState, IconPicker } from '@/components/ui'
 import { DegreeRequirements } from '@/components/DegreeRequirements'
-import { CourseInfoTags } from '@/components/CourseInfoTags'
+import { DegreeCatalog } from '@/components/DegreeCatalog'
+import { MoreMenu } from '@/components/StatusMenu'
 import { SemesterPlanner } from '@/components/SemesterPlanner'
 import { PageSkeleton } from '@/components/Skeleton'
 import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
-import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
+import { EMPTY_FILTER } from '@/lib/catalog'
+import type { CatalogFilter } from '@/lib/catalog'
+import { useCatalog, useCourses, useDegree, useDeleteDegree, useUpdateDegree } from '@/lib/queries'
 import { countsTowardDegree } from '@/lib/grades'
 import type { CourseStatus } from '@/lib/types'
 import './DegreeDetail.css'
 
 // מסך התואר = התואר והקטלוג שלו. ניהול הקורסים האישיים (רשימות, הוספה ידנית,
 // תכנון סמסטרים) נמצא רק במסך הקורסים - כאן מוצג רק סיכום שמקשר אליו.
-const STATUS_LABEL: Record<CourseStatus, string> = { done: 'הושלם', current: 'בתהליך', planned: 'מתוכנן' }
 const SUMMARY: { status: CourseStatus; label: string; tab: string }[] = [
   { status: 'done', label: 'הושלמו', tab: 'done' },
   { status: 'current', label: 'בתהליך', tab: 'current' },
@@ -29,13 +31,17 @@ export default function DegreeDetail() {
   const { data: catalog } = useCatalog(id)
   const { data: courses } = useCourses({ degree_id: id })
 
-  const selectCatalogCourse = useSelectCatalogCourse(id)
   const deleteDegree = useDeleteDegree()
   const updateDegree = useUpdateDegree()
   const [pickingIcon, setPickingIcon] = useState(false)
 
-  const [search, setSearch] = useState('')
-  const [addStatus, setAddStatus] = useState<CourseStatus>('planned')
+  // ?show=unselected (מ"+ מהקטלוג" במסך הקורסים) ו-?category=... פותחים את הקטלוג מסונן
+  const [params] = useSearchParams()
+  const [filter, setFilter] = useState<CatalogFilter>(() => ({
+    ...EMPTY_FILTER,
+    state: params.get('show') === 'unselected' ? 'unselected' : 'all',
+    category: params.get('category'),
+  }))
 
   // הגעה מ"+ הוספה מהקטלוג" בלוח התכנון - גוללים לקטלוג אחרי שנטען
   const { hash } = useLocation()
@@ -44,8 +50,15 @@ export default function DegreeDetail() {
     if (hash === '#catalog' && catalogLoaded) document.getElementById('catalog')?.scrollIntoView()
   }, [hash, catalogLoaded])
 
+  function showCategory(category: string) {
+    setFilter({ ...EMPTY_FILTER, category })
+    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   async function handleDeleteDegree() {
-    if (!confirm(`למחוק את התואר "${degree?.name}"? הקורסים האישיים יישמרו.`)) return
+    const count = courses?.length ?? 0
+    const kept = count === 0 ? '' : count === 1 ? ' הקורס שלך בתואר יישאר ברשימת הקורסים.' : ` ${count} הקורסים שלך בתואר יישארו ברשימת הקורסים.`
+    if (!confirm(`למחוק את התואר "${degree?.name}"? הקטלוג והדרישות יימחקו ואי אפשר לבטל.${kept}`)) return
     await deleteDegree.mutateAsync(id)
     navigate('/degrees')
   }
@@ -61,15 +74,6 @@ export default function DegreeDetail() {
       </Card>
     )
   }
-
-  const query = search.trim().toLowerCase()
-  const filteredCatalog = catalog?.filter(
-    (c) =>
-      !query ||
-      c.name.toLowerCase().includes(query) ||
-      c.category?.toLowerCase().includes(query) ||
-      c.info?.subjects.some((s) => s.toLowerCase().includes(query)),
-  )
 
   const myCourses = courses ?? []
   const earnedCredits = myCourses.filter(countsTowardDegree).reduce((sum, c) => sum + c.credits, 0)
@@ -100,9 +104,7 @@ export default function DegreeDetail() {
             </div>
           </div>
         </div>
-        <Button variant="danger" onClick={handleDeleteDegree}>
-          מחיקת תואר
-        </Button>
+        <MoreMenu label="פעולות נוספות לתואר" items={[{ label: 'מחיקת תואר', danger: true, onSelect: handleDeleteDegree }]} />
       </div>
 
       {pickingIcon && (
@@ -153,74 +155,11 @@ export default function DegreeDetail() {
         </Card>
       </div>
 
-      <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} />
+      <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={target} onCategoryClick={catalog?.length ? showCategory : undefined} />
 
       {catalog && catalog.some((c) => c.info) && <SemesterPlanner degreeId={id} catalog={catalog} courses={myCourses} />}
 
-      <div className="dd-section" id="catalog">
-        <div className="dd-section-header">
-          <h2>קטלוג קורסים</h2>
-          {query && catalog && (
-            <span className="dd-search-count">
-              {filteredCatalog!.length} מתוך {catalog.length}
-            </span>
-          )}
-        </div>
-        {!catalog || catalog.length === 0 ? (
-          <Card>
-            <EmptyState
-              title="אין קטלוג לתואר הזה"
-              subtitle="קורסים שלא בקטלוג אפשר להוסיף ידנית במסך הקורסים"
-            />
-          </Card>
-        ) : (
-          <>
-            <div className="dd-catalog-controls">
-              <Input
-                type="search"
-                placeholder="חיפוש בקטלוג לפי שם, קטגוריה או נושא…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <label className="dd-add-as">
-                הוספה בתור
-                <select value={addStatus} onChange={(e) => setAddStatus(e.target.value as CourseStatus)}>
-                  {(['planned', 'current', 'done'] as CourseStatus[]).map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <Card>
-              {filteredCatalog!.length === 0 && <EmptyState title="לא נמצאו קורסים תואמים" />}
-              {filteredCatalog!.map((c) => (
-                <div className="dd-row" key={c.id}>
-                  <div>
-                    <p className="dd-row__title">{c.name}</p>
-                    <p className="dd-row__meta">
-                      {c.credits} נ"ז{c.category ? ` · ${c.category}` : ''}
-                    </p>
-                    <CourseInfoTags info={c.info} />
-                  </div>
-                  {c.already_selected ? (
-                    <Pill tone="success">נבחר</Pill>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      disabled={selectCatalogCourse.isPending}
-                      onClick={() => selectCatalogCourse.mutate({ id: c.id, payload: { status: addStatus } })}
-                    >
-                      הוספה
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </Card>
-          </>
-        )}
-      </div>
+      {catalog && <DegreeCatalog degreeId={id} catalog={catalog} courses={myCourses} filter={filter} setFilter={setFilter} />}
     </div>
   )
 }

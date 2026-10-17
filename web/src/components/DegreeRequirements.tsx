@@ -10,7 +10,20 @@ import type { CatalogCourseRead, CourseRead, DegreeRequirementRead } from '@/lib
 import './DegreeRequirements.css'
 
 /** כרטיס "דרישות התואר" במסך התואר: לכל קטגוריה - נ"ז שהושלמו/בתהליך/מתוכננים מול הדרישה. */
-export function DegreeRequirements({ degreeId, courses, catalog }: { degreeId: number; courses: CourseRead[]; catalog: CatalogCourseRead[] }) {
+export function DegreeRequirements({
+  degreeId,
+  courses,
+  catalog,
+  targetCredits = null,
+  onCategoryClick,
+}: {
+  degreeId: number
+  courses: CourseRead[]
+  catalog: CatalogCourseRead[]
+  targetCredits?: number | null
+  /** לחיצה על שם קטגוריה - מציגה את הקורסים שלה בקטלוג */
+  onCategoryClick?: (category: string) => void
+}) {
   const { data: requirements, isLoading } = useDegreeRequirements(degreeId)
   const replace = useReplaceDegreeRequirements(degreeId)
   const [editing, setEditing] = useState(false)
@@ -38,6 +51,7 @@ export function DegreeRequirements({ degreeId, courses, catalog }: { degreeId: n
         <RequirementsEditor
           initial={list.length ? list.map((r) => ({ category: r.category, min_credits: r.min_credits })) : suggestion}
           categories={suggestion.map((s) => s.category)}
+          targetCredits={targetCredits}
           busy={replace.isPending}
           onCancel={() => setEditing(false)}
           onSave={async (rows) => {
@@ -76,7 +90,7 @@ export function DegreeRequirements({ degreeId, courses, catalog }: { degreeId: n
         <Card>
           <ul className="dr-list">
             {list.map((r) => (
-              <RequirementRow key={r.id} requirement={r} stats={statsFor(r.category, courses, catalog)} />
+              <RequirementRow key={r.id} requirement={r} stats={statsFor(r.category, courses, catalog)} onCategoryClick={onCategoryClick} />
             ))}
           </ul>
           <div className="dr-legend" aria-hidden>
@@ -91,7 +105,15 @@ export function DegreeRequirements({ degreeId, courses, catalog }: { degreeId: n
   )
 }
 
-function RequirementRow({ requirement, stats }: { requirement: DegreeRequirementRead; stats: RowStats }) {
+function RequirementRow({
+  requirement,
+  stats,
+  onCategoryClick,
+}: {
+  requirement: DegreeRequirementRead
+  stats: RowStats
+  onCategoryClick?: (category: string) => void
+}) {
   const required = requirement.min_credits
   const total = stats.done + stats.current + stats.planned
   const scale = Math.max(required ?? 0, total, 1)
@@ -102,7 +124,13 @@ function RequirementRow({ requirement, stats }: { requirement: DegreeRequirement
   return (
     <li className="dr-row">
       <div className="dr-row__top">
-        <span className="dr-row__name">{requirement.category}</span>
+        {onCategoryClick ? (
+          <button type="button" className="dr-row__name dr-row__name--link" onClick={() => onCategoryClick(requirement.category)} title="הצגת הקורסים בקטלוג">
+            {requirement.category}
+          </button>
+        ) : (
+          <span className="dr-row__name">{requirement.category}</span>
+        )}
         <span className={`dr-row__value${complete ? ' dr-row__value--done' : ''}`}>
           {formatGrade(stats.done)}
           {required != null ? ` / ${formatGrade(required)}` : ''} נ"ז
@@ -135,12 +163,14 @@ function RequirementRow({ requirement, stats }: { requirement: DegreeRequirement
 function RequirementsEditor({
   initial,
   categories,
+  targetCredits,
   busy,
   onSave,
   onCancel,
 }: {
   initial: { category: string; min_credits: number | null }[]
   categories: string[]
+  targetCredits: number | null
   busy: boolean
   onSave: (rows: { category: string; min_credits: number | null }[]) => Promise<void>
   onCancel: () => void
@@ -153,6 +183,7 @@ function RequirementsEditor({
     })),
   )
   const [error, setError] = useState<string | null>(null)
+  const defined = rows.reduce((sum, r) => sum + (Number.isFinite(Number(r.credits)) ? Number(r.credits) : 0), 0)
   const nextKey = () => Math.max(-1, ...rows.map((r) => r.key)) + 1
 
   async function handleSubmit(e: FormEvent) {
@@ -207,6 +238,11 @@ function RequirementsEditor({
         <button type="button" className="dr-link dr-add" onClick={() => setRows((prev) => [...prev, { key: nextKey(), category: '', credits: '' }])}>
           + קטגוריה
         </button>
+        <p className="dr-total" aria-live="polite">
+          הוגדרו {formatGrade(defined)}
+          {targetCredits ? ` מתוך ${formatGrade(targetCredits)}` : ''} נ"ז
+          {targetCredits && defined < targetCredits ? ` · עוד ${formatGrade(targetCredits - defined)} לחלק` : ''}
+        </p>
         {error && (
           <p className="dr-error" role="alert">
             {error}

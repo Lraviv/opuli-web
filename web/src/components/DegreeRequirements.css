@@ -145,3 +145,37 @@
   gap: var(--space-two);
   margin-top: var(--space-two);
 }
+.dr-row__name--link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.dr-row__name--link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.dr-total {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+@media (max-width: 640px) {
+  /* בטלפון שם הקטגוריה בשורה מלאה, כדי שלא ייחתך */
+  .dr-editor__row {
+    flex-wrap: wrap;
+    padding-bottom: var(--space-two);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .dr-editor__row .ui-input {
+    flex: 1 1 100%;
+  }
+  .dr-editor__row .dr-editor__credits {
+    flex: 1 1 auto;
+  }
+}
