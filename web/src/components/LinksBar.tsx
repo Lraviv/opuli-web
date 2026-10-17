@@ -15,7 +15,7 @@ const isSafeHref = (url: string) => /^https?:\/\//i.test(url)
  * קישורים אישיים: courseId=null - קישורים כלליים (מסך הבית), אחרת - של קורס.
  * מוצגים כשורת "אריחים"; עריכה נפתחת במקום, בלי לעזוב את המסך.
  */
-export function LinksBar({ courseId, title }: { courseId: number | null; title: string }) {
+export function LinksBar({ courseId, title, compact = false }: { courseId: number | null; title: string; compact?: boolean }) {
   const { data: links, isLoading } = useLinks(courseId)
   const createLink = useCreateLink(courseId)
   const [adding, setAdding] = useState(false)
@@ -27,7 +27,8 @@ export function LinksBar({ courseId, title }: { courseId: number | null; title: 
   )
 
   return (
-    <section className="lb" aria-label={title}>
+    <section className={`lb${compact ? ' lb--chips' : ''}`} aria-label={title}>
+      {/* compact: שורת "צ'יפים" דקה בלי כותרת - העריכה עוברת לצ'יפ בסוף השורה */}
       <div className="lb__header">
         <h2>{title}</h2>
         {list.length > 0 && (
@@ -57,6 +58,11 @@ export function LinksBar({ courseId, title }: { courseId: number | null; title: 
           {!adding && !editing && (
             <button type="button" className="lb__tile lb__tile--add" onClick={() => setAdding(true)}>
               <span aria-hidden>+</span> {list.length === 0 ? 'הוספת קישור' : 'קישור'}
+            </button>
+          )}
+          {compact && list.length > 0 && !adding && (
+            <button type="button" className="lb__tile lb__tile--add" onClick={() => setEditing((v) => !v)} aria-pressed={editing}>
+              {editing ? 'סיום' : 'עריכה'}
             </button>
           )}
         </div>
