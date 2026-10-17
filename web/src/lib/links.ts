@@ -10,6 +10,8 @@ export interface LinkPreset {
 export const GLOBAL_LINK_PRESETS: LinkPreset[] = [
   { title: 'שאילתא', url: 'https://sheilta.apps.openu.ac.il/' },
   { title: 'אתר הקורסים (אופל)', url: 'https://opal.openu.ac.il/' },
+  { title: 'Google Drive', url: 'https://drive.google.com/' },
+  { title: 'MEGA', url: 'https://mega.nz/' },
 ]
 
 /** הצעות לקישורים של קורס - הכתובות שונות מקורס לקורס */
@@ -17,6 +19,8 @@ export const COURSE_LINK_PRESETS: LinkPreset[] = [
   { title: 'אתר הקורס', url: '' },
   { title: 'הקלטות', url: '' },
   { title: 'מאגר מבחנים', url: '' },
+  { title: 'Google Drive', url: '' },
+  { title: 'MEGA', url: '' },
 ]
 
 /** מוסיפה https:// כשאין פרוטוקול. מחזירה null אם הכתובת לא http/https תקינה. */
