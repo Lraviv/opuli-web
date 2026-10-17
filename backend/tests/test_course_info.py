@@ -41,3 +41,15 @@ def test_info_in_catalog_and_course_responses(client):
     assert course["info"]["semesters"] == ["א", "ב"]
     manual = client.post("/courses", json={"name": "משהו", "credits": 3}, headers=h).json()
     assert manual["info"] is None
+
+
+def test_prior_knowledge_from_course_page():
+    algo = get_course_info("20417")
+    # ברשימת המחלקה אין סימון דרישות קדם, אבל דף הקורס מפרט ידע קודם דרוש
+    assert algo.has_prerequisites is True
+    assert "מתמטיקה בדידה: תורת הקבוצות, קומבינטוריקה ותורת הגרפים" in algo.required_knowledge
+    assert algo.recommended_knowledge
+    assert get_course_info("20109").recommended_knowledge == ("אשנב למתמטיקה",)
+    # קורס כלכלה שלא ברשימת המחלקה - יש ידע קודם, בלי סמסטרים
+    econ = get_course_info("10917")
+    assert econ.has_prerequisites and econ.schedule_label == "" and econ.required_knowledge
