@@ -141,3 +141,55 @@ console.log('all logic tests passed')
   assert.equal(weekSummary([]), 'השבוע פנוי, אין מטלות או מבחנים קרובים')
 }
 console.log('upcoming tests passed')
+
+// ---- עוזר בחירת קורסים לסמסטר ----
+{
+  const { planSemester, normalizeName } = await import('../src/lib/planner.ts')
+  const info = (semesters: string[], required: string[] = [], has: boolean | null = required.length > 0 ? true : null) => ({
+    semesters, every_year: semesters.length > 0, schedule_label: '', has_prerequisites: has, subjects: [], required_knowledge: required, recommended_knowledge: [],
+  })
+  let nextId = 1
+  const cat = (name: string, code: string, i: any, selected = false) =>
+    ({ id: nextId++, degree_id: 1, name, credits: 4, category: 'חובה', recommended_semester: null, notes: `מספר קורס: ${code}`, already_selected: selected, info: i }) as any
+  const mine = (name: string, status: string, code: string | null = null) => ({ name, status, course_code: code }) as any
+
+  assert.equal(normalizeName('הקורס חשבון אינפיניטסימלי 1 (20474).'), 'חשבון אינפיניטסימלי 1')
+
+  const catalog = [
+    cat('מבני נתונים ומבוא לאלגוריתמים', '20407', info(['א', 'ב'])),
+    cat('אלגוריתמים', '20417', info(['א', 'ב'], ['מתמטיקה בדידה: תורת הקבוצות, קומבינטוריקה ותורת הגרפים', 'מבני נתונים ומבוא לאלגוריתמים או מבני נתונים (20433)'])),
+    cat('חשבון אינפיניטסימלי 2', '20475', info(['א', 'ב', 'ג'], ['חשבון אינפיניטסימלי 1 (20474)'])),
+    cat('לוגיקה למדעי המחשב', '20466', info(['ג'], ['שני קורסים במתמטיקה'])),
+    cat('גרפיקה ממוחשבת', '20562', info(['ב'], ['חשבון אינפיניטסימלי 1 (20474) + חשבון אינפיניטסימלי 2 (20475)'])),
+    cat('רשתות תקשורת מחשבים', '20948', { ...info([]), schedule_label: 'א2027 בלבד' }),
+    cat('קורס שכבר נבחר', '20999', info(['א']), true),
+  ]
+  const courses = [mine('מתמטיקה בדידה: תורת הקבוצות, קומבינטוריקה ותורת הגרפים', 'done'), mine('מבני נתונים ומבוא לאלגוריתמים', 'current', '20407'), mine('חשבון אינפיניטסימלי 1', 'planned', '20474')]
+
+  const a = planSemester('א', catalog, courses)
+  // מבני נתונים כבר נבחר כקורס אישי? לא - already_selected=false, ולכן מוצע; אלגוריתמים מוכן כי מבני נתונים "בתהליך"
+  assert.deepEqual(a.ready.map((e) => e.course.name), ['מבני נתונים ומבוא לאלגוריתמים', 'אלגוריתמים'])
+  // אינפי 1 רק "מתוכנן" - לא נחשב ידע קודם
+  assert.deepEqual(a.missing.map((e) => [e.course.name, e.missing]), [['חשבון אינפיניטסימלי 2', ['חשבון אינפיניטסימלי 1 (20474)']]])
+  assert.deepEqual(a.unknown.map((e) => e.course.name), ['רשתות תקשורת מחשבים'])
+  assert.equal(a.notOffered, 2) // לוגיקה (ג) וגרפיקה (ב)
+
+  const c = planSemester('ג', catalog, courses)
+  const logic = c.ready.find((e) => e.course.name === 'לוגיקה למדעי המחשב')!
+  assert.deepEqual(logic.toCheck, ['שני קורסים במתמטיקה'])
+
+  // צמד קורסים: צריך את שניהם
+  const done2 = [mine('חשבון אינפיניטסימלי 1', 'done', '20474')]
+  assert.equal(planSemester('ב', catalog, done2).missing.some((e) => e.course.name === 'גרפיקה ממוחשבת'), true)
+  const doneBoth = [...done2, mine('חשבון אינפיניטסימלי 2', 'done', '20475')]
+  assert.equal(planSemester('ב', catalog, doneBoth).ready.some((e) => e.course.name === 'גרפיקה ממוחשבת'), true)
+  // "אלגוריתמים" לא מספק את "מבני נתונים ומבוא לאלגוריתמים"
+  const onlyAlgo = [mine('אלגוריתמים', 'done'), mine('מתמטיקה בדידה: תורת הקבוצות, קומבינטוריקה ותורת הגרפים', 'done')]
+  assert.deepEqual(planSemester('א', catalog, onlyAlgo).missing.find((e) => e.course.name === 'אלגוריתמים')!.missing, ['מבני נתונים ומבוא לאלגוריתמים או מבני נתונים (20433)'])
+  // דרישה שהיא חלק משם של קורס שנלקח
+  const lang = [cat('שפות תכנות', '20905', info(['ב'], ['מבוא לאלגוריתמים']))]
+  const langPlan = planSemester('ב', lang, [mine('מבני נתונים ומבוא לאלגוריתמים', 'done')])
+  assert.equal(langPlan.ready.length, 1)
+  assert.deepEqual(langPlan.ready[0].toCheck, [])
+  console.log('planner tests passed')
+}
