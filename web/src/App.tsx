@@ -5,6 +5,7 @@ import { Shell } from '@/components/Shell'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Home from '@/pages/Home'
+import Landing from '@/pages/Landing'
 import Degrees from '@/pages/Degrees'
 import Courses from '@/pages/Courses'
 import DegreeDetail from '@/pages/DegreeDetail'
@@ -38,6 +39,29 @@ function PublicRoute({ children }: { children: ReactNode }) {
   return user ? <Shell>{children}</Shell> : <InfoLayout>{children}</InfoLayout>
 }
 
+/** הכתובת הראשית: מחוברים רואים את הבית, אחרים דף פתיחה שמסביר מה זה */
+function HomeRoute() {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="app-boot">
+        <PageSkeleton variant="home" />
+      </div>
+    )
+  }
+  if (!user)
+    return (
+      <InfoLayout>
+        <Landing />
+      </InfoLayout>
+    )
+  return (
+    <Shell>
+      <Home />
+    </Shell>
+  )
+}
+
 const INFO_ROUTES: InfoPageId[] = ['help', 'faq', 'privacy', 'terms']
 
 export default function App() {
@@ -56,14 +80,7 @@ export default function App() {
           }
         />
       ))}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<HomeRoute />} />
       <Route
         path="/degrees"
         element={

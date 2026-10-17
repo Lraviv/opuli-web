@@ -10,6 +10,7 @@ import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { EMPTY_FILTER } from '@/lib/catalog'
 import type { CatalogFilter } from '@/lib/catalog'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useUpdateDegree } from '@/lib/queries'
+import { countsTowardDegree } from '@/lib/grades'
 import type { CourseStatus } from '@/lib/types'
 import './DegreeDetail.css'
 
@@ -75,7 +76,7 @@ export default function DegreeDetail() {
   }
 
   const myCourses = courses ?? []
-  const earnedCredits = myCourses.filter((c) => c.status === 'done').reduce((sum, c) => sum + c.credits, 0)
+  const earnedCredits = myCourses.filter(countsTowardDegree).reduce((sum, c) => sum + c.credits, 0)
   const target = degree.target_credits
   const progressPercent = target ? Math.min((earnedCredits / target) * 100, 100) : 0
 
@@ -148,6 +149,9 @@ export default function DegreeDetail() {
               </Link>
             ))}
           </div>
+          <p className="dd-plan-hint">
+            שיבוץ קורסים לסמסטרים נמצא ב<Link to="/courses?tab=plan">קורסים · תכנון</Link>.
+          </p>
         </Card>
       </div>
 

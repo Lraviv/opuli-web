@@ -1,5 +1,6 @@
 // לוגיקת דרישות התואר - חישוב נ"ז לכל קטגוריה והצעה מהקטלוג. זהה באפליקציה (opu-li/src/lib/requirements.ts).
 
+import { isFailedCourse } from './grades.ts'
 import type { CatalogCourseRead, CourseRead } from './types'
 
 export interface RowStats {
@@ -14,7 +15,9 @@ export const isMandatoryCategory = (category: string) => category.trim().startsW
 
 export function statsFor(category: string, courses: CourseRead[], catalog: CatalogCourseRead[]): RowStats {
   const inCat = courses.filter((c) => (c.category ?? '').trim() === category)
-  const sum = (status: CourseRead['status']) => inCat.filter((c) => c.status === status).reduce((s, c) => s + c.credits, 0)
+  // קורס שהושלם בציון נכשל לא נספר בנ"ז
+  const sum = (status: CourseRead['status']) =>
+    inCat.filter((c) => c.status === status && !isFailedCourse(c)).reduce((s, c) => s + c.credits, 0)
   const unselectedMandatory = isMandatoryCategory(category)
     ? catalog.filter((c) => (c.category ?? '').trim() === category && !c.already_selected).length
     : 0

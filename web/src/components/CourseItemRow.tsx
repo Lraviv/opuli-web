@@ -137,12 +137,15 @@ export function CourseItemRow({ item }: { item: CourseItemRead }) {
   const hasMeta = !!date_ || (!isLesson && (item.kind || item.is_mandatory || item.weight_percent != null || item.grade != null))
   return (
     <div className="cd-row">
-      <input
-        type="checkbox"
-        checked={item.is_done}
-        aria-label={isLesson ? `נצפה: ${item.title}` : `הוגשה: ${item.title}`}
-        onChange={(e) => handleToggle(e.target.checked)}
-      />
+      <label className="cd-done">
+        <input
+          type="checkbox"
+          checked={item.is_done}
+          aria-label={isLesson ? `נצפה: ${item.title}` : `הוגשה: ${item.title}`}
+          onChange={(e) => handleToggle(e.target.checked)}
+        />
+        <span aria-hidden>{isLesson ? 'נצפה' : 'הוגשה'}</span>
+      </label>
       <div className="cd-item__body">
         <p className={`cd-row__title${item.is_done ? ' cd-row__title--done' : ''}`}>{item.title}</p>
         {hasMeta && (

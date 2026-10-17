@@ -199,3 +199,7 @@
 .profile-info-links a {
   color: var(--color-text-secondary);
 }
+.install-hint__steps {
+  margin: 0;
+  line-height: 1.6;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button, Card, EmptyState, IconButton, Input } from '@/components/ui'
-import { formatGrade } from '@/lib/grades'
+import { countsTowardDegree, formatGrade } from '@/lib/grades'
 import { statsFor, suggestFromCatalog } from '@/lib/requirements'
 import type { RowStats } from '@/lib/requirements'
 import { Skeleton } from '@/components/Skeleton'
@@ -31,7 +31,7 @@ export function DegreeRequirements({
   const list = requirements ?? []
   const categories = new Set(list.map((r) => r.category))
   const unmatched = courses
-    .filter((c) => c.status === 'done' && !categories.has((c.category ?? '').trim()))
+    .filter((c) => countsTowardDegree(c) && !categories.has((c.category ?? '').trim()))
     .reduce((s, c) => s + c.credits, 0)
 
   const suggestion = suggestFromCatalog(catalog)

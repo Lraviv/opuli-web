@@ -1,0 +1,27 @@
+.ce {
+  margin-bottom: var(--space-four);
+}
+.ce__title {
+  margin: 0 0 var(--space-three);
+  font-size: 17px;
+  font-weight: 700;
+}
+.ce__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-three);
+}
+.ce__wide {
+  grid-column: 1 / -1;
+}
+.ce__hint {
+  margin: var(--space-three) 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.ce__actions {
+  display: flex;
+  gap: var(--space-two);
+  margin-top: var(--space-three);
+}
+
