@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict'
 import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight } from '../src/lib/grades.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
+import { EMPTY_FILTER, catalogSemesters, groupCatalog, isFiltered, matchesFilter, openByDefault } from '../src/lib/catalog.ts'
 import { relativeTime } from '../src/lib/tips.ts'
 import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
@@ -177,4 +178,34 @@ console.log('upcoming tests passed')
   assert.equal(langPlan.ready.length, 1)
   assert.deepEqual(langPlan.ready[0].toCheck, [])
   console.log('planner tests passed')
+}
+
+{
+  // קטלוג התואר: סינון וקיבוץ
+  const info = (semesters: string[], has_prerequisites: boolean | null) => ({ semesters, every_year: true, schedule_label: '', has_prerequisites, subjects: ['גרפים'], required_knowledge: [], recommended_knowledge: [] })
+  const row = (id: number, name: string, category: string | null, selected: boolean, i: ReturnType<typeof info> | null = null) => ({
+    id, degree_id: 1, name, credits: 6, category, recommended_semester: null, notes: null, already_selected: selected, info: i,
+  })
+  const catalog = [
+    row(1, 'אלגוריתמים', 'חובה - מדעי המחשב', false, info(['א', 'ב'], true)),
+    row(2, 'מבני נתונים', 'חובה - מדעי המחשב', true, info(['ב'], false)),
+    row(3, 'גרפיקה', 'בחירה', false, info(['ג'], false)),
+    row(4, 'קורס חופשי', null, false),
+  ]
+  assert.equal(isFiltered(EMPTY_FILTER), false)
+  assert.deepEqual(groupCatalog(catalog, EMPTY_FILTER).map((g) => [g.category, g.courses.length, g.selected, g.total]), [
+    ['חובה - מדעי המחשב', 2, 1, 2],
+    ['בחירה', 1, 0, 1],
+    ['בלי קטגוריה', 1, 0, 1],
+  ])
+  assert.deepEqual(groupCatalog(catalog, { ...EMPTY_FILTER, state: 'unselected' }).map((g) => g.courses.map((c) => c.id)), [[1], [3], [4]])
+  assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, semester: 'ב' })).map((c) => c.id), [1, 2])
+  assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, noPrerequisites: true })).map((c) => c.id), [2, 3])
+  assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, category: 'בלי קטגוריה' })).map((c) => c.id), [4])
+  assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, query: 'גרפ' })).map((c) => c.id), [1, 2, 3])
+  assert.deepEqual(catalogSemesters(catalog), ['א', 'ב', 'ג'])
+  const groups = groupCatalog(catalog, EMPTY_FILTER)
+  assert.equal(openByDefault(groups[0]), true)
+  assert.equal(openByDefault(groups[1]), false)
+  console.log('catalog tests passed')
 }

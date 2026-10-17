@@ -1,0 +1,184 @@
+.dc-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+  margin-bottom: var(--space-three);
+}
+.dc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dc-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dc-chip--on {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-background-element);
+}
+.dc-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-four);
+}
+.dc-link {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.dc-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+}
+.ui-card.dc-group {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.dc-group__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  width: 100%;
+  min-height: 52px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.dc-group__name {
+  flex: 1;
+  font-weight: 700;
+}
+.dc-group__count {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.dc-group__chevron {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s;
+}
+.dc-group__header[aria-expanded='true'] .dc-group__chevron {
+  transform: rotate(180deg);
+}
+.dc-group .dd-row:first-of-type {
+  border-top: 1px solid var(--color-border);
+}
+
+.dc-row__body {
+  min-width: 0;
+}
+.dc-row__pick {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-two);
+  flex: 1;
+  cursor: pointer;
+}
+.dc-row__pick input {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.dc-row--picked {
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+.dc-row__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  flex-shrink: 0;
+}
+.dc-row__grade {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.dc-grade-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+  padding: var(--space-two);
+}
+.dc-grade-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* סרגל קבוע בתחתית במצב "סימון כמה קורסים" */
+.dc-bulk {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  margin-top: var(--space-three);
+  padding-bottom: var(--space-two);
+}
+.dc-bulk__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+  padding: var(--space-three);
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 -6px 24px rgb(0 0 0 / 0.1);
+}
+.dc-bulk__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+}
+.dc-bulk__grades {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.dc-bulk__grade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+  font-size: 14px;
+}
+.dc-bulk__grade .ui-input {
+  flex: 0 0 80px;
+  width: 80px;
+}
+
+@media (max-width: 640px) {
+  /* מעל הסרגל התחתון של הניווט */
+  .dc-bulk {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
