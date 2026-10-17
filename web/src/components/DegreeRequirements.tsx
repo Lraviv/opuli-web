@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Button, Card, EmptyState, IconButton, Input } from '@/components/ui'
 import { countsTowardDegree, formatGrade } from '@/lib/grades'
 import { statsFor, suggestFromCatalog } from '@/lib/requirements'
@@ -36,42 +36,48 @@ export function DegreeRequirements({
 
   const suggestion = suggestFromCatalog(catalog)
 
-  return (
-    <div className="dd-section">
-      <div className="dd-section-header">
-        <h2>דרישות התואר</h2>
-        {list.length > 0 && !editing && (
-          <button type="button" className="dr-link" onClick={() => setEditing(true)}>
-            עריכה
-          </button>
-        )}
-      </div>
+  const header = (
+    <div className="dr-header">
+      <h2>דרישות התואר</h2>
+      {list.length > 0 && !editing && (
+        <button type="button" className="dr-link" onClick={() => setEditing(true)}>
+          עריכה
+        </button>
+      )}
+    </div>
+  )
 
-      {editing ? (
-        <RequirementsEditor
-          initial={list.length ? list.map((r) => ({ category: r.category, min_credits: r.min_credits })) : suggestion}
-          categories={suggestion.map((s) => s.category)}
-          targetCredits={targetCredits}
-          busy={replace.isPending}
-          onCancel={() => setEditing(false)}
-          onSave={async (rows) => {
-            await replace.mutateAsync(rows)
-            setEditing(false)
-          }}
-        />
-      ) : isLoading ? (
-        <Card>
-          <div className="dr-list" aria-busy="true">
-            {[0, 1, 2].map((i) => (
-              <div key={i}>
-                <Skeleton width="45%" height={15} style={{ marginBottom: 8 }} />
-                <Skeleton height={10} radius={5} />
-              </div>
-            ))}
-          </div>
-        </Card>
+  if (editing) {
+    return (
+      <RequirementsEditor
+        header={header}
+        initial={list.length ? list.map((r) => ({ category: r.category, min_credits: r.min_credits })) : suggestion}
+        categories={suggestion.map((s) => s.category)}
+        targetCredits={targetCredits}
+        busy={replace.isPending}
+        onCancel={() => setEditing(false)}
+        onSave={async (rows) => {
+          await replace.mutateAsync(rows)
+          setEditing(false)
+        }}
+      />
+    )
+  }
+
+  return (
+    <Card className="dr-card">
+      {header}
+      {isLoading ? (
+        <div className="dr-list" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i}>
+              <Skeleton width="45%" height={15} style={{ marginBottom: 8 }} />
+              <Skeleton height={8} radius={4} />
+            </div>
+          ))}
+        </div>
       ) : list.length === 0 ? (
-        <Card>
+        <>
           <EmptyState
             title="עוד לא הוגדרו דרישות"
             subtitle={
@@ -85,9 +91,9 @@ export function DegreeRequirements({
               {suggestion.length ? 'הגדרת דרישות מהקטלוג' : 'הגדרת דרישות'}
             </Button>
           </div>
-        </Card>
+        </>
       ) : (
-        <Card>
+        <>
           <ul className="dr-list">
             {list.map((r) => (
               <RequirementRow key={r.id} requirement={r} stats={statsFor(r.category, courses, catalog)} onCategoryClick={onCategoryClick} />
@@ -99,9 +105,9 @@ export function DegreeRequirements({
             <span><i className="dr-swatch dr-swatch--planned" />מתוכנן</span>
           </div>
           {unmatched > 0 && <p className="dr-note">{formatGrade(unmatched)} נ"ז שהושלמו לא משויכות לאף קטגוריה (קורסים בלי קטגוריה או בקטגוריה אחרת).</p>}
-        </Card>
+        </>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -150,17 +156,18 @@ function RequirementRow({
         {complete
           ? 'הדרישה הושלמה'
           : remaining != null
-            ? `נשארו ${formatGrade(remaining)} נ"ז${stats.current + stats.planned > 0 ? ` (${formatGrade(stats.current + stats.planned)} כבר בתהליך או בתכנון)` : ''}`
+            ? `נשארו ${formatGrade(remaining)} נ"ז`
             : stats.current + stats.planned > 0
-              ? `${formatGrade(stats.current + stats.planned)} נ"ז בתהליך או בתכנון · אין יעד לקטגוריה`
-              : 'אין יעד נ"ז לקטגוריה (אפשר להגדיר בעריכה)'}
-        {stats.unselectedMandatory > 0 && ` · ${stats.unselectedMandatory} קורסי חובה עוד לא נבחרו`}
+              ? `${formatGrade(stats.current + stats.planned)} נ"ז בתהליך או בתכנון · אין יעד`
+              : 'אין יעד נ"ז (אפשר להגדיר בעריכה)'}
+        {stats.unselectedMandatory > 0 && ` · ${stats.unselectedMandatory} קורסי חובה לא נבחרו`}
       </p>
     </li>
   )
 }
 
 function RequirementsEditor({
+  header,
   initial,
   categories,
   targetCredits,
@@ -168,6 +175,7 @@ function RequirementsEditor({
   onSave,
   onCancel,
 }: {
+  header: ReactNode
   initial: { category: string; min_credits: number | null }[]
   categories: string[]
   targetCredits: number | null
@@ -204,7 +212,8 @@ function RequirementsEditor({
   }
 
   return (
-    <Card>
+    <Card className="dr-card">
+      {header}
       <form className="dr-editor" onSubmit={handleSubmit}>
         <p className="dr-note dr-note--top">את הנ"ז הנדרשות בכל קטגוריה אפשר למצוא בידיעון של התוכנית. שדה נ"ז ריק = בלי יעד.</p>
         <datalist id="dr-categories">

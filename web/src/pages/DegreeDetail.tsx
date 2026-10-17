@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Card, EmptyState, IconPicker } from '@/components/ui'
 import { DegreeRequirements } from '@/components/DegreeRequirements'
@@ -10,8 +10,9 @@ import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { EMPTY_FILTER } from '@/lib/catalog'
 import type { CatalogFilter } from '@/lib/catalog'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useUpdateDegree } from '@/lib/queries'
-import { countsTowardDegree } from '@/lib/grades'
-import type { CourseStatus } from '@/lib/types'
+import { countsTowardDegree, formatGrade } from '@/lib/grades'
+import { useMediaQuery } from '@/lib/useMediaQuery'
+import type { CourseRead, CourseStatus } from '@/lib/types'
 import './DegreeDetail.css'
 
 // מסך התואר = התואר והקטלוג שלו. ניהול הקורסים האישיים (רשימות, הוספה ידנית,
@@ -22,10 +23,15 @@ const SUMMARY: { status: CourseStatus; label: string; tab: string }[] = [
   { status: 'planned', label: 'בתכנון', tab: 'plan' },
 ]
 
+// במחשב הדרישות בטור צדדי קבוע, ובטלפון הן לשונית
+type Tab = 'requirements' | 'plan' | 'catalog'
+const TAB_LABELS: Record<Tab, string> = { requirements: 'דרישות', plan: 'מה לקחת', catalog: 'קטלוג' }
+
 export default function DegreeDetail() {
   const { degreeId } = useParams()
   const id = Number(degreeId)
   const navigate = useNavigate()
+  const wide = useMediaQuery('(min-width: 900px)')
 
   const { degree, isLoading: degreeLoading } = useDegree(id)
   const { data: catalog } = useCatalog(id)
@@ -37,22 +43,32 @@ export default function DegreeDetail() {
 
   // ?show=unselected (מ"+ מהקטלוג" במסך הקורסים) ו-?category=... פותחים את הקטלוג מסונן
   const [params] = useSearchParams()
+  const { hash } = useLocation()
   const [filter, setFilter] = useState<CatalogFilter>(() => ({
     ...EMPTY_FILTER,
     state: params.get('show') === 'unselected' ? 'unselected' : 'all',
     category: params.get('category'),
   }))
+  const [chosenTab, setChosenTab] = useState<Tab | null>(() =>
+    hash === '#catalog' || params.has('show') || params.has('category') ? 'catalog' : null,
+  )
+  const tabsRef = useRef<HTMLDivElement>(null)
 
   // הגעה מ"+ הוספה מהקטלוג" בלוח התכנון - גוללים לקטלוג אחרי שנטען
-  const { hash } = useLocation()
   const catalogLoaded = catalog !== undefined
   useEffect(() => {
-    if (hash === '#catalog' && catalogLoaded) document.getElementById('catalog')?.scrollIntoView()
+    if (hash === '#catalog' && catalogLoaded) tabsRef.current?.scrollIntoView()
   }, [hash, catalogLoaded])
+
+  const hasPlanner = !!catalog?.some((c) => c.info)
+  const tabs: Tab[] = [...(wide ? [] : (['requirements'] as Tab[])), ...(hasPlanner ? (['plan'] as Tab[]) : []), 'catalog']
+  const defaultTab: Tab = wide ? (hasPlanner ? 'plan' : 'catalog') : 'requirements'
+  const tab = chosenTab && tabs.includes(chosenTab) ? chosenTab : defaultTab
 
   function showCategory(category: string) {
     setFilter({ ...EMPTY_FILTER, category })
-    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setChosenTab('catalog')
+    tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   async function handleDeleteDegree() {
@@ -76,12 +92,12 @@ export default function DegreeDetail() {
   }
 
   const myCourses = courses ?? []
-  const earnedCredits = myCourses.filter(countsTowardDegree).reduce((sum, c) => sum + c.credits, 0)
-  const target = degree.target_credits
-  const progressPercent = target ? Math.min((earnedCredits / target) * 100, 100) : 0
+  const requirements = (
+    <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={degree.target_credits} onCategoryClick={catalog?.length ? showCategory : undefined} />
+  )
 
   return (
-    <div>
+    <div className="dd">
       <div className="dd-header">
         <div className="dd-header__main">
           <Link to="/degrees?all=1" className="dd-all-degrees-link">
@@ -98,7 +114,7 @@ export default function DegreeDetail() {
             >
               <span aria-hidden>{degree.icon || DEFAULT_DEGREE_ICON}</span>
             </button>
-            <div>
+            <div className="dd-title">
               <h1>{degree.name}</h1>
               {degree.institution && <p>{degree.institution}</p>}
             </div>
@@ -121,45 +137,84 @@ export default function DegreeDetail() {
         </Card>
       )}
 
-      <div className="dd-section">
-        <div className="dd-section-header">
-          <h2>ההתקדמות שלי בתואר</h2>
-          <Link to="/courses" className="dd-section-link">
-            לניהול הקורסים ←
-          </Link>
-        </div>
-        <Card>
-          <div className="dd-credits">
-            <span>נקודות זכות</span>
-            <strong>
-              {earnedCredits}
-              {target ? ` / ${target}` : ''} נ"ז
-            </strong>
-          </div>
-          {target && (
-            <div className="dd-progress">
-              <div className="dd-progress__bar" style={{ width: `${progressPercent}%` }} />
-            </div>
-          )}
-          <div className="dd-summary">
-            {SUMMARY.map((s) => (
-              <Link key={s.status} to={`/courses?tab=${s.tab}`} className="dd-summary__item">
-                <strong>{myCourses.filter((c) => c.status === s.status).length}</strong>
-                <span>{s.label}</span>
-              </Link>
+      <div className="dd-layout">
+        <aside className="dd-side" aria-label="ההתקדמות שלי בתואר">
+          <ProgressCard courses={myCourses} target={degree.target_credits} />
+          {wide && requirements}
+        </aside>
+
+        <div className="dd-main">
+          <div className="dd-tabs" role="tablist" aria-label="אזורי התואר" ref={tabsRef} id="catalog">
+            {tabs.map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                id={`dd-tab-${t}`}
+                aria-selected={tab === t}
+                aria-controls="dd-panel"
+                className={`dd-tab${tab === t ? ' dd-tab--active' : ''}`}
+                onClick={() => setChosenTab(t)}
+              >
+                {wide && t === 'plan' ? 'מה לקחת בסמסטר' : TAB_LABELS[t]}
+                {t === 'catalog' && catalog && catalog.length > 0 && <span className="dd-tab__count">{catalog.length}</span>}
+              </button>
             ))}
           </div>
-          <p className="dd-plan-hint">
-            שיבוץ קורסים לסמסטרים נמצא ב<Link to="/courses?tab=plan">קורסים · תכנון</Link>.
-          </p>
-        </Card>
+          <div id="dd-panel" role="tabpanel" aria-labelledby={`dd-tab-${tab}`}>
+            {tab === 'requirements' && requirements}
+            {tab === 'plan' && catalog && <SemesterPlanner degreeId={id} catalog={catalog} courses={myCourses} />}
+            {tab === 'catalog' && catalog && <DegreeCatalog degreeId={id} catalog={catalog} courses={myCourses} filter={filter} setFilter={setFilter} />}
+          </div>
+        </div>
       </div>
-
-      <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={target} onCategoryClick={catalog?.length ? showCategory : undefined} />
-
-      {catalog && catalog.some((c) => c.info) && <SemesterPlanner degreeId={id} catalog={catalog} courses={myCourses} />}
-
-      {catalog && <DegreeCatalog degreeId={id} catalog={catalog} courses={myCourses} filter={filter} setFilter={setFilter} />}
     </div>
+  )
+}
+
+/** נ"ז מול היעד (הושלם / בתהליך / בתכנון), מספר הקורסים בכל מצב וממוצע משוקלל */
+function ProgressCard({ courses, target }: { courses: CourseRead[]; target: number | null }) {
+  const done = courses.filter(countsTowardDegree)
+  const credits = (status: CourseStatus) => courses.filter((c) => c.status === status).reduce((sum, c) => sum + c.credits, 0)
+  const earned = done.reduce((sum, c) => sum + c.credits, 0)
+  const graded = done.filter((c) => c.grade != null)
+  const gradedCredits = graded.reduce((sum, c) => sum + c.credits, 0)
+  const average = gradedCredits > 0 ? graded.reduce((sum, c) => sum + c.grade! * c.credits, 0) / gradedCredits : null
+  const scale = Math.max(target ?? 0, 1)
+  const pct = (n: number) => `${Math.min((n / scale) * 100, 100)}%`
+
+  return (
+    <Card className="dd-progress-card">
+      <div className="dd-credits">
+        <span>
+          <strong>{formatGrade(earned)}</strong>
+          {target ? ` מתוך ${formatGrade(target)}` : ''} נ"ז
+        </span>
+        {target ? <span className="dd-credits__pct">{Math.min(Math.round((earned / target) * 100), 100)}%</span> : null}
+      </div>
+      {target ? (
+        <div
+          className="dr-bar"
+          role="img"
+          aria-label={`${formatGrade(earned)} נ"ז הושלמו, ${formatGrade(credits('current'))} בתהליך, ${formatGrade(credits('planned'))} בתכנון, מתוך ${formatGrade(target)}`}
+        >
+          <span className="dr-bar__seg dr-bar__seg--done" style={{ width: pct(earned) }} />
+          <span className="dr-bar__seg dr-bar__seg--current" style={{ width: pct(credits('current')) }} />
+          <span className="dr-bar__seg dr-bar__seg--planned" style={{ width: pct(credits('planned')) }} />
+        </div>
+      ) : null}
+      <div className="dd-summary">
+        {SUMMARY.map((s) => (
+          <Link key={s.status} to={`/courses?tab=${s.tab}`} className="dd-summary__item">
+            <strong>{courses.filter((c) => c.status === s.status).length}</strong>
+            <span>{s.label}</span>
+          </Link>
+        ))}
+        <div className="dd-summary__item">
+          <strong>{average != null ? average.toFixed(1) : '—'}</strong>
+          <span>ממוצע</span>
+        </div>
+      </div>
+    </Card>
   )
 }
