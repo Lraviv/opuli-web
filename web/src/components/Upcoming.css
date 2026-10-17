@@ -1,0 +1,136 @@
+/* פריסה וכרטיסים משותפים לדף הקורס ולעמוד הבית: עמודות, "הבא בתור", תיבת תאריך, פס התקדמות */
+/* ---- פריסה: עמודה ראשית + צדדית; בטלפון אחת מתחת לשנייה ---- */
+.cd-cols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-four);
+}
+.cd-cols__main {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-four);
+}
+.cd-cols__side {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-four);
+}
+.cd-cols .cd-section {
+  margin-bottom: 0;
+}
+/* ---- כרטיסי הסקירה ---- */
+.ui-card.cd-card {
+  padding: var(--space-three) var(--space-four);
+}
+.cd-card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cd-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+  margin-bottom: var(--space-two);
+}
+.cd-ghost {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cd-ghost:hover {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+.cd-muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.cd-next {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  min-height: 56px;
+  padding: 6px 0;
+}
+.cd-next + .cd-next {
+  border-top: 1px solid var(--color-border);
+}
+.cd-next--past {
+  opacity: 0.6;
+}
+.cd-next__body {
+  flex: 1;
+  min-width: 0;
+}
+.cd-next__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.date-box {
+  width: 46px;
+  flex-shrink: 0;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: var(--color-background);
+  text-align: center;
+  line-height: 1.1;
+}
+.date-box b {
+  display: block;
+  font-size: 17px;
+}
+.date-box small {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.kind-pill {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-background-selected);
+  color: var(--color-text-secondary);
+}
+.kind-pill--assignment {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: color-mix(in srgb, var(--color-warning) 55%, var(--color-text));
+}
+.kind-pill--exam {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: color-mix(in srgb, var(--color-primary) 70%, var(--color-text));
+}
+.cd-bar {
+  display: block;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--color-background-selected);
+  overflow: hidden;
+}
+.cd-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--color-primary);
+}
+.cd-bar__fill--success {
+  background: var(--color-success);
+}
