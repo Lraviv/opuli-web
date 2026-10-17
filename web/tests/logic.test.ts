@@ -6,7 +6,7 @@ import { statsFor } from '../src/lib/requirements.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { relativeTime } from '../src/lib/tips.ts'
 import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
-import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
+import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays, defaultWeekStart } from '../src/lib/schedule.ts'
 
 const rules = { examWeight: null, minExamGrade: null, passGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
 const parts = [{ weight: 10, value: 90 }, { weight: 10, value: 80 }]
@@ -136,8 +136,17 @@ console.log('all logic tests passed')
   assert.deepEqual(entries.map((e) => e.key), ['assignment-3', 'exam-2', 'session-1-2026-10-18', 'assignment-1', 'exam-1', 'reminder-1'])
   assert.deepEqual(groupByHorizon(entries).map((g) => [g.horizon, g.entries.length]), [['overdue', 1], ['today', 1], ['week', 2], ['later', 1], ['undated', 1]])
   // מפגשים, "בהמשך" ו"בלי תאריך" לא נספרים
-  assert.equal(weekSummary(entries), 'השבוע מחכים לך 2 מטלות ומבחן אחד (1 באיחור)')
-  assert.equal(weekSummary([...entries, { ...entries[0], key: 'r', kind: 'reminder' }, { ...entries[0], key: 'r2', kind: 'reminder' }]), 'השבוע מחכים לך 2 מטלות, מבחן אחד ו-2 תזכורות (3 באיחור)')
-  assert.equal(weekSummary([]), 'השבוע פנוי, אין מטלות או מבחנים קרובים')
+  assert.equal(weekSummary(entries), 'בשבוע הקרוב מחכים לך 2 מטלות ומבחן אחד (1 באיחור)')
+  assert.equal(weekSummary([...entries, { ...entries[0], key: 'r', kind: 'reminder' }, { ...entries[0], key: 'r2', kind: 'reminder' }]), 'בשבוע הקרוב מחכים לך 2 מטלות, מבחן אחד ו-2 תזכורות (3 באיחור)')
+  const firstAssignment = entries.find((e) => e.kind === 'assignment' && e.horizon === 'week')!
+  assert.equal(weekSummary([firstAssignment]), 'בשבוע הקרוב מחכה לך מטלה אחת')
+  assert.equal(weekSummary([firstAssignment, { ...firstAssignment, key: 'a2' }]), 'בשבוע הקרוב מחכות לך 2 מטלות')
+  assert.equal(weekSummary([{ ...firstAssignment, kind: 'exam' }, { ...firstAssignment, key: 'e2', kind: 'exam' }]), 'בשבוע הקרוב מחכים לך 2 מבחנים')
+  assert.equal(weekSummary([]), 'השבוע הקרוב פנוי, אין מטלות או מבחנים קרובים')
 }
 console.log('upcoming tests passed')
+
+// הלו"ז פותח בשישי ובשבת על השבוע הבא (17.10.2026 = שבת)
+assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 17, 10))), '2026-10-18')
+assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 16, 10))), '2026-10-18')
+assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')

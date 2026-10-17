@@ -141,6 +141,9 @@ export default function DegreeDetail() {
               </Link>
             ))}
           </div>
+          <p className="dd-plan-hint">
+            שיבוץ קורסים לסמסטרים נמצא ב<Link to="/courses?tab=plan">קורסים · תכנון</Link>.
+          </p>
         </Card>
       </div>
 

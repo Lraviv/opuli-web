@@ -141,6 +141,11 @@ export default function Home() {
                   {f.label}
                 </button>
               ))}
+              {filter === 'exam' && (
+                <Link to="/exams" className="home-section__link home-filters__more">
+                  כל המבחנים ←
+                </Link>
+              )}
             </div>
             {agendaLoading ? (
               <SkeletonList rows={4} />

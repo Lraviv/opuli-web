@@ -36,13 +36,15 @@ export function LinksBar({
   const presets = (courseId == null ? GLOBAL_LINK_PRESETS : COURSE_LINK_PRESETS)
     .filter((p) => !list.some((l) => l.title === p.title))
     .map((p) => (p.title === 'אתר הקורס' && siteUrl ? { ...p, url: siteUrl } : p))
+  // בלי קישורים: ההצעות שיש להן כתובת מוצגות כצ'יפים ונוספות בלחיצה אחת
+  const quickPresets = compact && list.length === 0 && !adding ? presets.filter((p) => p.url) : []
 
   return (
-    <section className={`lb${compact ? ' lb--chips' : ''}`} aria-label={title}>
-      {/* compact: שורת "צ'יפים" דקה בלי כותרת - העריכה עוברת לצ'יפ בסוף השורה */}
+    <section className={`lb${compact ? ' lb--chips' : ''}${compact && courseId == null ? ' lb--titled' : ''}`} aria-label={title}>
+      {/* compact: שורת "צ'יפים" דקה (בבית עם כותרת קטנה) - העריכה עוברת לצ'יפ בסוף השורה */}
       <div className="lb__header">
         <h2>{title}</h2>
-        {list.length > 0 && (
+        {!compact && list.length > 0 && (
           <button type="button" className="lb__toggle" onClick={() => setEditing((v) => !v)} aria-pressed={editing}>
             {editing ? 'סיום' : 'עריכה'}
           </button>
@@ -66,9 +68,20 @@ export function LinksBar({
               </a>
             ) : null,
           )}
+          {quickPresets.map((p) => (
+            <button
+              key={p.title}
+              type="button"
+              className="lb__tile lb__tile--add"
+              disabled={createLink.isPending}
+              onClick={() => createLink.mutate({ title: p.title, url: p.url })}
+            >
+              <span aria-hidden>+</span> {p.title}
+            </button>
+          ))}
           {!adding && !editing && (
             <button type="button" className="lb__tile lb__tile--add" onClick={() => setAdding(true)}>
-              <span aria-hidden>+</span> {list.length === 0 ? 'הוספת קישור' : 'קישור'}
+              <span aria-hidden>+</span> {list.length === 0 ? (quickPresets.length ? 'קישור אחר' : 'הוספת קישור') : 'קישור'}
             </button>
           )}
           {compact && list.length > 0 && !adding && (

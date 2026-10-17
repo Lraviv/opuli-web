@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CalendarExport } from '@/components/CalendarExport'
 import { PageSkeleton } from '@/components/Skeleton'
-import { useAllCourseItems, useAllSessions, useCourses, useExams, useReminders, useUpdateCourseItem, useUpdateReminder } from '@/lib/queries'
+import { Button, DateInput, Input } from '@/components/ui'
+import { useAddReminder, useAllCourseItems, useAllSessions, useCourses, useExams, useReminders, useUpdateCourseItem, useUpdateReminder } from '@/lib/queries'
 import {
   AGENDA_KIND_LABEL,
   WEEKDAY_NAMES,
@@ -10,6 +12,7 @@ import {
   buildAgenda,
   courseColor,
   dateKey,
+  defaultWeekStart,
   formatWeekRange,
   parseDateKey,
   startOfWeek,
@@ -25,12 +28,13 @@ export default function Schedule() {
   // "עכשיו" נקבע פעם אחת בטעינת המסך - מספיק ללו"ז, ושומר על רינדור יציב
   const [now] = useState(() => new Date())
   const weekStart = useMemo(() => {
-    const base = weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? parseDateKey(weekParam) : now
-    return startOfWeek(base)
+    return weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? startOfWeek(parseDateKey(weekParam)) : defaultWeekStart(now)
   }, [weekParam, now])
   const days = useMemo(() => weekDays(weekStart), [weekStart])
   const todayKey = dateKey(now)
   const isCurrentWeek = dateKey(startOfWeek(now)) === dateKey(weekStart)
+  // בשישי ובשבת הלו"ז נפתח על השבוע הבא - מסבירים למה
+  const showingNextByDefault = !weekParam && !isCurrentWeek
 
   const { data: courses, isLoading: coursesLoading } = useCourses()
   const { data: sessions, isLoading: sessionsLoading } = useAllSessions()
@@ -38,16 +42,18 @@ export default function Schedule() {
   const { data: assignments, isLoading: itemsLoading } = useAllCourseItems({ type: 'assignment' })
   const { data: reminders } = useReminders()
 
-  const agenda = useMemo(() => {
+  const agendaFor = useMemo(() => {
     const names = new Map((courses ?? []).map((c) => [c.id, c.name]))
-    return buildAgenda(days, {
-      sessions: sessions ?? [],
-      exams: exams ?? [],
-      assignments: assignments ?? [],
-      reminders: reminders ?? [],
-      courseName: (id) => names.get(id) ?? null,
-    })
-  }, [days, courses, sessions, exams, assignments, reminders])
+    return (forDays: Date[]) =>
+      buildAgenda(forDays, {
+        sessions: sessions ?? [],
+        exams: exams ?? [],
+        assignments: assignments ?? [],
+        reminders: reminders ?? [],
+        courseName: (id) => names.get(id) ?? null,
+      })
+  }, [courses, sessions, exams, assignments, reminders])
+  const agenda = useMemo(() => agendaFor(days), [agendaFor, days])
 
   // תזכורות פתוחות בלי תאריך - אין להן יום בלו"ז, אז הן מוצגות ברשימה נפרדת מתחת לשבוע
   const undatedReminders = useMemo<AgendaItem[]>(
@@ -76,6 +82,15 @@ export default function Schedule() {
     }
   }, [agenda])
 
+  // שבוע בלי מבחנים והגשות: מה מחכה בשבוע שאחריו, כדי שהבית והלו"ז לא ייראו סותרים
+  const nextWeekPreview = useMemo(() => {
+    if (summary.exams || summary.due) return []
+    return [...agendaFor(weekDays(addDays(weekStart, 7))).values()]
+      .flat()
+      .filter((i) => i.kind === 'exam' || (i.kind === 'assignment' && !i.done))
+      .map((i) => (i.kind === 'exam' ? `${i.title} ב${i.courseName ?? ''}` : i.title))
+  }, [summary, agendaFor, weekStart])
+
   const goToWeek = (d: Date | null) => {
     const next = new URLSearchParams(params)
     if (d) next.set('week', dateKey(d))
@@ -102,7 +117,7 @@ export default function Schedule() {
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, -7))} aria-label="השבוע הקודם">
             <Chevron direction="right" />
           </button>
-          <button type="button" className="sch-nav__today" onClick={() => goToWeek(null)} disabled={isCurrentWeek}>
+          <button type="button" className="sch-nav__today" onClick={() => goToWeek(startOfWeek(now))} disabled={isCurrentWeek}>
             השבוע
           </button>
           <button type="button" className="sch-nav__btn" onClick={() => goToWeek(addDays(weekStart, 7))} aria-label="השבוע הבא">
@@ -111,7 +126,18 @@ export default function Schedule() {
         </nav>
       </div>
 
-      <p className="sch-summary">{summaryParts.length ? `השבוע: ${summaryParts.join(', ')}` : 'שבוע פנוי - אין מבחנים, הגשות או מפגשים'}</p>
+      {showingNextByDefault && <p className="sch-note">השבוע הנוכחי כמעט נגמר, אז מוצג השבוע הבא.</p>}
+      <p className="sch-summary">
+        {summaryParts.length ? `בשבוע הזה: ${summaryParts.join(', ')}` : 'שבוע פנוי, אין מבחנים, הגשות או מפגשים'}
+        {nextWeekPreview.length > 0 && (
+          <span className="sch-summary__next">
+            {' · '}בשבוע הבא: {nextWeekPreview.slice(0, 2).join(', ')}
+            {nextWeekPreview.length > 2 ? ` ועוד ${nextWeekPreview.length - 2}` : ''}
+          </span>
+        )}
+        {' · '}
+        <Link to="/exams">כל המבחנים</Link>
+      </p>
 
       <ol className="sch-days">
         {days.map((day) => {
@@ -138,16 +164,22 @@ export default function Schedule() {
         })}
       </ol>
 
-      {undatedReminders.length > 0 && (
-        <section className="sch-undated" aria-labelledby="sch-undated-title">
-          <h2 id="sch-undated-title">תזכורות בלי תאריך</h2>
+      <section className="sch-undated" aria-labelledby="sch-undated-title">
+        <div className="sch-undated__header">
+          <h2 id="sch-undated-title">תזכורות</h2>
+          <Link to="/reminders" className="sch-undated__all">
+            לכל התזכורות ←
+          </Link>
+        </div>
+        <ReminderQuickAdd />
+        {undatedReminders.length > 0 && (
           <div className="sch-undated__list">
             {undatedReminders.map((item) => (
               <AgendaRow key={item.key} item={item} timeLabel="בלי תאריך" />
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {(sessions ?? []).length === 0 && (
         <p className="sch-hint">
@@ -160,6 +192,45 @@ export default function Schedule() {
         <CalendarExport />
       </section>
     </div>
+  )
+}
+
+/** תזכורת חדשה מתוך הלו"ז: עם תאריך היא מופיעה ביום שלה, בלי תאריך ברשימה כאן */
+function ReminderQuickAdd() {
+  const addReminder = useAddReminder()
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
+
+  async function handleAdd(e: FormEvent) {
+    e.preventDefault()
+    if (!title.trim()) return
+    await addReminder.mutateAsync({ title: title.trim(), due_date: dueDate ? new Date(dueDate).toISOString() : null })
+    setTitle('')
+    setDueDate('')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="sch-add-reminder" onClick={() => setOpen(true)}>
+        + תזכורת
+      </button>
+    )
+  }
+  return (
+    <form className="sch-reminder-form" onSubmit={handleAdd}>
+      <Input placeholder="תזכורת חדשה" aria-label="תזכורת חדשה" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+      <DateInput type="datetime-local" label="מועד יעד" placeholder="מועד יעד (לא חובה)" value={dueDate} onChange={setDueDate} />
+      <div className="sch-reminder-form__actions">
+        <Button type="submit" disabled={addReminder.isPending}>
+          הוספה
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+          ביטול
+        </Button>
+      </div>
+    </form>
   )
 }
 
@@ -189,7 +260,7 @@ function AgendaRow({ item, timeLabel = 'כל היום' }: { item: AgendaItem; ti
       </span>
       <span className="sch-item__main">
         <span className={`sch-item__title${item.done ? ' sch-item__title--done' : ''}`}>
-          {item.kind === 'exam' ? `מבחן: ${item.courseName ?? ''}` : item.title}
+          {item.kind === 'exam' ? `${item.title}: ${item.courseName ?? ''}` : item.title}
         </span>
         <span className="sch-item__sub">
           <span className={`sch-tag sch-tag--${item.kind}`}>{AGENDA_KIND_LABEL[item.kind]}</span>

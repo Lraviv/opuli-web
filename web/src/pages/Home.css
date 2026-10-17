@@ -116,6 +116,10 @@
   gap: 6px;
   margin-bottom: var(--space-two);
 }
+.home-filters__more {
+  align-self: center;
+  margin-inline-start: auto;
+}
 .home-filter {
   min-height: 32px;
   padding: 0 14px;

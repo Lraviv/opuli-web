@@ -198,3 +198,11 @@
   padding: 9px 12px;
   font-size: 14px;
 }
+.dd-plan-hint {
+  margin: var(--space-three) 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.dd-plan-hint a {
+  color: var(--color-primary);
+}
