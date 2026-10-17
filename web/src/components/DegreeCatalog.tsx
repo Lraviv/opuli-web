@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Dispatch, FormEvent, ReactNode, SetStateAction } from 'react'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
-import { CourseInfoTags } from '@/components/CourseInfoTags'
 import { StatusMenu } from '@/components/StatusMenu'
 import { catalogCategories, catalogSemesters, groupCatalog, isFiltered, openByDefault, selectedCourse, EMPTY_FILTER } from '@/lib/catalog'
 import type { CatalogFilter, CatalogGroup, CatalogState } from '@/lib/catalog'
@@ -16,13 +15,11 @@ const STATUS_OPTIONS: { value: CourseStatus; label: string }[] = [
   { value: 'done', label: 'הושלם' },
 ]
 
-const STATE_CHIPS: { value: CatalogState; label: string }[] = [
-  { value: 'all', label: 'הכול' },
+const STATE_OPTIONS: { value: CatalogState; label: string }[] = [
+  { value: 'all', label: 'כל הקורסים' },
   { value: 'unselected', label: 'עוד לא נבחרו' },
   { value: 'selected', label: 'נבחרו' },
 ]
-
-const isPhone = () => window.matchMedia('(max-width: 640px)').matches
 
 function parseGrade(raw: string): number | null | undefined {
   if (raw.trim() === '') return null
@@ -30,7 +27,7 @@ function parseGrade(raw: string): number | null | undefined {
   return Number.isFinite(n) && n >= 0 && n <= 100 ? n : undefined
 }
 
-/** קטלוג הקורסים של התואר: סינון בצ'יפים, קבוצות לפי קטגוריה, הוספה עם סטטוס, ובחירה מרוכזת */
+/** קטלוג הקורסים של התואר: סינון בתפריטים, קבוצות לפי קטגוריה, הוספה עם סטטוס, ובחירה מרוכזת */
 export function DegreeCatalog({
   degreeId,
   catalog,
@@ -51,150 +48,151 @@ export function DegreeCatalog({
   const filtered = isFiltered(filter)
   const shownCount = groups.reduce((s, g) => s + g.courses.length, 0)
 
-  // במחשב כל הקבוצות פתוחות; בטלפון רק קבוצות חובה שעוד חסרים בהן קורסים
+  // קבוצות פתוחות מראש רק אם הן חובה ועוד חסרים בהן קורסים (או כשמסננים)
   const [toggled, setToggled] = useState<Record<string, boolean>>({})
-  const [phone] = useState(isPhone)
-  const isOpen = (g: CatalogGroup) => filtered || (toggled[g.category] ?? (!phone || openByDefault(g)))
+  const isOpen = (g: CatalogGroup) => toggled[g.category] ?? (filtered || openByDefault(g))
 
   const [bulk, setBulk] = useState(false)
   const [picked, setPicked] = useState<number[]>([])
 
   const patch = (p: Partial<CatalogFilter>) => setFilter((f) => ({ ...f, ...p }))
 
+  if (catalog.length === 0) {
+    return (
+      <Card>
+        <EmptyState title="אין קטלוג לתואר הזה" subtitle="קורסים שלא בקטלוג אפשר להוסיף ידנית במסך הקורסים" />
+      </Card>
+    )
+  }
+
   return (
-    <div className="dd-section" id="catalog">
-      <div className="dd-section-header">
-        <h2>קטלוג קורסים</h2>
-        {filtered && (
-          <span className="dd-search-count">
-            {shownCount} מתוך {catalog.length}
+    <div className="dc">
+      <div className="dc-controls">
+        <Input
+          type="search"
+          placeholder="חיפוש לפי שם, קטגוריה או נושא…"
+          aria-label="חיפוש בקטלוג"
+          value={filter.query}
+          onChange={(e) => patch({ query: e.target.value })}
+        />
+        <div className="dc-filters">
+          <Select label="מצב" value={filter.state} active={filter.state !== 'all'} onChange={(v) => patch({ state: v as CatalogState })}>
+            {STATE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select label="קטגוריה" value={filter.category ?? ''} active={filter.category != null} onChange={(v) => patch({ category: v || null })}>
+            <option value="">כל הקטגוריות</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+          {semesters.length > 0 && (
+            <Select label="סמסטר" value={filter.semester ?? ''} active={filter.semester != null} onChange={(v) => patch({ semester: v || null })}>
+              <option value="">כל הסמסטרים</option>
+              {semesters.map((s) => (
+                <option key={s} value={s}>
+                  נפתח בסמסטר {s}
+                </option>
+              ))}
+            </Select>
+          )}
+          {hasPrereqInfo && (
+            <Select label="ידע קודם" value={filter.noPrerequisites ? 'none' : ''} active={filter.noPrerequisites} onChange={(v) => patch({ noPrerequisites: v === 'none' })}>
+              <option value="">ידע קודם: הכול</option>
+              <option value="none">בלי ידע קודם</option>
+            </Select>
+          )}
+        </div>
+        <div className="dc-toolbar">
+          <span className="dc-count">
+            {shownCount === catalog.length ? `${catalog.length} קורסים` : `${shownCount} מתוך ${catalog.length} קורסים`}
           </span>
-        )}
+          {filtered && (
+            <button type="button" className="dc-link" onClick={() => setFilter(EMPTY_FILTER)}>
+              ניקוי הסינון
+            </button>
+          )}
+          <button
+            type="button"
+            className="dc-link"
+            aria-pressed={bulk}
+            onClick={() => {
+              setBulk((v) => !v)
+              setPicked([])
+            }}
+          >
+            {bulk ? 'ביטול הסימון' : 'בחירה מרובה'}
+          </button>
+        </div>
       </div>
-      {catalog.length === 0 ? (
+
+      {groups.length === 0 ? (
         <Card>
-          <EmptyState title="אין קטלוג לתואר הזה" subtitle="קורסים שלא בקטלוג אפשר להוסיף ידנית במסך הקורסים" />
+          <EmptyState title="לא נמצאו קורסים תואמים" />
         </Card>
       ) : (
-        <>
-          <div className="dc-controls">
-            <Input
-              type="search"
-              placeholder="חיפוש לפי שם, קטגוריה או נושא…"
-              aria-label="חיפוש בקטלוג"
-              value={filter.query}
-              onChange={(e) => patch({ query: e.target.value })}
-            />
-            <div className="dc-chips" role="group" aria-label="סינון לפי קטגוריה">
-              <Chip on={filter.category == null} onClick={() => patch({ category: null })}>
-                כל הקטגוריות
-              </Chip>
-              {categories.map((c) => (
-                <Chip key={c} on={filter.category === c} onClick={() => patch({ category: filter.category === c ? null : c })}>
-                  {c}
-                </Chip>
-              ))}
-            </div>
-            <div className="dc-chips" role="group" aria-label="סינון לפי מצב">
-              {STATE_CHIPS.map((s) => (
-                <Chip key={s.value} on={filter.state === s.value} onClick={() => patch({ state: s.value })}>
-                  {s.label}
-                </Chip>
-              ))}
-              {semesters.map((s) => (
-                <Chip key={s} on={filter.semester === s} onClick={() => patch({ semester: filter.semester === s ? null : s })}>
-                  נפתח בסמסטר {s}
-                </Chip>
-              ))}
-              {hasPrereqInfo && (
-                <Chip on={filter.noPrerequisites} onClick={() => patch({ noPrerequisites: !filter.noPrerequisites })}>
-                  בלי ידע קודם
-                </Chip>
-              )}
-            </div>
-            <div className="dc-toolbar">
-              {filtered && (
-                <button type="button" className="dc-link" onClick={() => setFilter(EMPTY_FILTER)}>
-                  ניקוי הסינון
+        <div className="dc-groups">
+          {groups.map((g) => {
+            const open = isOpen(g)
+            return (
+              <Card key={g.category} className="dc-group">
+                <button
+                  type="button"
+                  className="dc-group__header"
+                  aria-expanded={open}
+                  onClick={() => setToggled((t) => ({ ...t, [g.category]: !open }))}
+                >
+                  <span className="dc-group__name">{g.category}</span>
+                  <span className="dc-group__count">
+                    {g.selected} מתוך {g.total} נבחרו
+                  </span>
+                  <svg className="dc-group__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
                 </button>
-              )}
-              <button
-                type="button"
-                className="dc-link"
-                aria-pressed={bulk}
-                onClick={() => {
-                  setBulk((v) => !v)
-                  setPicked([])
-                }}
-              >
-                {bulk ? 'ביטול הסימון' : 'סימון כמה קורסים'}
-              </button>
-            </div>
-          </div>
+                {open &&
+                  g.courses.map((c) => (
+                    <CatalogRow
+                      key={c.id}
+                      degreeId={degreeId}
+                      course={c}
+                      mine={c.already_selected ? selectedCourse(c.id, courses) : undefined}
+                      bulk={bulk}
+                      picked={picked.includes(c.id)}
+                      onPick={(on) => setPicked((p) => (on ? [...p, c.id] : p.filter((id) => id !== c.id)))}
+                    />
+                  ))}
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
-          {groups.length === 0 ? (
-            <Card>
-              <EmptyState title="לא נמצאו קורסים תואמים" />
-            </Card>
-          ) : (
-            <div className="dc-groups">
-              {groups.map((g) => {
-                const open = isOpen(g)
-                return (
-                  <Card key={g.category} className="dc-group">
-                    <button
-                      type="button"
-                      className="dc-group__header"
-                      aria-expanded={open}
-                      onClick={() => setToggled((t) => ({ ...t, [g.category]: !open }))}
-                    >
-                      <span className="dc-group__name">{g.category}</span>
-                      <span className="dc-group__count">
-                        {g.selected} מתוך {g.total} נבחרו
-                      </span>
-                      <svg className="dc-group__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    </button>
-                    {open &&
-                      g.courses.map((c) => (
-                        <CatalogRow
-                          key={c.id}
-                          degreeId={degreeId}
-                          course={c}
-                          mine={c.already_selected ? selectedCourse(c.id, courses) : undefined}
-                          bulk={bulk}
-                          picked={picked.includes(c.id)}
-                          onPick={(on) => setPicked((p) => (on ? [...p, c.id] : p.filter((id) => id !== c.id)))}
-                        />
-                      ))}
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-
-          {bulk && picked.length > 0 && (
-            <BulkBar
-              degreeId={degreeId}
-              courses={picked.map((id) => catalog.find((c) => c.id === id)!).filter(Boolean)}
-              onDone={() => {
-                setPicked([])
-                setBulk(false)
-              }}
-            />
-          )}
-        </>
+      {bulk && picked.length > 0 && (
+        <BulkBar
+          degreeId={degreeId}
+          courses={picked.map((id) => catalog.find((c) => c.id === id)!).filter(Boolean)}
+          onDone={() => {
+            setPicked([])
+            setBulk(false)
+          }}
+        />
       )}
     </div>
   )
 }
 
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
+/** תפריט סינון קטן; מודגש כשבחור בו משהו שאינו ברירת המחדל */
+function Select({ label, value, active, onChange, children }: { label: string; value: string; active: boolean; onChange: (value: string) => void; children: ReactNode }) {
   return (
-    <button type="button" className={`dc-chip${on ? ' dc-chip--on' : ''}`} aria-pressed={on} onClick={onClick}>
+    <select className={`dc-select${active ? ' dc-select--on' : ''}`} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
       {children}
-    </button>
+    </select>
   )
 }
 
@@ -214,26 +212,59 @@ function CatalogRow({
   onPick: (on: boolean) => void
 }) {
   const updateCourse = useUpdateCourse()
+  const [expanded, setExpanded] = useState(false)
   const selectable = bulk && !c.already_selected
-  const body = (
-    <div className="dc-row__body">
-      <p className="dd-row__title">{c.name}</p>
-      <p className="dd-row__meta">
-        {c.credits} נ"ז{c.category ? ` · ${c.category}` : ''}
-      </p>
-      <CourseInfoTags info={c.info} />
-    </div>
+  const info = c.info
+  const hasDetails = !!info && (info.subjects.length > 0 || info.required_knowledge.length > 0 || info.recommended_knowledge.length > 0)
+  const summary = (
+    <>
+      <span className="dc-row__title">{c.name}</span>
+      <span className="dc-row__meta">
+        <span>
+          {c.credits} נ"ז{info?.schedule_label ? ` · ${info.schedule_label}` : ''}
+        </span>
+        {info?.has_prerequisites != null && (
+          <span className={`dc-prereq dc-prereq--${info.has_prerequisites ? 'yes' : 'no'}`}>{info.has_prerequisites ? 'דורש ידע קודם' : 'ללא ידע קודם'}</span>
+        )}
+      </span>
+    </>
+  )
+  const body = selectable ? (
+    <label className="dc-row__body dc-row__pick">
+      <input type="checkbox" checked={picked} onChange={(e) => onPick(e.target.checked)} aria-label={`סימון ${c.name}`} />
+      <span className="dc-row__text">{summary}</span>
+    </label>
+  ) : hasDetails ? (
+    <button type="button" className="dc-row__body dc-row__toggle" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+      {summary}
+    </button>
+  ) : (
+    <div className="dc-row__body">{summary}</div>
   )
   return (
-    <div className={`dd-row dc-row${picked ? ' dc-row--picked' : ''}`}>
-      {selectable ? (
-        <label className="dc-row__pick">
-          <input type="checkbox" checked={picked} onChange={(e) => onPick(e.target.checked)} aria-label={`סימון ${c.name}`} />
-          {body}
-        </label>
-      ) : (
-        body
-      )}
+    <div className={`dc-row${picked ? ' dc-row--picked' : ''}`}>
+      <div className="dc-row__main">
+        {body}
+        {expanded && info && !selectable && (
+          <div className="dc-row__details">
+            {info.subjects.length > 0 && (
+              <p>
+                <strong>נושא:</strong> {info.subjects.join(', ')}
+              </p>
+            )}
+            {info.required_knowledge.length > 0 && (
+              <p>
+                <strong>ידע קודם דרוש:</strong> {info.required_knowledge.join(' · ')}
+              </p>
+            )}
+            {info.recommended_knowledge.length > 0 && (
+              <p>
+                <strong>מומלץ:</strong> {info.recommended_knowledge.join(' · ')}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
       {mine ? (
         <div className="dc-row__status">
           <StatusMenu status={mine.status} onChange={(status) => updateCourse.mutate({ id: mine.id, payload: { status } })} />
@@ -275,9 +306,20 @@ function AddMenu({ degreeId, course }: { degreeId: number; course: CatalogCourse
 
   return (
     <div className="status-menu" ref={ref}>
-      <Button variant="secondary" disabled={select.isPending} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        הוספה
-      </Button>
+      <button
+        type="button"
+        className="dc-add"
+        disabled={select.isPending}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`הוספת ${course.name}`}
+        title="הוספה"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
       {open && (
         <div className="menu-popover menu-popover--end" role="menu" aria-label={`הוספת ${course.name}`}>
           {doneForm ? (

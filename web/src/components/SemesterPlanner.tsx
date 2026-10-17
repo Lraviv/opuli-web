@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Button, Card, EmptyState, Pill } from '@/components/ui'
+import { Card, EmptyState } from '@/components/ui'
 import { isMandatoryCategory } from '@/lib/requirements'
 import { planSemester, SEMESTER_LETTERS, SEMESTER_NAMES } from '@/lib/planner'
 import type { PlanEntry, SemesterLetter } from '@/lib/planner'
@@ -22,57 +22,52 @@ export function SemesterPlanner({ degreeId, catalog, courses }: { degreeId: numb
   const add = (entry: PlanEntry) => select.mutate({ id: entry.course.id, payload: { status: 'planned' } })
 
   return (
-    <div className="dd-section" id="planner">
-      <div className="dd-section-header">
-        <h2>בחירת קורסים לסמסטר</h2>
+    <div className="sp">
+      <div className="sp__tabs" role="radiogroup" aria-label="סמסטר">
+        {SEMESTER_LETTERS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="radio"
+            aria-checked={semester === s}
+            className={`sp__tab${semester === s ? ' sp__tab--active' : ''}`}
+            onClick={() => setSemester(s)}
+          >
+            סמסטר {s} <span className="sp__tab-sub">{SEMESTER_NAMES[s]}</span>
+          </button>
+        ))}
       </div>
-      <Card className="sp">
-        <div className="sp__tabs" role="tablist" aria-label="סמסטר">
-          {SEMESTER_LETTERS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={semester === s}
-              className={`sp__tab${semester === s ? ' sp__tab--active' : ''}`}
-              onClick={() => setSemester(s)}
-            >
-              סמסטר {s} <span className="sp__tab-sub">{SEMESTER_NAMES[s]}</span>
-            </button>
-          ))}
-        </div>
+      <p className="sp__hint">קורסים שנפתחים בסמסטר {semester} ושיש לך את הידע הקודם שהם דורשים, לפי מה שסיימת או לומדת עכשיו.</p>
 
-        <div className="sp__body">
-          <p className="sp__hint">לפי הקורסים שסיימת או לומדת עכשיו. קורסים שכבר הוספת לתואר לא מופיעים כאן.</p>
+      <Card className="sp__card">
+        <h3 className="sp__group">
+          אפשר לקחת <span className="sp__count">{ready.length} קורסים</span>
+        </h3>
+        {ready.length === 0 ? (
+          <EmptyState title="אין קורסים פתוחים בשבילך בסמסטר הזה" />
+        ) : (
+          <ShowMore key={`ready-${semester}`}>
+            {ready.map((e) => (
+              <PlanRow key={e.course.id} entry={e} onAdd={() => add(e)} busy={select.isPending} />
+            ))}
+          </ShowMore>
+        )}
+      </Card>
 
-          <h3 className="sp__group">
-            אפשר לקחת <span className="sp__count">{ready.length}</span>
-          </h3>
-          {ready.length === 0 ? (
-            <EmptyState title="אין קורסים פתוחים בשבילך בסמסטר הזה" />
-          ) : (
-            <ShowMore key={`ready-${semester}`}>
-              {ready.map((e) => (
+      {(missing.length > 0 || plan.unknown.length > 0) && (
+        <Card className="sp__card sp__card--folded">
+          {missing.length > 0 && (
+            <details className="sp__more" key={`missing-${semester}`}>
+              <summary>
+                חסר ידע קודם <span className="sp__count">{missing.length}</span>
+              </summary>
+              {missing.map((e) => (
                 <PlanRow key={e.course.id} entry={e} onAdd={() => add(e)} busy={select.isPending} />
               ))}
-            </ShowMore>
+            </details>
           )}
-
-          {missing.length > 0 && (
-            <>
-              <h3 className="sp__group">
-                חסר ידע קודם <span className="sp__count">{missing.length}</span>
-              </h3>
-              <ShowMore key={`missing-${semester}`}>
-                {missing.map((e) => (
-                  <PlanRow key={e.course.id} entry={e} onAdd={() => add(e)} busy={select.isPending} />
-                ))}
-              </ShowMore>
-            </>
-          )}
-
           {plan.unknown.length > 0 && (
-            <details className="sp__more">
+            <details className="sp__more" key={`unknown-${semester}`}>
               <summary>
                 לא ידוע אם נפתחים בסמסטר הזה <span className="sp__count">{plan.unknown.length}</span>
               </summary>
@@ -81,10 +76,10 @@ export function SemesterPlanner({ degreeId, catalog, courses }: { degreeId: numb
               ))}
             </details>
           )}
+        </Card>
+      )}
 
-          {plan.notOffered > 0 && <p className="sp__hint">{plan.notOffered} קורסים מהקטלוג לא נפתחים בסמסטר {semester}.</p>}
-        </div>
-      </Card>
+      {plan.notOffered > 0 && <p className="sp__hint">{plan.notOffered} קורסים מהקטלוג לא נפתחים בסמסטר {semester}. קורסים שכבר הוספת לא מופיעים כאן.</p>}
     </div>
   )
 }
@@ -109,36 +104,37 @@ function ShowMore({ children }: { children: ReactNode[] }) {
 
 function PlanRow({ entry, onAdd, busy }: { entry: PlanEntry; onAdd: () => void; busy: boolean }) {
   const { course, missing, toCheck, prerequisitesUnlisted } = entry
+  // שורת אזהרה אחת במקום כמה פסקאות: מה חסר, מה לבדוק, או שלא ידוע
+  const warning =
+    missing.length > 0
+      ? { tone: 'danger', label: 'חסר', text: missing.join(' · ') }
+      : toCheck.length > 0
+        ? { tone: 'warning', label: 'לבדוק', text: toCheck.join(' · ') }
+        : prerequisitesUnlisted
+          ? { tone: 'warning', label: 'דורש ידע קודם', text: 'כדאי לבדוק בדף הקורס' }
+          : course.info?.has_prerequisites === null && entry.status !== 'unknown'
+            ? { tone: 'muted', label: '', text: 'לא ידוע אם דורש ידע קודם' }
+            : null
   return (
-    <div className="dd-row sp__row">
-      <div>
-        <p className="dd-row__title">{course.name}</p>
-        <p className="dd-row__meta">
+    <div className="sp-row">
+      <div className="sp-row__body">
+        <p className="sp-row__title">{course.name}</p>
+        <p className="sp-row__meta">
           {course.credits} נ"ז{course.category ? ` · ${course.category}` : ''}
           {entry.status === 'unknown' && course.info?.schedule_label ? ` · ${course.info.schedule_label}` : ''}
         </p>
-        {missing.length > 0 && (
-          <p className="sp__note sp__note--missing">
-            <strong>חסר:</strong> {missing.join(' · ')}
+        {warning && (
+          <p className={`sp-row__warn sp-row__warn--${warning.tone}`} title={warning.text}>
+            {warning.label && <strong>{warning.label}: </strong>}
+            {warning.text}
           </p>
-        )}
-        {toCheck.length > 0 && (
-          <p className="sp__note">
-            <strong>לבדוק:</strong> {toCheck.join(' · ')}
-          </p>
-        )}
-        {prerequisitesUnlisted && (
-          <div className="sp__pill">
-            <Pill tone="warning">דורש ידע קודם - כדאי לבדוק בדף הקורס</Pill>
-          </div>
-        )}
-        {course.info?.has_prerequisites === null && entry.status !== 'unknown' && (
-          <p className="sp__note">לא ידוע אם דורש ידע קודם</p>
         )}
       </div>
-      <Button variant="secondary" disabled={busy} onClick={onAdd}>
-        הוספה
-      </Button>
+      <button type="button" className="sp-row__add" disabled={busy} onClick={onAdd} aria-label={`הוספת ${course.name} כמתוכנן`} title="הוספה כמתוכנן">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
     </div>
   )
 }

@@ -1,80 +1,185 @@
 .sp {
-  padding: 0;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-three);
 }
+/* בחירת סמסטר כמתג מקטעים */
 .sp__tabs {
   display: flex;
-  border-bottom: 1px solid var(--color-border);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-background-selected);
+  align-self: flex-start;
 }
 .sp__tab {
-  flex: 1;
+  min-height: 38px;
+  padding: 0 var(--space-three);
   border: none;
+  border-radius: 9px;
   background: transparent;
-  padding: 12px 8px;
   font: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-secondary);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
 }
 .sp__tab--active {
+  background: var(--color-background-element);
   color: var(--color-text);
-  border-bottom-color: var(--color-primary);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }
 .sp__tab:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  outline-offset: 1px;
 }
 .sp__tab-sub {
   font-weight: 400;
   font-size: 12px;
   color: var(--color-text-secondary);
 }
-.sp__body {
-  padding: var(--space-two) var(--space-four) var(--space-four);
-}
 .sp__hint {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin: var(--space-two) 0;
+  margin: 0;
+}
+.ui-card.sp__card {
+  padding-top: var(--space-three);
+  padding-bottom: var(--space-one);
+}
+.ui-card.sp__card--folded {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .sp__group {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
-  margin: var(--space-four) 0 0;
+  margin: 0 0 var(--space-one);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 .sp__count {
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-.sp__note {
   font-size: 13px;
+  font-weight: 500;
   color: var(--color-text-secondary);
-  margin: 4px 0 0;
 }
-.sp__note--missing strong {
-  color: var(--color-danger);
-}
-.sp__pill {
-  margin-top: 6px;
-}
-.sp__more {
-  margin-top: var(--space-four);
+.sp__more + .sp__more {
+  border-top: 1px solid var(--color-border);
 }
 .sp__more summary {
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 50px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
+.sp__more summary::-webkit-details-marker {
+  display: none;
+}
+.sp__more summary::after {
+  content: '';
+  margin-inline-start: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-text-secondary);
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+.sp__more[open] summary::after {
+  transform: rotate(-135deg);
+}
+.sp__more summary {
+  list-style: none;
+}
+.sp__more[open] summary {
+  border-bottom: 1px solid var(--color-border);
+}
 .sp__show-more {
   border: none;
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+  min-height: 46px;
   background: transparent;
   color: var(--color-primary);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  padding: var(--space-two) 0;
+  text-align: start;
   cursor: pointer;
+}
+
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  min-height: 56px;
+  padding: 8px 0;
+}
+.sp-row + .sp-row {
+  border-top: 1px solid var(--color-border);
+}
+.sp-row__body {
+  flex: 1;
+  min-width: 0;
+}
+.sp-row__title {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.sp-row__meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+/* אזהרת ידע קודם: עד שתי שורות; הטקסט המלא ב-title */
+.sp-row__warn {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.sp-row__warn--danger strong {
+  color: var(--color-danger);
+}
+.sp-row__warn--warning strong {
+  color: var(--color-warning);
+}
+.sp-row__add {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background-element);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.sp-row__add:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+.sp-row__add:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .sp__tabs {
+    align-self: stretch;
+  }
+  .sp__tab {
+    flex: 1;
+    padding: 0 6px;
+  }
 }
