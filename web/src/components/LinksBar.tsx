@@ -15,27 +15,16 @@ const isSafeHref = (url: string) => /^https?:\/\//i.test(url)
  * קישורים אישיים: courseId=null - קישורים כלליים (מסך הבית), אחרת - של קורס.
  * מוצגים כשורת "אריחים"; עריכה נפתחת במקום, בלי לעזוב את המסך.
  */
-export function LinksBar({
-  courseId,
-  title,
-  compact = false,
-  siteUrl = null,
-}: {
-  courseId: number | null
-  title: string
-  compact?: boolean
-  /** כתובת "אתר הקורס" כשאפשר לבנות אותה ממספר הקורס - ממלאת את ההצעה */
-  siteUrl?: string | null
-}) {
+export function LinksBar({ courseId, title, compact = false }: { courseId: number | null; title: string; compact?: boolean }) {
   const { data: links, isLoading } = useLinks(courseId)
   const createLink = useCreateLink(courseId)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(false)
 
   const list = links ?? []
-  const presets = (courseId == null ? GLOBAL_LINK_PRESETS : COURSE_LINK_PRESETS)
-    .filter((p) => !list.some((l) => l.title === p.title))
-    .map((p) => (p.title === 'אתר הקורס' && siteUrl ? { ...p, url: siteUrl } : p))
+  const presets = (courseId == null ? GLOBAL_LINK_PRESETS : COURSE_LINK_PRESETS).filter(
+    (p) => !list.some((l) => l.title === p.title),
+  )
   // בלי קישורים: ההצעות שיש להן כתובת מוצגות כצ'יפים ונוספות בלחיצה אחת
   const quickPresets = compact && list.length === 0 && !adding ? presets.filter((p) => p.url) : []
 

@@ -15,8 +15,7 @@ import type { CourseView } from '@/components/CourseOverview'
 import { MoreMenu, StatusMenu } from '@/components/StatusMenu'
 import { PageSkeleton } from '@/components/Skeleton'
 import { isFailedCourse } from '@/lib/grades'
-import { useAddCourseItem, useBatchAddLessons, useCourseItems, useCourses, useCourseTips, useDegree, useDeleteCourse, useUpdateCourse } from '@/lib/queries'
-import { courseSiteUrl } from '@/lib/links'
+import { useAddCourseItem, useBatchAddLessons, useCourseItems, useCourses, useCourseTips, useDeleteCourse, useUpdateCourse } from '@/lib/queries'
 import type { CourseItemRead, CourseStatus } from '@/lib/types'
 import './CourseDetail.css'
 
@@ -41,7 +40,6 @@ export default function CourseDetail() {
 
   const { data: courses, isLoading: coursesLoading } = useCourses()
   const course = courses?.find((c) => c.id === id)
-  const { degree } = useDegree(course?.degree_id ?? undefined)
   const { data: items, isLoading: itemsLoading } = useCourseItems(id)
   // אותו מפתח שאילתה כמו ברירת המחדל של לשונית העצות - בשביל המספר שעל הלשונית
   const { data: tips } = useCourseTips(id, 'top', 20)
@@ -117,7 +115,7 @@ export default function CourseDetail() {
 
       {editing && <CourseEditForm key={course.id} course={course} onDone={() => setEditing(false)} />}
 
-      <LinksBar courseId={id} title="קישורים לקורס" compact siteUrl={courseSiteUrl(degree?.institution, course.course_code)} />
+      <LinksBar courseId={id} title="קישורים לקורס" compact />
 
       <div className="cd-tabs" role="tablist" aria-label="אזורי הקורס">
         {VIEWS.map((v) => (
