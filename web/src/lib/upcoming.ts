@@ -29,7 +29,7 @@ export const HORIZON_ORDER: Horizon[] = ['overdue', 'today', 'week', 'later', 'u
 export const HORIZON_LABEL: Record<Horizon, string> = {
   overdue: 'באיחור',
   today: 'היום',
-  week: 'השבוע',
+  week: 'בשבוע הקרוב',
   later: 'בהמשך',
   undated: 'בלי תאריך',
 }
@@ -128,26 +128,26 @@ export function relativeDays(date: Date, now: Date): string {
   return n > 0 ? `עוד ${n} ימים` : `לפני ${-n} ימים`
 }
 
-const COUNT_WORDS: Record<'assignment' | 'exam' | 'reminder', [string, string]> = {
-  assignment: ['מטלה אחת', 'מטלות'],
-  exam: ['מבחן אחד', 'מבחנים'],
-  reminder: ['תזכורת אחת', 'תזכורות'],
+// [יחיד, רבים, נקבה?] - בשביל ההתאמה של "מחכה / מחכות / מחכים"
+const COUNT_WORDS: Record<'assignment' | 'exam' | 'reminder', [string, string, boolean]> = {
+  assignment: ['מטלה אחת', 'מטלות', true],
+  exam: ['מבחן אחד', 'מבחנים', false],
+  reminder: ['תזכורת אחת', 'תזכורות', true],
 }
 
-/** שורת הסיכום בעמוד הבית: מה מחכה עד סוף השבוע (כולל מה שבאיחור), בלי מפגשים קבועים */
+/** שורת הסיכום בעמוד הבית: מה מחכה בשבעת הימים הקרובים (כולל מה שבאיחור), בלי מפגשים קבועים */
 export function weekSummary(entries: UpcomingEntry[]): string {
   const soon = entries.filter((e) => e.kind !== 'session' && (e.horizon === 'overdue' || e.horizon === 'today' || e.horizon === 'week'))
-  const parts = (['assignment', 'exam', 'reminder'] as const)
-    .map((kind) => {
-      const n = soon.filter((e) => e.kind === kind).length
-      const [one, many] = COUNT_WORDS[kind]
-      return n === 0 ? null : n === 1 ? one : `${n} ${many}`
-    })
-    .filter((p): p is string => p !== null)
-  if (parts.length === 0) return 'השבוע פנוי, אין מטלות או מבחנים קרובים'
+  const counted = (['assignment', 'exam', 'reminder'] as const)
+    .map((kind) => ({ kind, n: soon.filter((e) => e.kind === kind).length }))
+    .filter((c) => c.n > 0)
+  if (counted.length === 0) return 'השבוע הקרוב פנוי, אין מטלות או מבחנים קרובים'
+  const parts = counted.map(({ kind, n }) => (n === 1 ? COUNT_WORDS[kind][0] : `${n} ${COUNT_WORDS[kind][1]}`))
   const last = parts[parts.length - 1]
   // "ו-2 תזכורות" עם מקף לפני ספרה, "ומבחן אחד" בלי
   const list = parts.length === 1 ? last : `${parts.slice(0, -1).join(', ')} ו${/^\d/.test(last) ? '-' : ''}${last}`
+  const feminine = counted.every((c) => COUNT_WORDS[c.kind][2])
+  const verb = counted.length === 1 && counted[0].n === 1 ? 'מחכה' : feminine ? 'מחכות' : 'מחכים'
   const overdue = soon.filter((e) => e.horizon === 'overdue').length
-  return `השבוע מחכים לך ${list}${overdue ? ` (${overdue} באיחור)` : ''}`
+  return `בשבוע הקרוב ${verb} לך ${list}${overdue ? ` (${overdue} באיחור)` : ''}`
 }

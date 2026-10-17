@@ -163,6 +163,14 @@ a.lb__tile:focus-visible {
 .lb--chips .lb__header {
   display: none;
 }
+.lb--titled .lb__header {
+  display: flex;
+  margin-bottom: 6px;
+}
+.lb--titled .lb__header h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
 .lb--chips .lb__tiles {
   gap: 6px;
 }

@@ -66,7 +66,7 @@ export default function Courses() {
     setShowForm(false)
   }
 
-  const catalogLink = degrees && degrees.length > 0 ? `/degrees/${degrees[0].id}#catalog` : null
+  const catalogLink = degrees && degrees.length > 0 ? `/degrees/${degrees[0].id}?show=unselected#catalog` : null
 
   return (
     <div>

@@ -38,6 +38,11 @@ export function startOfWeek(d: Date): Date {
   return addDays(d, -d.getDay())
 }
 
+/** השבוע שהלו"ז פותח עליו: בשישי ובשבת השבוע כמעט נגמר, אז עוברים לשבוע הבא */
+export function defaultWeekStart(now: Date): Date {
+  return startOfWeek(now.getDay() >= 5 ? addDays(now, 7) : now)
+}
+
 export function weekDays(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 }

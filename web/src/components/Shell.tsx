@@ -11,7 +11,6 @@ const NAV_ITEMS: { to: string; label: string; icon: NavIconName }[] = [
   { to: '/schedule', label: 'לו״ז', icon: 'schedule' },
   { to: '/degrees', label: 'התואר שלי', icon: 'degree' },
   { to: '/courses', label: 'קורסים', icon: 'courses' },
-  { to: '/reminders', label: 'תזכורות', icon: 'reminders' },
   { to: '/profile', label: 'פרופיל', icon: 'profile' },
 ]
 
