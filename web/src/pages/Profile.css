@@ -177,3 +177,14 @@
     transition: none;
   }
 }
+
+/* קישורי יצירת קשר - בטלפון אין footer, אז הם כאן */
+.profile-contact {
+  margin: calc(-1 * var(--space-three)) 0 var(--space-five);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.profile-contact a {
+  color: var(--color-primary);
+  font-weight: 600;
+}

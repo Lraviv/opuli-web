@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
 import { CalendarExport } from '@/components/CalendarExport'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
+import { LINKEDIN_URL } from '@/lib/site'
 import { useSendFeedback, useUpdateSettings } from '@/lib/queries'
 import type { FeedbackCategory, UserSettingsUpdate } from '@/lib/queries'
 import type { ThemeModePreference } from '@/lib/types'
@@ -147,6 +148,13 @@ export default function Profile() {
 
       <FeedbackSection />
 
+      <p className="profile-contact">
+        אפשר גם ליצור קשר ב-
+        <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+          LinkedIn
+        </a>
+      </p>
+
       <div className="profile-section">
         <Button variant="danger" onClick={logout} style={{ width: '100%' }}>
           התנתקות
@@ -178,6 +186,12 @@ function FeedbackSection() {
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
   const [viaMail, setViaMail] = useState(false)
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  // "צרו קשר" ב-footer מוביל ל-/profile#feedback - גוללים לטופס
+  useEffect(() => {
+    if (window.location.hash === '#feedback') sectionRef.current?.scrollIntoView({ block: 'start' })
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -195,7 +209,7 @@ function FeedbackSection() {
   }
 
   return (
-    <div className="profile-section">
+    <div className="profile-section" id="feedback" ref={sectionRef}>
       <h2>משוב ודיווח על באגים</h2>
       <Card>
         <form className="feedback-form" onSubmit={handleSubmit}>

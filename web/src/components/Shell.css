@@ -1,5 +1,7 @@
 .shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .shell__topbar {
@@ -20,9 +22,17 @@
   gap: var(--space-four);
 }
 
+.shell__logo {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+}
+
 .shell__nav {
   display: flex;
-  gap: var(--space-three);
+  flex-wrap: wrap;
+  gap: var(--space-one);
 }
 
 .shell__nav-link {
@@ -35,28 +45,141 @@
   font-size: 14px;
   font-weight: 600;
 }
+.shell__nav-link:hover {
+  color: var(--color-text);
+}
+.shell__nav-link svg {
+  width: 18px;
+  height: 18px;
+}
+.shell__nav-avatar {
+  font-size: 17px;
+  line-height: 1;
+}
 
-.shell__nav-link--active {
+.shell__nav-link--active,
+.shell__nav-link--active:hover {
   background: var(--color-background-selected);
   color: var(--color-primary);
 }
 
 .shell__content {
+  flex: 1 0 auto;
+  width: 100%;
+  box-sizing: border-box;
   max-width: var(--max-content-width);
   margin: 0 auto;
   padding: var(--space-five) var(--space-four) var(--space-six);
 }
 
+.shell__footer {
+  background: var(--color-background-element);
+  border-top: 1px solid var(--color-border);
+}
+.shell__footer-inner {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-five) var(--space-four);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-four);
+}
+.shell__footer-about {
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+}
+.shell__footer-about p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.shell__footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-four);
+  font-size: 14px;
+  font-weight: 600;
+}
+.shell__footer-links a {
+  color: var(--color-primary);
+}
+.shell__footer-links a:hover {
+  text-decoration: underline;
+}
+.shell__footer-copy {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-three) var(--space-four);
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* עמודים רחבים (בית, דף קורס) - אחרי כללי הבסיס כדי לגבור עליהם */
+.shell__topbar-inner--wide,
+.shell__content--wide,
+.shell__footer-inner--wide,
+.shell__footer-copy--wide {
+  max-width: var(--max-content-width-wide);
+}
+
+/* טלפון: הניווט הופך לסרגל קבוע בתחתית המסך, בלי לוגו ובלי footer
+   (הקישורים של יצירת קשר נמצאים בעמוד הפרופיל) */
 @media (max-width: 640px) {
+  .shell__topbar {
+    position: static;
+    border-bottom: none;
+    background: transparent;
+  }
   .shell__topbar-inner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-two);
+    padding: 0;
+  }
+  .shell__logo,
+  .shell__footer {
+    display: none;
   }
   .shell__nav {
-    justify-content: space-between;
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
+    flex-wrap: nowrap;
+    gap: 0;
+    background: var(--color-background-element);
+    border-top: 1px solid var(--color-border);
+    padding: 0 var(--space-one) env(safe-area-inset-bottom);
   }
-  .shell__nav-link span:last-child {
-    display: none;
+  .shell__nav-link {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 56px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 2px;
+    border-radius: 0;
+    font-size: 11px;
+  }
+  .shell__nav-link svg {
+    width: 22px;
+    height: 22px;
+  }
+  .shell__nav-link--active,
+  .shell__nav-link--active:hover {
+    background: transparent;
+  }
+  .shell__nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .shell__content {
+    padding: var(--space-four) var(--space-three) calc(80px + env(safe-area-inset-bottom));
   }
 }
