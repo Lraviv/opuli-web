@@ -41,109 +41,9 @@
   color: var(--color-text-secondary);
   margin: 0;
 }
-.home-section__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: var(--space-two);
-}
-.home-section__header h2 {
-  margin: 0;
-}
 .home-section__link {
   font-size: 13px;
   color: var(--color-primary);
-}
-.home-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-three);
-  margin-bottom: var(--space-three);
-}
-@media (max-width: 480px) {
-  .home-stats {
-    grid-template-columns: 1fr;
-  }
-}
-.home-stat {
-  text-align: center;
-}
-.home-stat__value {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--color-primary);
-  font-variant-numeric: tabular-nums;
-}
-.home-stat__label {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.home-credits__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: var(--space-two);
-}
-.home-credits__label {
-  font-weight: 600;
-}
-.home-credits__value {
-  font-weight: 800;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
-}
-.home-progress {
-  height: 10px;
-  border-radius: 5px;
-  background: var(--color-background-selected);
-  overflow: hidden;
-  margin-bottom: var(--space-two);
-}
-.home-progress__bar {
-  height: 100%;
-  background: var(--color-primary);
-  border-radius: 5px;
-}
-.home-reminder {
-  justify-content: flex-start;
-  cursor: pointer;
-}
-/* ריחוף מעל תזכורת - קו חוצה מראה שלחיצה תסמן אותה כבוצעה */
-.home-reminder .home-row__title {
-  text-decoration: line-through transparent;
-  transition: text-decoration-color 0.15s, color 0.15s;
-}
-.home-reminder:hover .home-row__title,
-.home-reminder:focus-within .home-row__title {
-  text-decoration-color: currentColor;
-  color: var(--color-text-secondary);
-}
-/* כרטיסי הסטטיסטיקה שנפתחים ללשונית המתאימה במסך הקורסים */
-.home-stat-link {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-}
-.home-stat-link .home-stat {
-  height: 100%;
-  transition: border-color 0.15s;
-}
-.home-stat-link:hover .home-stat,
-.home-stat-link:focus-visible .home-stat {
-  border-color: var(--color-primary);
-}
-.home-stat-link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 16px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .home-reminder .home-row__title,
-  .home-stat-link .home-stat {
-    transition: none;
-  }
 }
 .home-welcome {
   text-align: center;
@@ -207,4 +107,149 @@
   text-align: center;
   font-size: 16px;
   padding: 14px 20px;
+}
+
+/* ---- עמוד הבית החדש ---- */
+.home-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-two);
+}
+.home-filter {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.home-filter--on {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-background-element);
+}
+.home-group + .home-group {
+  margin-top: var(--space-two);
+}
+.home-group__title {
+  margin: var(--space-two) 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.home-group__title--danger {
+  color: var(--color-danger);
+}
+.home-agenda__row {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px;
+}
+a.home-agenda__row:hover .cd-next__title {
+  color: var(--color-primary);
+}
+.home-agenda__row .cd-next__title,
+.home-agenda__row .cd-muted {
+  display: block;
+}
+label.home-agenda__row {
+  cursor: pointer;
+}
+.home-agenda__check {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+.home-agenda__nodate {
+  font-size: 17px;
+  color: var(--color-text-secondary);
+}
+.home-agenda__empty {
+  padding: var(--space-three) 0;
+}
+
+.home-degree {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.home-degree:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+.home-degree__chevron {
+  color: var(--color-text-secondary);
+}
+.home-degree__credits {
+  margin: 0 0 var(--space-two);
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+.home-degree__credits b {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+.home-degree__left {
+  margin-top: 6px;
+}
+.home-degree__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-two);
+  margin-top: var(--space-three);
+  padding-top: var(--space-three);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+.home-degree__stats b {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+}
+.home-degree__stats small {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.home-course {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-two) 0 var(--space-two);
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--course-color, var(--color-primary));
+  color: inherit;
+  text-decoration: none;
+}
+.home-course + .home-course {
+  margin-top: var(--space-two);
+}
+.home-course__name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.home-course:hover .home-course__name {
+  color: var(--color-primary);
+}
+.home-course__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+}
+.home-course__progress .cd-bar {
+  flex: 1;
+}
+.home-course__progress .cd-bar__fill {
+  background: var(--course-color, var(--color-primary));
+}
+.home-course__progress small {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }

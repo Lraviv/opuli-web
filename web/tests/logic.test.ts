@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight } from '../src/lib/grades.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { relativeTime } from '../src/lib/tips.ts'
-import { collectUpcoming, groupByHorizon, horizonOf, relativeDays } from '../src/lib/upcoming.ts'
+import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
 
 const rules = { examWeight: null, minExamGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
@@ -120,5 +120,9 @@ console.log('all logic tests passed')
   }, now)
   assert.deepEqual(entries.map((e) => e.key), ['assignment-3', 'exam-2', 'session-1-2026-10-18', 'assignment-1', 'exam-1', 'reminder-1'])
   assert.deepEqual(groupByHorizon(entries).map((g) => [g.horizon, g.entries.length]), [['overdue', 1], ['today', 1], ['week', 2], ['later', 1], ['undated', 1]])
+  // מפגשים, "בהמשך" ו"בלי תאריך" לא נספרים
+  assert.equal(weekSummary(entries), 'השבוע מחכים לך 2 מטלות ומבחן אחד (1 באיחור)')
+  assert.equal(weekSummary([...entries, { ...entries[0], key: 'r', kind: 'reminder' }, { ...entries[0], key: 'r2', kind: 'reminder' }]), 'השבוע מחכים לך 2 מטלות, מבחן אחד ו-2 תזכורות (3 באיחור)')
+  assert.equal(weekSummary([]), 'השבוע פנוי, אין מטלות או מבחנים קרובים')
 }
 console.log('upcoming tests passed')

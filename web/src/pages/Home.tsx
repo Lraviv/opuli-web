@@ -1,56 +1,60 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
-import { Card, EmptyState, Pill } from '@/components/ui'
+import { Card } from '@/components/ui'
 import { LinksBar } from '@/components/LinksBar'
+import { DateBox } from '@/components/CourseOverview'
 import { courseColor } from '@/lib/schedule'
 import '@/components/LinksBar.css'
+import '@/components/Upcoming.css'
 import { PageSkeleton, SkeletonList } from '@/components/Skeleton'
 import { useAllCourseItems, useCourses, useDegrees, useExams, useReminders, useUpdateReminder } from '@/lib/queries'
+import { collectUpcoming, groupByHorizon, HORIZON_LABEL, relativeDays, UPCOMING_KIND_LABEL, weekSummary } from '@/lib/upcoming'
+import type { UpcomingEntry, UpcomingKind } from '@/lib/upcoming'
+import type { CourseItemRead, CourseRead } from '@/lib/types'
 import './Home.css'
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })
+type Filter = 'all' | Exclude<UpcomingKind, 'session'>
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'הכול' },
+  { id: 'assignment', label: 'מטלות' },
+  { id: 'exam', label: 'מבחנים' },
+  { id: 'reminder', label: 'תזכורות' },
+]
+
+/** כמה פריטים מציגים ברשימה לפני "לכל הלו״ז" */
+const AGENDA_LIMIT = 10
+
+function parseFilter(raw: string | null): Filter {
+  return FILTERS.some((f) => f.id === raw) ? (raw as Filter) : 'all'
 }
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('he-IL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+function formatTime(d: Date) {
+  return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function Home() {
   const { user } = useAuth()
-  const { data: items, isLoading: itemsLoading } = useAllCourseItems({ is_done: false })
+  const [now] = useState(() => new Date())
+  // כל הפריטים (גם שהושלמו) - בשביל התקדמות השיעורים בכרטיסי הקורסים
+  const { data: items, isLoading: itemsLoading } = useAllCourseItems()
   const { data: exams, isLoading: examsLoading } = useExams()
   const { data: courses, isLoading: coursesLoading } = useCourses()
   const { data: degrees, isLoading: degreesLoading } = useDegrees()
   const { data: reminders, isLoading: remindersLoading } = useReminders()
-  const updateReminder = useUpdateReminder()
+  const [params, setParams] = useSearchParams()
+  const filter = parseFilter(params.get('filter'))
 
-  const courseName = (courseId: number) => courses?.find((c) => c.id === courseId)?.name ?? ''
-
-  const upcomingItems = (items ?? [])
-    .filter((i) => i.due_date)
-    .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
-    .slice(0, 5)
-
-  const now = Date.now()
-  // מבחן של היום נשאר ברשימה עד סוף היום, גם אחרי שעת ההתחלה
-  const todayStart = new Date().setHours(0, 0, 0, 0)
-  const upcomingExams = (exams ?? [])
-    .filter((e) => new Date(e.date_time).getTime() >= todayStart)
-    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
-    .slice(0, 5)
-
-  // תזכורות פתוחות - עם תאריך קודם (הקרוב ביותר ראשון), בלי תאריך בסוף
-  const openReminders = (reminders ?? [])
-    .filter((r) => !r.is_done)
-    .sort((a, b) => (a.due_date ? new Date(a.due_date).getTime() : Infinity) - (b.due_date ? new Date(b.due_date).getTime() : Infinity))
-    .slice(0, 5)
+  const allItems = items ?? []
+  const assignments = allItems.filter((i) => i.type === 'assignment')
+  const upcoming = collectUpcoming({ assignments, exams: exams ?? [], reminders: reminders ?? [] }, now)
+  const shown = upcoming.filter((e) => filter === 'all' || e.kind === filter).slice(0, AGENDA_LIMIT)
 
   // סטטיסטיקות - ממוצע משוקלל לפי נ"ז, רק על קורסים שהושלמו ויש להם ציון
   const allCourses = courses ?? []
   const doneCourses = allCourses.filter((c) => c.status === 'done')
   const currentCourses = allCourses.filter((c) => c.status === 'current')
-  const currentCount = currentCourses.length
   const earnedCredits = doneCourses.reduce((sum, c) => sum + c.credits, 0)
   const graded = doneCourses.filter((c) => c.grade != null)
   const gradedCredits = graded.reduce((sum, c) => sum + c.credits, 0)
@@ -59,9 +63,17 @@ export default function Home() {
   const remainingCredits = targetCredits ? Math.max(targetCredits - earnedCredits, 0) : null
   const progressPercent = targetCredits ? Math.min((earnedCredits / targetCredits) * 100, 100) : 0
 
+  const courseById = new Map(allCourses.map((c) => [c.id, c]))
+
+  function changeFilter(next: Filter) {
+    const p = new URLSearchParams(params)
+    if (next === 'all') p.delete('filter')
+    else p.set('filter', next)
+    setParams(p, { replace: true })
+  }
+
   if (degreesLoading || coursesLoading) return <PageSkeleton variant="home" />
 
-  // משתמש/ת חדש/ה בלי תואר - במקום לוח ריק, מזמינים להוסיף תואר
   if (degrees && degrees.length === 0) {
     return (
       <div>
@@ -97,175 +109,172 @@ export default function Home() {
     )
   }
 
+  const agendaLoading = itemsLoading || examsLoading || remindersLoading
+
   return (
     <div>
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
-      <p className="home-subgreeting">הנה מה שמחכה לך בקרוב</p>
+      <p className="home-subgreeting">{agendaLoading ? 'הנה מה שמחכה לך בקרוב' : weekSummary(upcoming)}</p>
 
-      <LinksBar courseId={null} title="קישורים מהירים" />
+      <LinksBar courseId={null} title="קישורים מהירים" compact />
 
-      {currentCourses.length > 0 && (
-        <section className="lb" aria-label="הקורסים שלי עכשיו">
-          <div className="lb__header">
-            <h2>הקורסים שלי עכשיו</h2>
-            <Link to="/courses" className="home-section__link">
-              לכל הקורסים ←
-            </Link>
-          </div>
-          <div className="lb__tiles">
-            {currentCourses.map((c) => (
-              <Link
-                key={c.id}
-                to={`/courses/${c.id}`}
-                className="lb__tile"
-                style={{ ['--color-primary' as string]: courseColor(c.id) }}
-              >
-                <span className="lb__tile-title">{c.name}</span>
-                <span className="lb__tile-host">{c.credits} נ״ז</span>
+      <div className="cd-cols">
+        <div className="cd-cols__main">
+          <Card className="cd-card home-agenda">
+            <div className="cd-card__header">
+              <h2>השבוע שלי</h2>
+              <Link to="/schedule" className="home-section__link">
+                ללו״ז ←
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="home-section">
-        <h2>הסטטיסטיקות שלי</h2>
-        <div className="home-stats">
-          <Link to="/courses?tab=done" className="home-stat-link">
-            <Card className="home-stat">
-              <p className="home-stat__value">{doneCourses.length}</p>
-              <p className="home-stat__label">קורסים שהושלמו</p>
-            </Card>
-          </Link>
-          <Link to="/courses?tab=current" className="home-stat-link">
-            <Card className="home-stat">
-              <p className="home-stat__value">{currentCount}</p>
-              <p className="home-stat__label">קורסים בתהליך</p>
-            </Card>
-          </Link>
-          <Card className="home-stat">
-            <p className="home-stat__value">{average != null ? average.toFixed(1) : '—'}</p>
-            <p className="home-stat__label">ממוצע משוקלל</p>
+            </div>
+            <div className="home-filters" role="radiogroup" aria-label="סינון">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={filter === f.id}
+                  className={`home-filter${filter === f.id ? ' home-filter--on' : ''}`}
+                  onClick={() => changeFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            {agendaLoading ? (
+              <SkeletonList rows={4} />
+            ) : shown.length === 0 ? (
+              <p className="cd-muted home-agenda__empty">{filter === 'all' ? 'אין כרגע מטלות, מבחנים או תזכורות פתוחות. הכול מעודכן 🎉' : 'אין כאן כלום כרגע.'}</p>
+            ) : (
+              groupByHorizon(shown).map((g) => (
+                <section key={g.horizon} className="home-group" aria-label={HORIZON_LABEL[g.horizon]}>
+                  <h3 className={`home-group__title${g.horizon === 'overdue' ? ' home-group__title--danger' : ''}`}>{HORIZON_LABEL[g.horizon]}</h3>
+                  {g.entries.map((e) => (
+                    <AgendaRow key={e.key} entry={e} course={e.courseId != null ? courseById.get(e.courseId) : undefined} now={now} />
+                  ))}
+                </section>
+              ))
+            )}
           </Card>
         </div>
-        <Card className="home-credits">
-          <div className="home-credits__row">
-            <span className="home-credits__label">נקודות זכות</span>
-            <span className="home-credits__value">
-              {earnedCredits}
-              {targetCredits ? ` / ${targetCredits}` : ''} נ"ז
-            </span>
-          </div>
-          {targetCredits && (
-            <>
-              <div
-                className="home-progress"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={targetCredits}
-                aria-valuenow={earnedCredits}
-              >
-                <div className="home-progress__bar" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <p className="home-row__meta">
-                {remainingCredits === 0 ? 'השלמת את כל הנ"ז הנדרשות לתואר 🎉' : `נשארו עוד ${remainingCredits} נ"ז להשלמת התואר`}
+
+        <div className="cd-cols__side">
+          <Link to="/degrees" className="ui-card cd-card home-degree">
+            <div className="cd-card__header">
+              <h2>התואר שלי</h2>
+              <span className="home-degree__chevron" aria-hidden>
+                ←
+              </span>
+            </div>
+            <p className="home-degree__credits">
+              <b>{earnedCredits}</b>
+              {targetCredits ? ` / ${targetCredits}` : ''} נ״ז
+            </p>
+            {targetCredits && (
+              <>
+                <span className="cd-bar" role="progressbar" aria-label="נקודות זכות" aria-valuemin={0} aria-valuemax={targetCredits} aria-valuenow={earnedCredits}>
+                  <span className="cd-bar__fill" style={{ width: `${progressPercent}%` }} />
+                </span>
+                <p className="cd-muted home-degree__left">
+                  {remainingCredits === 0 ? 'השלמת את כל הנ"ז הנדרשות לתואר 🎉' : `נשארו עוד ${remainingCredits} נ"ז`}
+                </p>
+              </>
+            )}
+            <div className="home-degree__stats">
+              <span>
+                <b>{average != null ? average.toFixed(1) : '—'}</b>
+                <small>ממוצע</small>
+              </span>
+              <span>
+                <b>{doneCourses.length}</b>
+                <small>הושלמו</small>
+              </span>
+              <span>
+                <b>{currentCourses.length}</b>
+                <small>בתהליך</small>
+              </span>
+            </div>
+          </Link>
+
+          <Card className="cd-card">
+            <div className="cd-card__header">
+              <h2>הקורסים שלי עכשיו</h2>
+              <Link to="/courses" className="home-section__link">
+                לכל הקורסים ←
+              </Link>
+            </div>
+            {currentCourses.length === 0 ? (
+              <p className="cd-muted">
+                אין קורסים בתהליך. <Link to="/courses?tab=plan">בחירת קורס מהתכנון</Link>
               </p>
-            </>
-          )}
-        </Card>
-      </div>
-
-      <div className="home-section">
-        <div className="home-section__header">
-          <h2>תזכורות</h2>
-          <Link to="/reminders" className="home-section__link">
-            לכל התזכורות ←
-          </Link>
+            ) : (
+              currentCourses.map((c) => <CourseRow key={c.id} course={c} items={allItems.filter((i) => i.course_id === c.id)} now={now} />)
+            )}
+          </Card>
         </div>
-        <Card>
-          {remindersLoading ? (
-            <SkeletonList rows={2} check />
-          ) : openReminders.length === 0 ? (
-            <EmptyState title="אין תזכורות פתוחות" />
-          ) : (
-            <div className="home-list">
-              {openReminders.map((r) => {
-                const overdue = r.due_date != null && new Date(r.due_date).getTime() < now
-                return (
-                  <label key={r.id} className="home-row home-reminder">
-                    <input
-                      type="checkbox"
-                      checked={false}
-                      aria-label={`סימון "${r.title}" כבוצע`}
-                      onChange={() => updateReminder.mutate({ id: r.id, payload: { is_done: true } })}
-                    />
-                    <p className="home-row__title" style={{ flex: 1 }}>
-                      {r.title}
-                    </p>
-                    {r.due_date && <Pill tone={overdue ? 'danger' : 'warning'}>{formatDateTime(r.due_date)}</Pill>}
-                  </label>
-                )
-              })}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div className="home-section">
-        <div className="home-section__header">
-          <h2>מטלות קרובות</h2>
-          <Link to="/schedule" className="home-section__link">
-            ללו״ז השבועי ←
-          </Link>
-        </div>
-        <Card>
-          {itemsLoading ? (
-            <SkeletonList rows={3} />
-          ) : upcomingItems.length === 0 ? (
-            <EmptyState title="אין מטלות פתוחות" subtitle="הכול מעודכן כרגע" />
-          ) : (
-            <div className="home-list">
-              {upcomingItems.map((item) => (
-                <Link key={item.id} to={`/courses/${item.course_id}`} className="home-row">
-                  <div>
-                    <p className="home-row__title">{item.title}</p>
-                    <p className="home-row__meta">{courseName(item.course_id)}</p>
-                  </div>
-                  {item.due_date && <Pill tone="warning">{formatDate(item.due_date)}</Pill>}
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div className="home-section">
-        <div className="home-section__header">
-          <h2>מבחנים קרובים</h2>
-          <Link to="/exams" className="home-section__link">
-            לכל המבחנים ←
-          </Link>
-        </div>
-        <Card>
-          {examsLoading ? (
-            <SkeletonList rows={2} />
-          ) : upcomingExams.length === 0 ? (
-            <EmptyState title="אין מבחנים קרובים" />
-          ) : (
-            <div className="home-list">
-              {upcomingExams.map((exam) => (
-                <Link key={exam.id} to={`/courses/${exam.course_id}`} className="home-row">
-                  <div>
-                    <p className="home-row__title">{courseName(exam.course_id)}</p>
-                    {exam.location && <p className="home-row__meta">{exam.location}</p>}
-                  </div>
-                  <Pill tone="danger">{formatDate(exam.date_time)}</Pill>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
       </div>
     </div>
+  )
+}
+
+function AgendaRow({ entry: e, course, now }: { entry: UpcomingEntry; course: CourseRead | undefined; now: Date }) {
+  const updateReminder = useUpdateReminder()
+  // במבחן שם הקורס כבר בכותרת
+  const meta = [e.kind === 'exam' ? null : course?.name, e.date ? relativeDays(e.date, now) : null, e.date && e.hasTime ? formatTime(e.date) : null, e.location]
+    .filter(Boolean)
+    .join(' · ')
+  const title = e.kind === 'assignment' ? `הגשת ${e.title}` : e.kind === 'exam' ? `מבחן${course ? ` ב${course.name}` : ''}` : e.title
+  const body = (
+    <>
+      {e.date ? <DateBox date={e.date} /> : <span className="date-box home-agenda__nodate" aria-hidden>—</span>}
+      <span className="cd-next__body">
+        <span className="cd-next__title">{title}</span>
+        <span className="cd-muted">{meta}</span>
+      </span>
+      {/* לתזכורת יש תיבת סימון, אין צורך בתגית */}
+      {e.kind !== 'reminder' && <span className={`kind-pill kind-pill--${e.kind}`}>{UPCOMING_KIND_LABEL[e.kind]}</span>}
+    </>
+  )
+
+  if (e.kind === 'reminder') {
+    return (
+      <label className="cd-next home-agenda__row">
+        <input
+          type="checkbox"
+          className="home-agenda__check"
+          checked={false}
+          aria-label={`סימון "${e.title}" כבוצע`}
+          onChange={() => updateReminder.mutate({ id: e.sourceId, payload: { is_done: true } })}
+        />
+        {body}
+      </label>
+    )
+  }
+  return (
+    <Link to={`/courses/${e.courseId}${e.kind === 'assignment' ? '?view=grade' : ''}`} className="cd-next home-agenda__row">
+      {body}
+    </Link>
+  )
+}
+
+function CourseRow({ course, items, now }: { course: CourseRead; items: CourseItemRead[]; now: Date }) {
+  const lessons = items.filter((i) => i.type === 'lesson')
+  const watched = lessons.filter((l) => l.is_done).length
+  const next = collectUpcoming({ assignments: items.filter((i) => i.type === 'assignment'), exams: [] }, now)[0]
+  return (
+    <Link to={`/courses/${course.id}`} className="home-course" style={{ ['--course-color' as string]: courseColor(course.id) }}>
+      <span className="home-course__name">{course.name}</span>
+      {lessons.length > 0 && (
+        <span className="home-course__progress">
+          <span className="cd-bar" role="progressbar" aria-label={`שיעורים שנצפו ב${course.name}`} aria-valuemin={0} aria-valuemax={lessons.length} aria-valuenow={watched}>
+            <span className="cd-bar__fill" style={{ width: `${(watched / lessons.length) * 100}%` }} />
+          </span>
+          <small>
+            {watched}/{lessons.length} שיעורים
+          </small>
+        </span>
+      )}
+      <span className="cd-muted">{next?.date ? `הבא: ${next.title} · ${relativeDays(next.date, now)}` : 'אין מטלות פתוחות'}</span>
+    </Link>
   )
 }
