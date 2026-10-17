@@ -1,9 +1,11 @@
 import re
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
 from .models import AssignmentKind, CourseItemType, CourseStatus
+from .ou_course_info import get_course_info
+from .tips import code_from_catalog_notes
 
 
 class RegisterRequest(BaseModel):
@@ -123,6 +125,29 @@ class CatalogCourseUpdate(BaseModel):
     notes: str | None = None
 
 
+class CourseInfoRead(BaseModel):
+    """מתי הקורס נפתח, דרישות קדם ונושא - לפי רשימת הקורסים של האו"פ (ראו app/ou_course_info.py)."""
+
+    semesters: list[str]
+    every_year: bool
+    schedule_label: str
+    has_prerequisites: bool
+    subjects: list[str]
+
+
+def _course_info(code: str | None) -> CourseInfoRead | None:
+    info = get_course_info(code)
+    if info is None:
+        return None
+    return CourseInfoRead(
+        semesters=list(info.semesters),
+        every_year=info.every_year,
+        schedule_label=info.schedule_label,
+        has_prerequisites=info.has_prerequisites,
+        subjects=list(info.subjects),
+    )
+
+
 class CatalogCourseRead(BaseModel):
     id: int
     degree_id: int
@@ -135,6 +160,11 @@ class CatalogCourseRead(BaseModel):
     already_selected: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def info(self) -> CourseInfoRead | None:
+        return _course_info(code_from_catalog_notes(self.notes))
 
 
 class CatalogCourseSelect(BaseModel):
@@ -205,6 +235,11 @@ class CourseRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def info(self) -> CourseInfoRead | None:
+        return _course_info(self.course_code)
 
 
 # ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, EmptyState, IconPicker, Input, Pill } from '@/components/ui'
 import { DegreeRequirements } from '@/components/DegreeRequirements'
+import { CourseInfoTags } from '@/components/CourseInfoTags'
 import { PageSkeleton } from '@/components/Skeleton'
 import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
@@ -61,7 +62,11 @@ export default function DegreeDetail() {
 
   const query = search.trim().toLowerCase()
   const filteredCatalog = catalog?.filter(
-    (c) => !query || c.name.toLowerCase().includes(query) || c.category?.toLowerCase().includes(query),
+    (c) =>
+      !query ||
+      c.name.toLowerCase().includes(query) ||
+      c.category?.toLowerCase().includes(query) ||
+      c.info?.subjects.some((s) => s.toLowerCase().includes(query)),
   )
 
   const myCourses = courses ?? []
@@ -166,7 +171,7 @@ export default function DegreeDetail() {
             <div className="dd-catalog-controls">
               <Input
                 type="search"
-                placeholder="חיפוש בקטלוג לפי שם או קטגוריה…"
+                placeholder="חיפוש בקטלוג לפי שם, קטגוריה או נושא…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -190,6 +195,7 @@ export default function DegreeDetail() {
                     <p className="dd-row__meta">
                       {c.credits} נ"ז{c.category ? ` · ${c.category}` : ''}
                     </p>
+                    <CourseInfoTags info={c.info} />
                   </div>
                   {c.already_selected ? (
                     <Pill tone="success">נבחר</Pill>

@@ -10,6 +10,7 @@ import { GradeCalculator } from '@/components/GradeCalculator'
 import { LinksBar } from '@/components/LinksBar'
 import { CourseTips } from '@/components/CourseTips'
 import { CourseOverview } from '@/components/CourseOverview'
+import { CourseInfoTags } from '@/components/CourseInfoTags'
 import type { CourseView } from '@/components/CourseOverview'
 import { MoreMenu, StatusMenu } from '@/components/StatusMenu'
 import { PageSkeleton } from '@/components/Skeleton'
@@ -92,6 +93,7 @@ export default function CourseDetail() {
           {course.category ? ` · ${course.category}` : ''}
           {course.course_code ? ` · ${course.course_code}` : ''}
         </p>
+        <CourseInfoTags info={course.info} />
         <div className="cd-header__status">
           <StatusMenu status={course.status} onChange={(status) => updateCourse.mutate({ id, payload: { status } })} />
           {course.status === 'done' && (

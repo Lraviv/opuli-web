@@ -1,0 +1,12 @@
+.course-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.course-info-tags__subjects {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
