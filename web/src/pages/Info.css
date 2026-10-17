@@ -1,0 +1,117 @@
+.info-page {
+  max-width: 720px;
+}
+.info-page h1 {
+  margin: 0 0 var(--space-four);
+  font-size: 26px;
+  font-weight: 800;
+}
+.ui-card.info-page__card {
+  padding: var(--space-four) var(--space-five);
+  line-height: 1.7;
+}
+.info-page__card h2 {
+  margin: var(--space-five) 0 var(--space-two);
+  font-size: 17px;
+  font-weight: 700;
+}
+.info-page__card > h2:first-child {
+  margin-top: 0;
+}
+.info-page__card p {
+  margin: 0 0 var(--space-two);
+}
+.info-page__card ul,
+.info-page__card ol {
+  margin: 0;
+  padding-inline-start: 1.3em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.info-page__card a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.info-updated {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.info-steps li::marker {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.info-faq details {
+  border-bottom: 1px solid var(--color-border);
+}
+.info-faq details:last-child {
+  border-bottom: none;
+}
+.info-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+  min-height: 52px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.info-faq summary::-webkit-details-marker {
+  display: none;
+}
+.info-faq summary::after {
+  content: '+';
+  flex-shrink: 0;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+.info-faq details[open] summary::after {
+  content: '−';
+}
+.info-faq details p {
+  margin: 0 0 var(--space-three);
+  color: var(--color-text-secondary);
+}
+
+.info-page__more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two) var(--space-four);
+  margin-top: var(--space-four);
+  font-size: 14px;
+}
+.info-page__more a {
+  color: var(--color-text-secondary);
+}
+
+/* מסגרת לדפי המידע למי שלא מחובר/ת */
+.info-layout {
+  min-height: 100vh;
+  background: var(--color-background);
+}
+.info-layout__top {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-four);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.info-layout__login {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.info-layout__main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--space-four) var(--space-six, 48px);
+}
+
+@media (max-width: 640px) {
+  .ui-card.info-page__card {
+    padding: var(--space-three) var(--space-four);
+  }
+}

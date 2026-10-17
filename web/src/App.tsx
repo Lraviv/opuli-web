@@ -13,6 +13,9 @@ import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
 import Schedule from '@/pages/Schedule'
 import Exams from '@/pages/Exams'
+import InfoPage from '@/pages/Info'
+import type { InfoPageId } from '@/pages/Info'
+import { InfoLayout } from '@/components/InfoLayout'
 import { PageSkeleton } from '@/components/Skeleton'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -28,11 +31,31 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <Shell>{children}</Shell>
 }
 
+/** דפי מידע פתוחים לכולם: מחוברים רואים אותם בתוך האפליקציה, אחרים במסגרת פשוטה */
+function PublicRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  return user ? <Shell>{children}</Shell> : <InfoLayout>{children}</InfoLayout>
+}
+
+const INFO_ROUTES: InfoPageId[] = ['help', 'faq', 'privacy', 'terms']
+
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      {INFO_ROUTES.map((id) => (
+        <Route
+          key={id}
+          path={`/${id}`}
+          element={
+            <PublicRoute>
+              <InfoPage page={id} />
+            </PublicRoute>
+          }
+        />
+      ))}
       <Route
         path="/"
         element={

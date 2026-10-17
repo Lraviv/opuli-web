@@ -86,3 +86,14 @@
   justify-content: center;
   min-height: 44px;
 }
+
+.auth-legal {
+  margin: var(--space-three) 0 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+.auth-legal a {
+  color: inherit;
+  text-decoration: underline;
+}

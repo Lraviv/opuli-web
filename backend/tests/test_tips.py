@@ -179,3 +179,17 @@ def test_selecting_template_course_sets_code(client):
     assert course["course_code"] == "20407"
     page = client.get(f"/courses/{course['id']}/tips", headers=h).json()
     assert page["course"]["institution"] == "האוניברסיטה הפתוחה"
+
+
+def test_econ_cs_template(client):
+    h = register_and_login(client, "econ@example.com")["headers"]
+    templates = {t["key"]: t for t in client.get("/degree-templates", headers=h).json()}
+    assert templates["econ_cs_open_university"]["target_credits"] == 125
+    did = client.post("/degrees", json={"name": "econ", "template": "econ_cs_open_university"}, headers=h).json()["id"]
+    catalog = client.get(f"/degrees/{did}/catalog", headers=h).json()
+    by_name = {c["name"]: c for c in catalog}
+    assert by_name["תורת המחירים א"]["category"] == "חובה - כלכלה"
+    # עבודה סמינריונית בלי מספר קורס - לא נשמרת הערה ריקה
+    assert by_name["עבודה סמינריונית בכלכלה"]["notes"] is None
+    mandatory = sum(c["credits"] for c in catalog if c["category"].startswith("חובה"))
+    assert mandatory == 14 + 37 + 24

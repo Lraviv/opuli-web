@@ -88,7 +88,7 @@ def create_degree(
                     name=course.name,
                     credits=course.credits,
                     category=course.category,
-                    notes=f"מספר קורס: {course.code}",
+                    notes=f"מספר קורס: {course.code}" if course.code else None,
                 )
             )
         session.commit()

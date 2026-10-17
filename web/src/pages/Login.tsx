@@ -74,6 +74,9 @@ export default function Login() {
         <div className="auth-switch">
           עוד אין לך חשבון? <Link to="/register">הרשמה</Link>
         </div>
+        <p className="auth-legal">
+          <Link to="/help">עזרה</Link> · <Link to="/privacy">פרטיות</Link> · <Link to="/terms">תנאי שימוש</Link>
+        </p>
       </div>
     </div>
   )

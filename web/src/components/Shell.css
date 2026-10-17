@@ -87,7 +87,9 @@
   gap: var(--space-four);
 }
 .shell__footer-about {
+  flex: 1 1 260px;
   max-width: 340px;
+  margin-inline-end: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-two);
@@ -100,13 +102,17 @@
 }
 .shell__footer-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-four);
+  flex-direction: column;
+  gap: var(--space-two);
   font-size: 14px;
   font-weight: 600;
 }
 .shell__footer-links a {
   color: var(--color-primary);
+}
+.shell__footer-links--muted a {
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 .shell__footer-links a:hover {
   text-decoration: underline;
@@ -139,7 +145,7 @@
   .shell__topbar-inner {
     padding: 0;
   }
-  .shell__logo,
+  .shell__topbar .shell__logo,
   .shell__footer {
     display: none;
   }
