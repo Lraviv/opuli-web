@@ -43,6 +43,21 @@ export interface DegreeTemplateRead {
   course_count: number
 }
 
+/** מתי הקורס נפתח, דרישות קדם ונושא - לפי רשימת הקורסים של האו"פ (null לקורס שלא ברשימה) */
+export interface CourseInfo {
+  /** אותיות הסמסטרים שבהם הקורס נפתח כל שנה, ריק אם אין דפוס קבוע */
+  semesters: string[]
+  every_year: boolean
+  /** ריק לקורס שלא ברשימת הקורסים של המחלקה */
+  schedule_label: string
+  /** null = לא ידוע (דף הקורס באתר האו"פ לא נקרא) */
+  has_prerequisites: boolean | null
+  subjects: string[]
+  /** הידע הקודם מדף הקורס באתר האו"פ */
+  required_knowledge: string[]
+  recommended_knowledge: string[]
+}
+
 export interface CatalogCourseRead {
   id: number
   degree_id: number
@@ -52,6 +67,7 @@ export interface CatalogCourseRead {
   recommended_semester: string | null
   notes: string | null
   already_selected: boolean
+  info: CourseInfo | null
 }
 
 export interface CourseRead {
@@ -73,6 +89,7 @@ export interface CourseRead {
   assignments_shield: boolean
   /** מספר הקורס במוסד (למשל "20407") - מחבר ללשונית העצות המשותפת */
   course_code: string | null
+  info: CourseInfo | null
   created_at: string
 }
 
