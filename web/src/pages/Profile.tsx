@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
+import { InstallHint } from '@/components/InstallHint'
 import { CalendarExport } from '@/components/CalendarExport'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { Link } from 'react-router-dom'
@@ -141,6 +142,8 @@ export default function Profile() {
           ))}
         </Card>
       </div>
+
+      <InstallHint />
 
       <div className="profile-section">
         <h2>ייצוא ליומן</h2>
