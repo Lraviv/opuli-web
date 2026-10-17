@@ -131,7 +131,8 @@ class CourseInfoRead(BaseModel):
     semesters: list[str]
     every_year: bool
     schedule_label: str
-    has_prerequisites: bool
+    # None = לא ידוע (דף הקורס לא נקרא)
+    has_prerequisites: bool | None
     subjects: list[str]
     required_knowledge: list[str]
     recommended_knowledge: list[str]

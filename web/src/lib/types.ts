@@ -50,7 +50,8 @@ export interface CourseInfo {
   every_year: boolean
   /** ריק לקורס שלא ברשימת הקורסים של המחלקה */
   schedule_label: string
-  has_prerequisites: boolean
+  /** null = לא ידוע (דף הקורס באתר האו"פ לא נקרא) */
+  has_prerequisites: boolean | null
   subjects: string[]
   /** הידע הקודם מדף הקורס באתר האו"פ */
   required_knowledge: string[]

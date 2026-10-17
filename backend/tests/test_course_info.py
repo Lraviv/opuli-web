@@ -18,7 +18,9 @@ def test_irregular_and_missing_semesters_are_shown_as_listed():
 
 def test_prerequisites_and_subjects():
     assert get_course_info("20554").has_prerequisites is True
-    assert get_course_info("20441").has_prerequisites is False
+    # לא מסומן ברשימה ודף הקורס לא נקרא - לא ידוע, לא "ללא ידע קודם"
+    assert get_course_info("20229").has_prerequisites is None
+    assert get_course_info("10131").has_prerequisites is False
     assert get_course_info("20277").subjects == ("הנדסת תוכנה", "מדעי המחשב")
     assert get_course_info("99999") is None and get_course_info(None) is None
 

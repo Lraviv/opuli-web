@@ -9,9 +9,11 @@ export function CourseInfoTags({ info }: { info: CourseInfo | null | undefined }
     <div className="course-info">
       <div className="course-info-tags">
         {info.schedule_label && <Pill tone={info.every_year ? 'neutral' : 'warning'}>{info.schedule_label}</Pill>}
-        <Pill tone={info.has_prerequisites ? 'warning' : 'success'}>
-          {info.has_prerequisites ? 'דורש ידע קודם' : 'ללא ידע קודם'}
-        </Pill>
+        {info.has_prerequisites !== null && (
+          <Pill tone={info.has_prerequisites ? 'warning' : 'success'}>
+            {info.has_prerequisites ? 'דורש ידע קודם' : 'ללא ידע קודם'}
+          </Pill>
+        )}
         {info.subjects.length > 0 && <span className="course-info__text">נושא: {info.subjects.join(', ')}</span>}
       </div>
       {info.required_knowledge.length > 0 && (

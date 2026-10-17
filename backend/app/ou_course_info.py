@@ -29,7 +29,10 @@ class CourseInfo:
     every_year: bool
     # טקסט לתצוגה, למשל "סמסטרים א, ב, ג" או "א2028 בלבד"
     schedule_label: str
-    has_prerequisites: bool
+    # True = דורש ידע קודם, False = דף הקורס לא דורש ידע קודם, None = לא ידוע.
+    # ברשימת המחלקה רק הסימון החיובי אמין (למשל אלגברה לינארית 2 לא מסומנת אבל דורשת
+    # את אלגברה לינארית 1), ולכן "לא מסומן" ברשימה נחשב לא ידוע עד שנקרא דף הקורס.
+    has_prerequisites: bool | None
     subjects: tuple[str, ...]
     # הידע הקודם כפי שמופיע בדף הקורס באתר האו"פ (ריק אם אין או שלא נמצא)
     required_knowledge: tuple[str, ...] = ()
@@ -235,7 +238,8 @@ _RAW: tuple[tuple[str, str, str, tuple[str, ...], bool], ...] = (
 )
 
 
-def _build(semesters_text: str, subjects: tuple[str, ...], has_prerequisites: bool) -> CourseInfo:
+def _build(semesters_text: str, subjects: tuple[str, ...], listed_prerequisites: bool) -> CourseInfo:
+    has_prerequisites = True if listed_prerequisites else None
     by_year: dict[str, set[str]] = {}
     tokens = [t.strip() for t in semesters_text.split(",") if t.strip()]
     for token in tokens:
@@ -259,7 +263,7 @@ def _with_prerequisites(code: str, info: CourseInfo | None) -> CourseInfo | None
     required, recommended = knowledge
     if info is None:
         # קורס שלא ברשימת המחלקה (למשל קורסי כלכלה) - יש רק ידע קודם, בלי סמסטרים ונושא
-        info = CourseInfo((), False, "", False, ())
+        info = CourseInfo((), False, "", None, ())
     return CourseInfo(
         info.semesters,
         info.every_year,
