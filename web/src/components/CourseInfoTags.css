@@ -1,0 +1,20 @@
+.course-info {
+  margin-top: 6px;
+}
+
+.course-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.course-info__text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 4px 0 0;
+}
+
+.course-info__text strong {
+  font-weight: 600;
+}
