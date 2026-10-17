@@ -59,6 +59,11 @@ body {
   padding: 0;
 }
 
+/* שומר מקום לפס הגלילה גם בעמודים קצרים, כדי שהסרגל לא יזוז כשעוברים בין עמודים */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-text);

@@ -126,11 +126,12 @@
   color: var(--color-text-secondary);
 }
 
-/* עמודים רחבים (בית, דף קורס) - אחרי כללי הבסיס כדי לגבור עליהם */
-.shell__topbar-inner--wide,
-.shell__content--wide,
-.shell__footer-inner--wide,
-.shell__footer-copy--wide {
+/* הסרגל וה-footer תמיד ברוחב הרחב כדי שלא יזוזו בין עמודים; התוכן רחב רק בעמודים
+   הרחבים (בית, דף קורס). אחרי כללי הבסיס כדי לגבור עליהם */
+.shell__topbar-inner,
+.shell__footer-inner,
+.shell__footer-copy,
+.shell__content--wide {
   max-width: var(--max-content-width-wide);
 }
 

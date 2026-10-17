@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
       <header className="shell__topbar">
-        <div className={`shell__topbar-inner${wide ? ' shell__topbar-inner--wide' : ''}`}>
+        <div className="shell__topbar-inner">
           {/* בסדר ה-DOM הניווט ראשון, כך שב-RTL הוא בימין והלוגו בשמאל */}
           <nav className="shell__nav" aria-label="ניווט ראשי">
             {NAV_ITEMS.map((item) => (
@@ -57,7 +57,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
       <main className={`shell__content${wide ? ' shell__content--wide' : ''}`}>{children}</main>
       <footer className="shell__footer">
-        <div className={`shell__footer-inner${wide ? ' shell__footer-inner--wide' : ''}`}>
+        <div className="shell__footer-inner">
           <div className="shell__footer-about">
             <span className="shell__logo">OpuLi</span>
             <p>כל התואר במקום אחד: קורסים, מטלות, מבחנים, ממוצע ועצות מסטודנטים.</p>
@@ -76,7 +76,7 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
         </div>
-        <p className={`shell__footer-copy${wide ? ' shell__footer-copy--wide' : ''}`}>© {YEAR} OpuLi</p>
+        <p className="shell__footer-copy">© {YEAR} OpuLi</p>
       </footer>
     </div>
   )
