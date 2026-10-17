@@ -155,3 +155,44 @@ a.lb__tile:focus-visible {
   padding: 8px 16px;
   font-size: 14px;
 }
+
+/* מצב compact: שורה דקה של קישורים בצורת "צ'יפים" (עמוד הבית ודף הקורס) */
+.lb--chips {
+  margin-bottom: var(--space-three);
+}
+.lb--chips .lb__header {
+  display: none;
+}
+.lb--chips .lb__tiles {
+  gap: 6px;
+}
+.lb--chips .lb__tile {
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+  max-width: 220px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+}
+.lb--chips .lb__tile-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+.lb--chips .lb__tile-host {
+  display: none;
+}
+.lb--chips .lb__tile--add {
+  font-size: 13px;
+  color: var(--color-primary);
+  border-style: dashed;
+}
+.lb--chips .lb__tile--editing {
+  padding-inline-end: 2px;
+}
+.lb--chips .lb__tile--editing .ui-icon-button {
+  width: 30px;
+  height: 30px;
+}

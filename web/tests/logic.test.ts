@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight } from '../src/lib/grades.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { relativeTime } from '../src/lib/tips.ts'
+import { collectUpcoming, groupByHorizon, horizonOf, relativeDays } from '../src/lib/upcoming.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays } from '../src/lib/schedule.ts'
 
 const rules = { examWeight: null, minExamGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
@@ -87,3 +88,37 @@ console.log('all logic tests passed')
   assert.equal(relativeTime('2026-10-07T12:00:00Z', now), 'לפני 3 ימים')
   assert.match(relativeTime('2026-09-01T12:00:00Z', now), /2026/)
 }
+
+// "מה מחכה לי" - קבוצות זמן ומיון (שעון מקומי)
+{
+  const now = new Date(2026, 9, 17, 10, 0) // שבת 17.10.2026 10:00
+  assert.equal(horizonOf(new Date(2026, 9, 16, 23, 0), now), 'overdue')
+  assert.equal(horizonOf(new Date(2026, 9, 17, 23, 30), now), 'today')
+  assert.equal(horizonOf(new Date(2026, 9, 24, 23, 59), now), 'week')
+  assert.equal(horizonOf(new Date(2026, 9, 25, 0, 0), now), 'later')
+  assert.equal(horizonOf(null, now), 'undated')
+  assert.equal(relativeDays(new Date(2026, 9, 18, 1, 0), now), 'מחר')
+  assert.equal(relativeDays(new Date(2026, 9, 21), now), 'עוד 4 ימים')
+
+  const iso = (y: number, m: number, d: number, h = 12) => new Date(y, m, d, h).toISOString()
+  const entries = collectUpcoming({
+    assignments: [
+      { id: 1, course_id: 1, title: 'ממ"ן 12', due_date: iso(2026, 9, 21), is_done: false, weight_percent: 5 },
+      { id: 2, course_id: 1, title: 'ממ"ן 11', due_date: iso(2026, 9, 1), is_done: true },
+      { id: 3, course_id: 2, title: 'ממ"ח 02', due_date: iso(2026, 9, 15), is_done: false },
+    ],
+    exams: [
+      { id: 1, course_id: 1, date_time: iso(2027, 1, 14, 9), location: 'רעננה' },
+      { id: 2, course_id: 1, date_time: iso(2026, 9, 17, 8), location: null }, // היום, כבר התחיל - נשאר
+      { id: 3, course_id: 1, date_time: iso(2026, 9, 10, 9), location: null }, // עבר
+    ],
+    reminders: [
+      { id: 1, title: 'בלי תאריך', due_date: null, is_done: false },
+      { id: 2, title: 'סגורה', due_date: iso(2026, 9, 18), is_done: true },
+    ],
+    sessions: [{ id: 1, course_id: 1, weekday: 0, interval_weeks: 1, start_date: null, end_date: null, start_time: '18:00', title: null, location: 'זום' }],
+  }, now)
+  assert.deepEqual(entries.map((e) => e.key), ['assignment-3', 'exam-2', 'session-1-2026-10-18', 'assignment-1', 'exam-1', 'reminder-1'])
+  assert.deepEqual(groupByHorizon(entries).map((g) => [g.horizon, g.entries.length]), [['overdue', 1], ['today', 1], ['week', 2], ['later', 1], ['undated', 1]])
+}
+console.log('upcoming tests passed')
