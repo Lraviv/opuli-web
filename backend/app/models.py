@@ -91,6 +91,9 @@ class Course(SQLModel, table=True):
     exam_weight: Optional[float] = None
     # ציון מינימום בבחינה כדי לעבור את הקורס. ריק = 60 בצד הלקוח
     min_exam_grade: Optional[float] = None
+    # הציון הסופי המינימלי כדי לעבור את הקורס. ריק = 60 בצד הלקוח.
+    # קורס שהושלם עם ציון נמוך ממנו לא נספר בנ"ז ובממוצע
+    pass_grade: Optional[float] = None
     # זכאות לבחינה: מספר מטלות מינימלי שהוגשו ו/או משקל מינימלי שהוגש
     min_assignments_count: Optional[int] = None
     min_assignments_weight: Optional[float] = None
@@ -160,6 +163,8 @@ class Exam(SQLModel, table=True):
     date_time: datetime
     location: Optional[str] = None
     notes: Optional[str] = None
+    # מועד הבחינה: "a" (מועד א'), "b" (מועד ב'), "special" (מועד מיוחד). ריק = לא צוין
+    term: Optional[str] = None
     # מתי נשלחה תזכורת במייל על המבחן (יום לפני). ריק = עוד לא נשלחה
     email_sent_at: Optional[datetime] = None
 

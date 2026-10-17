@@ -2,13 +2,14 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button, Card, DateInput, EmptyState, IconButton, Input } from '@/components/ui'
 import { ClassSessions } from '@/components/ClassSessions'
-import { averageGradedAssignments, formatGrade, requiredExamGrade, rulesFromCourse } from '@/lib/grades'
+import { averageGradedAssignments, DEFAULT_PASS_GRADE, formatGrade, isFailedCourse, requiredExamGrade, rulesFromCourse } from '@/lib/grades'
 import type { GradePart } from '@/lib/grades'
 import { useCourseExams, useCourseSessions, useCreateExam, useDeleteExam, useStudyTopics } from '@/lib/queries'
 import './Upcoming.css'
 import { collectUpcoming, relativeDays, UPCOMING_KIND_LABEL } from '@/lib/upcoming'
+import { EXAM_TERM_LABEL } from '@/lib/schedule'
 import type { UpcomingEntry } from '@/lib/upcoming'
-import type { CourseItemRead, CourseRead } from '@/lib/types'
+import type { CourseItemRead, CourseRead, ExamTerm } from '@/lib/types'
 
 export type CourseView = 'overview' | 'study' | 'grade' | 'tips'
 
@@ -64,6 +65,9 @@ export function CourseOverview({
 
   const next = collectUpcoming({ assignments, exams, sessions }, now).slice(0, 3)
 
+  // קורס שהושלם: אין "הבא בתור" ומבחנים - רק הציון והדרך לחומרים
+  if (course.status === 'done') return <DoneCourseCard course={course} onGo={onGo} />
+
   const lessonsDone = lessons.filter((l) => l.is_done).length
   const topicList = topics ?? []
   const topicsDone = topicList.filter((t) => t.is_done).length
@@ -107,9 +111,37 @@ export function CourseOverview({
           <ProgressRow label="מטלות שהוגשו" done={submitted} total={assignments.length} tone="success" onClick={() => onGo('grade')} />
         </Card>
 
-        {course.status !== 'done' && <ExamNeedCard course={course} assignments={assignments} onClick={() => onGo('grade')} />}
+        <ExamNeedCard course={course} assignments={assignments} onClick={() => onGo('grade')} />
       </div>
     </div>
+  )
+}
+
+function DoneCourseCard({ course, onGo }: { course: CourseRead; onGo: (view: CourseView) => void }) {
+  const failed = isFailedCourse(course)
+  return (
+    <Card className="cd-card cd-done-card">
+      <h2>הקורס הושלם</h2>
+      {course.grade != null ? (
+        <p className={`cd-done-card__grade${failed ? ' cd-done-card__grade--failed' : ''}`}>
+          {formatGrade(course.grade)}
+          <span>{failed ? `לא עבר · הציון העובר הוא ${formatGrade(course.pass_grade ?? DEFAULT_PASS_GRADE)}` : 'ציון סופי'}</span>
+        </p>
+      ) : (
+        <p className="cd-muted">עוד לא הוזן ציון. אפשר להזין אותו ליד הסטטוס למעלה.</p>
+      )}
+      <div className="cd-done-card__links">
+        <button type="button" className="cd-ghost" onClick={() => onGo('study')}>
+          חומרי הלימוד
+        </button>
+        <button type="button" className="cd-ghost" onClick={() => onGo('grade')}>
+          מטלות וציונים
+        </button>
+        <button type="button" className="cd-ghost" onClick={() => onGo('tips')}>
+          עצות מסטודנטים
+        </button>
+      </div>
+    </Card>
   )
 }
 
@@ -157,21 +189,23 @@ function ExamNeedCard({ course, assignments, onClick }: { course: CourseRead; as
   )
 }
 
-function ExamsCard({ courseId, exams, now }: { courseId: number; exams: { id: number; date_time: string; location: string | null }[]; now: Date }) {
+function ExamsCard({ courseId, exams, now }: { courseId: number; exams: { id: number; date_time: string; location: string | null; term: ExamTerm | null }[]; now: Date }) {
   const createExam = useCreateExam(courseId)
   const deleteExam = useDeleteExam()
   const [adding, setAdding] = useState(false)
   const [date, setDate] = useState('')
   const [location, setLocation] = useState('')
+  const [term, setTerm] = useState<ExamTerm | ''>('')
 
   const sorted = [...exams].sort((a, b) => a.date_time.localeCompare(b.date_time))
 
   async function handleAdd(e: FormEvent) {
     e.preventDefault()
     if (!date) return
-    await createExam.mutateAsync({ date_time: new Date(date).toISOString(), location: location.trim() || null })
+    await createExam.mutateAsync({ date_time: new Date(date).toISOString(), location: location.trim() || null, term: term || null })
     setDate('')
     setLocation('')
+    setTerm('')
     setAdding(false)
   }
 
@@ -187,7 +221,21 @@ function ExamsCard({ courseId, exams, now }: { courseId: number; exams: { id: nu
       </div>
       {adding && (
         <form className="cd-add-form" onSubmit={handleAdd}>
-          <DateInput type="datetime-local" label="מועד המבחן" placeholder="מועד המבחן" value={date} onChange={setDate} />
+          <DateInput type="datetime-local" label="תאריך ושעת המבחן" placeholder="תאריך ושעה" value={date} onChange={setDate} />
+          <div className="cd-term" role="radiogroup" aria-label="מועד (לא חובה)">
+            {(['a', 'b', 'special'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="radio"
+                aria-checked={term === t}
+                className={`cd-term__chip${term === t ? ' cd-term__chip--on' : ''}`}
+                onClick={() => setTerm(term === t ? '' : t)}
+              >
+                {EXAM_TERM_LABEL[t]}
+              </button>
+            ))}
+          </div>
           <Input placeholder="מקום (לא חובה)" aria-label="מקום המבחן" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={100} />
           <div className="cd-add-form__actions">
             <Button type="submit" disabled={!date || createExam.isPending}>
@@ -209,7 +257,10 @@ function ExamsCard({ courseId, exams, now }: { courseId: number; exams: { id: nu
             <div key={exam.id} className={`cd-next${past ? ' cd-next--past' : ''}`}>
               <DateBox date={d} />
               <div className="cd-next__body">
-                <p className="cd-next__title">{d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                <p className="cd-next__title">
+                  {exam.term && `${EXAM_TERM_LABEL[exam.term]} · `}
+                  {d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </p>
                 <p className="cd-muted">{[formatTime(d), exam.location, past ? 'עבר' : relativeDays(d, now)].filter(Boolean).join(' · ')}</p>
               </div>
               <IconButton icon="delete" tone="danger" label={`מחיקת המבחן ב-${d.toLocaleDateString('he-IL')}`} onClick={() => deleteExam.mutate(exam.id)} />

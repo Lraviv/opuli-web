@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Card, EmptyState, Pill } from '@/components/ui'
 import { PageSkeleton } from '@/components/Skeleton'
 import { useCourses, useExams } from '@/lib/queries'
+import { EXAM_TERM_LABEL } from '@/lib/schedule'
 import type { ExamRead } from '@/lib/types'
 import './Home.css'
 
@@ -45,6 +46,7 @@ export default function Exams() {
         <div>
           <p className="home-row__title">{courseName(exam.course_id)}</p>
           <p className="home-row__meta">
+            {exam.term && `${EXAM_TERM_LABEL[exam.term]} · `}
             {formatDateTime(exam.date_time)}
             {exam.location && ` · ${exam.location}`}
           </p>

@@ -23,6 +23,13 @@ export const COURSE_LINK_PRESETS: LinkPreset[] = [
   { title: 'MEGA', url: '' },
 ]
 
+/** דף הקורס הציבורי באתר האוניברסיטה הפתוחה, לפי מספר הקורס. null למוסד אחר או בלי מספר. */
+export function courseSiteUrl(institution: string | null | undefined, courseCode: string | null | undefined): string | null {
+  const code = courseCode?.trim()
+  if (!code || !/^\d{4,6}$/.test(code) || !institution?.includes('הפתוחה')) return null
+  return `https://www.openu.ac.il/courses/${code}.htm`
+}
+
 /** מוסיפה https:// כשאין פרוטוקול. מחזירה null אם הכתובת לא http/https תקינה. */
 export function normalizeUrl(raw: string): string | null {
   let url = raw.trim()

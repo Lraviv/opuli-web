@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
 import { NewSemesterForm, SemesterBoard } from '@/components/SemesterBoard'
 import { GradeInput } from '@/components/GradeInput'
+import { isFailedCourse } from '@/lib/grades'
 import { SkeletonList } from '@/components/Skeleton'
 import { useCourses, useCreateCourse, useDegrees } from '@/lib/queries'
 import type { CourseStatus } from '@/lib/types'
@@ -162,6 +163,7 @@ export default function Courses() {
                       <span className="courses-row__meta">{course.credits} נ"ז</span>
                     </Link>
                     {course.status === 'done' && <GradeInput key={course.grade ?? ''} course={course} />}
+                    {isFailedCourse(course) && <span className="failed-pill">לא עבר</span>}
                   </div>
                 )
               })

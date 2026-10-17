@@ -2,7 +2,7 @@
 // ומחולקת לקבוצות (באיחור / היום / השבוע / בהמשך / בלי תאריך).
 // פונקציות טהורות, לפי שעון מקומי - משמשות את עמוד הבית ואת סקירת הקורס.
 
-import { addDays, dateKey, sessionOccursOn } from './schedule.ts'
+import { addDays, dateKey, examTitle, sessionOccursOn } from './schedule.ts'
 import type { ClassSessionRead } from './types'
 
 export type UpcomingKind = 'assignment' | 'exam' | 'reminder' | 'session'
@@ -53,7 +53,7 @@ export function horizonOf(date: Date | null, now: Date): Horizon {
 
 export interface UpcomingSources {
   assignments: { id: number; course_id: number; title: string; due_date: string | null; is_done: boolean; weight_percent?: number | null }[]
-  exams: { id: number; course_id: number; date_time: string; location: string | null }[]
+  exams: { id: number; course_id: number; date_time: string; location: string | null; term?: string | null }[]
   reminders?: { id: number; title: string; due_date: string | null; is_done: boolean }[]
   sessions?: Pick<ClassSessionRead, 'id' | 'course_id' | 'weekday' | 'interval_weeks' | 'start_date' | 'end_date' | 'start_time' | 'title' | 'location'>[]
 }
@@ -84,7 +84,7 @@ export function collectUpcoming(src: UpcomingSources, now: Date): UpcomingEntry[
     const d = new Date(e.date_time)
     // מבחן של היום נשאר עד סוף היום, גם אחרי שעת ההתחלה
     if (d < todayStart) continue
-    out.push({ key: `exam-${e.id}`, kind: 'exam', title: 'מבחן', courseId: e.course_id, date: d, hasTime: true, location: e.location, weight: null, sourceId: e.id })
+    out.push({ key: `exam-${e.id}`, kind: 'exam', title: examTitle(e.term), courseId: e.course_id, date: d, hasTime: true, location: e.location, weight: null, sourceId: e.id })
   }
   for (const r of src.reminders ?? []) {
     if (r.is_done) continue

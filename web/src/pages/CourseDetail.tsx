@@ -10,10 +10,13 @@ import { GradeCalculator } from '@/components/GradeCalculator'
 import { LinksBar } from '@/components/LinksBar'
 import { CourseTips } from '@/components/CourseTips'
 import { CourseOverview } from '@/components/CourseOverview'
+import { CourseEditForm } from '@/components/CourseEditForm'
 import type { CourseView } from '@/components/CourseOverview'
 import { MoreMenu, StatusMenu } from '@/components/StatusMenu'
 import { PageSkeleton } from '@/components/Skeleton'
-import { useAddCourseItem, useBatchAddLessons, useCourseItems, useCourses, useCourseTips, useDeleteCourse, useUpdateCourse } from '@/lib/queries'
+import { isFailedCourse } from '@/lib/grades'
+import { useAddCourseItem, useBatchAddLessons, useCourseItems, useCourses, useCourseTips, useDegree, useDeleteCourse, useUpdateCourse } from '@/lib/queries'
+import { courseSiteUrl } from '@/lib/links'
 import type { CourseItemRead, CourseStatus } from '@/lib/types'
 import './CourseDetail.css'
 
@@ -38,6 +41,7 @@ export default function CourseDetail() {
 
   const { data: courses, isLoading: coursesLoading } = useCourses()
   const course = courses?.find((c) => c.id === id)
+  const { degree } = useDegree(course?.degree_id ?? undefined)
   const { data: items, isLoading: itemsLoading } = useCourseItems(id)
   // אותו מפתח שאילתה כמו ברירת המחדל של לשונית העצות - בשביל המספר שעל הלשונית
   const { data: tips } = useCourseTips(id, 'top', 20)
@@ -47,6 +51,7 @@ export default function CourseDetail() {
   const updateCourse = useUpdateCourse()
   const deleteCourse = useDeleteCourse()
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [studyView, setStudyView] = useState<'lessons' | 'topics'>('lessons')
 
   function changeView(next: CourseView) {
@@ -82,7 +87,13 @@ export default function CourseDetail() {
         <Link to={`/courses?tab=${STATUS_TAB[course.status]}`} className="cd-back">
           → הקורסים שלי
         </Link>
-        <MoreMenu label="עוד פעולות לקורס" items={[{ label: 'מחיקת קורס', danger: true, onSelect: handleDeleteCourse }]} />
+        <MoreMenu
+          label="עוד פעולות לקורס"
+          items={[
+            { label: 'עריכת קורס', onSelect: () => setEditing(true) },
+            { label: 'מחיקת קורס', danger: true, onSelect: handleDeleteCourse },
+          ]}
+        />
       </div>
 
       <header className="cd-header">
@@ -100,10 +111,13 @@ export default function CourseDetail() {
               <GradeInput key={course.grade ?? ''} course={course} />
             </label>
           )}
+          {isFailedCourse(course) && <span className="failed-pill">לא עבר</span>}
         </div>
       </header>
 
-      <LinksBar courseId={id} title="קישורים לקורס" compact />
+      {editing && <CourseEditForm key={course.id} course={course} onDone={() => setEditing(false)} />}
+
+      <LinksBar courseId={id} title="קישורים לקורס" compact siteUrl={courseSiteUrl(degree?.institution, course.course_code)} />
 
       <div className="cd-tabs" role="tablist" aria-label="אזורי הקורס">
         {VIEWS.map((v) => (

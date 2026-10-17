@@ -2,11 +2,14 @@
 // קיימת גם באפליקציה (opu-li/src/lib/grades.ts) - שינוי כאן צריך להיעשות גם שם.
 
 export const DEFAULT_MIN_EXAM_GRADE = 60
+export const DEFAULT_PASS_GRADE = 60
 
 export interface GradeRules {
   /** משקל הבחינה ב-%. null = 100 פחות סכום משקלי המטלות */
   examWeight: number | null
   minExamGrade: number | null
+  /** הציון הסופי המינימלי לעבור את הקורס. null = 60 */
+  passGrade: number | null
   minAssignmentsCount: number | null
   minAssignmentsWeight: number | null
   /** מגן: ציון המטלות נכלל רק אם הוא משפר */
@@ -22,6 +25,7 @@ export interface GradePart {
 export function rulesFromCourse(course: {
   exam_weight: number | null
   min_exam_grade: number | null
+  pass_grade?: number | null
   min_assignments_count: number | null
   min_assignments_weight: number | null
   assignments_shield: boolean
@@ -29,6 +33,7 @@ export function rulesFromCourse(course: {
   return {
     examWeight: course.exam_weight,
     minExamGrade: course.min_exam_grade,
+    passGrade: course.pass_grade ?? null,
     minAssignmentsCount: course.min_assignments_count,
     minAssignmentsWeight: course.min_assignments_weight,
     shield: course.assignments_shield,
@@ -48,6 +53,20 @@ export function minExamGrade(rules: GradeRules): number {
   return rules.minExamGrade ?? DEFAULT_MIN_EXAM_GRADE
 }
 
+export function passGrade(rules: GradeRules): number {
+  return rules.passGrade ?? DEFAULT_PASS_GRADE
+}
+
+/** קורס שהושלם עם ציון נמוך מהציון העובר שלו - לא עבר */
+export function isFailedCourse(course: { status: string; grade: number | null; pass_grade?: number | null }): boolean {
+  return course.status === 'done' && course.grade != null && course.grade < (course.pass_grade ?? DEFAULT_PASS_GRADE)
+}
+
+/** קורס שנספר בנ"ז ובממוצע: הושלם, ולא נכשל */
+export function countsTowardDegree(course: { status: string; grade: number | null; pass_grade?: number | null }): boolean {
+  return course.status === 'done' && !isFailedCourse(course)
+}
+
 const clamp = (n: number) => Math.min(100, Math.max(0, n))
 
 /** הממוצע המשוקלל (בלי מגן). null אם אין שום משקל. */
@@ -63,6 +82,8 @@ export interface FinalGradeResult {
   grade: number | null
   /** ציון הבחינה נמוך מהסף - הקורס לא עובר */
   failedExam: boolean
+  /** הציון הסופי נמוך מהציון העובר בקורס */
+  failedCourse: boolean
   /** במגן: האם המטלות שיפרו את הציון */
   shieldUsed: boolean
 }
@@ -72,11 +93,10 @@ export function finalGrade(examGrade: number, parts: GradePart[], rules: GradeRu
   const exam = clamp(examGrade)
   const failedExam = examWeight > 0 && exam < minExamGrade(rules)
   const w = weighted(exam, parts, examWeight)
-  if (w == null) return { grade: null, failedExam, shieldUsed: false }
-  if (rules.shield && examWeight > 0) {
-    return { grade: Math.max(exam, w), failedExam, shieldUsed: w > exam }
-  }
-  return { grade: w, failedExam, shieldUsed: false }
+  if (w == null) return { grade: null, failedExam, failedCourse: false, shieldUsed: false }
+  const grade = rules.shield && examWeight > 0 ? Math.max(exam, w) : w
+  const failedCourse = grade < passGrade(rules)
+  return { grade, failedExam, failedCourse, shieldUsed: rules.shield && examWeight > 0 && w > exam }
 }
 
 export type RequiredExamResult =

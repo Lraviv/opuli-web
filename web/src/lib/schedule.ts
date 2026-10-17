@@ -10,6 +10,13 @@ export const WEEKDAY_SHORT = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', '�
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Date -> "YYYY-MM-DD" לפי שעון מקומי */
+export const EXAM_TERM_LABEL: Record<string, string> = { a: "מועד א'", b: "מועד ב'", special: 'מועד מיוחד' }
+
+/** "מבחן" או "מבחן מועד א'" */
+export function examTitle(term?: string | null): string {
+  return term && EXAM_TERM_LABEL[term] ? `מבחן ${EXAM_TERM_LABEL[term]}` : 'מבחן'
+}
+
 export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
@@ -91,7 +98,7 @@ export const AGENDA_KIND_LABEL: Record<AgendaKind, string> = {
 
 export interface AgendaSources {
   sessions: ClassSessionRead[]
-  exams: { id: number; course_id: number; date_time: string; location: string | null }[]
+  exams: { id: number; course_id: number; date_time: string; location: string | null; term?: string | null }[]
   assignments: { id: number; course_id: number; title: string; due_date: string | null; is_done: boolean; is_mandatory?: boolean }[]
   lessons?: { id: number; course_id: number; title: string; due_date: string | null; is_done: boolean }[]
   reminders: { id: number; title: string; due_date?: string | null; is_done: boolean }[]
@@ -129,7 +136,7 @@ export function buildAgenda(days: Date[], src: AgendaSources): Map<string, Agend
     push(dateKey(d), {
       key: `exam-${e.id}`,
       kind: 'exam',
-      title: 'מבחן',
+      title: examTitle(e.term),
       courseId: e.course_id,
       courseName: src.courseName(e.course_id),
       time: timeOf(d),

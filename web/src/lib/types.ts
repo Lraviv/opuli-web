@@ -68,6 +68,8 @@ export interface CourseRead {
   /** כללי הציון של הקורס - ריק = ברירת מחדל (ראו lib/grades.ts) */
   exam_weight: number | null
   min_exam_grade: number | null
+  /** הציון הסופי המינימלי לעבור את הקורס - ריק = 60 */
+  pass_grade: number | null
   min_assignments_count: number | null
   min_assignments_weight: number | null
   assignments_shield: boolean
@@ -98,12 +100,16 @@ export interface ExamReminderRead {
   sent_at: string | null
 }
 
+export type ExamTerm = 'a' | 'b' | 'special'
+
 export interface ExamRead {
   id: number
   course_id: number
   date_time: string
   location: string | null
   notes: string | null
+  /** מועד א' / ב' / מיוחד - ריק = לא צוין */
+  term: ExamTerm | null
   reminders: ExamReminderRead[]
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button, IconButton, Input } from '@/components/ui'
 import { Skeleton } from '@/components/Skeleton'
@@ -15,16 +15,27 @@ const isSafeHref = (url: string) => /^https?:\/\//i.test(url)
  * קישורים אישיים: courseId=null - קישורים כלליים (מסך הבית), אחרת - של קורס.
  * מוצגים כשורת "אריחים"; עריכה נפתחת במקום, בלי לעזוב את המסך.
  */
-export function LinksBar({ courseId, title, compact = false }: { courseId: number | null; title: string; compact?: boolean }) {
+export function LinksBar({
+  courseId,
+  title,
+  compact = false,
+  siteUrl = null,
+}: {
+  courseId: number | null
+  title: string
+  compact?: boolean
+  /** כתובת "אתר הקורס" כשאפשר לבנות אותה ממספר הקורס - ממלאת את ההצעה */
+  siteUrl?: string | null
+}) {
   const { data: links, isLoading } = useLinks(courseId)
   const createLink = useCreateLink(courseId)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(false)
 
   const list = links ?? []
-  const presets = (courseId == null ? GLOBAL_LINK_PRESETS : COURSE_LINK_PRESETS).filter(
-    (p) => !list.some((l) => l.title === p.title),
-  )
+  const presets = (courseId == null ? GLOBAL_LINK_PRESETS : COURSE_LINK_PRESETS)
+    .filter((p) => !list.some((l) => l.title === p.title))
+    .map((p) => (p.title === 'אתר הקורס' && siteUrl ? { ...p, url: siteUrl } : p))
 
   return (
     <section className={`lb${compact ? ' lb--chips' : ''}`} aria-label={title}>
@@ -139,6 +150,7 @@ function LinkForm({
 }) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [url, setUrl] = useState(initial?.url ?? '')
+  const urlRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
@@ -165,7 +177,9 @@ function LinkForm({
               className="lb__preset"
               onClick={() => {
                 setTitle(p.title)
+                // הצעה בלי כתובת - עוברים ישר לשדה הכתובת להדבקה
                 if (p.url) setUrl(p.url)
+                else urlRef.current?.focus()
               }}
             >
               {p.title}
@@ -176,6 +190,7 @@ function LinkForm({
       <div className="lb__fields">
         <Input placeholder="כותרת" aria-label="כותרת הקישור" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} autoFocus />
         <Input
+          ref={urlRef}
           placeholder="כתובת (https://…)"
           aria-label="כתובת הקישור"
           value={url}

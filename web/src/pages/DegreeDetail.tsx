@@ -5,6 +5,7 @@ import { DegreeRequirements } from '@/components/DegreeRequirements'
 import { PageSkeleton } from '@/components/Skeleton'
 import { DEFAULT_DEGREE_ICON, DegreeIcons } from '@/lib/constants'
 import { useCatalog, useCourses, useDegree, useDeleteDegree, useSelectCatalogCourse, useUpdateDegree } from '@/lib/queries'
+import { countsTowardDegree } from '@/lib/grades'
 import type { CourseStatus } from '@/lib/types'
 import './DegreeDetail.css'
 
@@ -65,7 +66,7 @@ export default function DegreeDetail() {
   )
 
   const myCourses = courses ?? []
-  const earnedCredits = myCourses.filter((c) => c.status === 'done').reduce((sum, c) => sum + c.credits, 0)
+  const earnedCredits = myCourses.filter(countsTowardDegree).reduce((sum, c) => sum + c.credits, 0)
   const target = degree.target_credits
   const progressPercent = target ? Math.min((earnedCredits / target) * 100, 100) : 0
 

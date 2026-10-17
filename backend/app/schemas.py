@@ -1,5 +1,6 @@
 import re
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
@@ -163,6 +164,7 @@ class CourseCreate(BaseModel):
     grade: float | None = None
     exam_weight: float | None = Field(default=None, ge=0, le=100)
     min_exam_grade: float | None = Field(default=None, ge=0, le=100)
+    pass_grade: float | None = Field(default=None, ge=0, le=100)
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool = False
@@ -179,6 +181,7 @@ class CourseUpdate(BaseModel):
     grade: float | None = None
     exam_weight: float | None = Field(default=None, ge=0, le=100)
     min_exam_grade: float | None = Field(default=None, ge=0, le=100)
+    pass_grade: float | None = Field(default=None, ge=0, le=100)
     min_assignments_count: int | None = Field(default=None, ge=0, le=50)
     min_assignments_weight: float | None = Field(default=None, ge=0, le=100)
     assignments_shield: bool | None = None
@@ -198,6 +201,7 @@ class CourseRead(BaseModel):
     grade: float | None
     exam_weight: float | None = None
     min_exam_grade: float | None = None
+    pass_grade: float | None = None
     min_assignments_count: int | None = None
     min_assignments_weight: float | None = None
     assignments_shield: bool = False
@@ -270,6 +274,9 @@ class BatchAssignmentCreate(BaseModel):
     start_number: int | None = Field(default=None, ge=0, le=99)
     weight_percent: float | None = Field(default=None, ge=0, le=100)
     is_mandatory: bool = False
+    # תאריך ההגשה של המטלה הראשונה, וכל כמה שבועות הבאה אחריה. ריק = בלי תאריכים
+    first_due_date: datetime | None = None
+    interval_weeks: int | None = Field(default=None, ge=1, le=12)
 
 
 # ---------------------------------------------------------------------------
@@ -285,10 +292,14 @@ class ExamReminderRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+ExamTerm = Literal["a", "b", "special"]
+
+
 class ExamCreate(BaseModel):
     date_time: datetime
     location: str | None = None
     notes: str | None = None
+    term: ExamTerm | None = None
     # בדקות לפני המבחן; None = להשתמש בברירת המחדל (יום + שעתיים לפני)
     reminder_offsets_minutes: list[int] | None = None
 
@@ -297,6 +308,7 @@ class ExamUpdate(BaseModel):
     date_time: datetime | None = None
     location: str | None = None
     notes: str | None = None
+    term: ExamTerm | None = None
     # אם מסופק, מחליף את כל התזכורות הקיימות (שעדיין לא נשלחו) בחדשות
     reminder_offsets_minutes: list[int] | None = None
 
@@ -307,6 +319,7 @@ class ExamRead(BaseModel):
     date_time: datetime
     location: str | None
     notes: str | None
+    term: str | None = None
     reminders: list[ExamReminderRead] = []
 
     model_config = ConfigDict(from_attributes=True)

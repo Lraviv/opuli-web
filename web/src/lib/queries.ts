@@ -15,6 +15,7 @@ import type {
   DegreeRequirementRead,
   DegreeTemplateRead,
   ExamRead,
+  ExamTerm,
   LinkRead,
   SemesterRead,
   StudyTopicRead,
@@ -136,6 +137,7 @@ export interface CourseCreatePayload {
   grade?: number | null
   exam_weight?: number | null
   min_exam_grade?: number | null
+  pass_grade?: number | null
   min_assignments_count?: number | null
   min_assignments_weight?: number | null
   assignments_shield?: boolean
@@ -228,11 +230,22 @@ export function useAddCourseItem(courseId: number) {
 
 export function useUpdateCourseItem(courseId: number) {
   const qc = useQueryClient()
+  const key = ['course-items', courseId]
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: Partial<CourseItemCreatePayload> & { is_done?: boolean } }) =>
       api.put<CourseItemRead>(`/items/${id}`, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['course-items', courseId] })
+    // עדכון מיידי ברשימה (למשל סימון "הוגשה"), וחזרה אחורה אם השרת נכשל
+    onMutate: async ({ id, payload }) => {
+      await qc.cancelQueries({ queryKey: key })
+      const previous = qc.getQueryData<CourseItemRead[]>(key)
+      qc.setQueryData<CourseItemRead[]>(key, (old) => old?.map((i) => (i.id === id ? ({ ...i, ...payload } as CourseItemRead) : i)))
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(key, context.previous)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key })
       qc.invalidateQueries({ queryKey: ['all-course-items'] })
     },
   })
@@ -277,6 +290,7 @@ export interface ExamCreatePayload {
   date_time: string
   location?: string | null
   notes?: string | null
+  term?: ExamTerm | null
   reminder_offsets_minutes?: number[] | null
 }
 
@@ -474,6 +488,9 @@ export interface BatchAssignmentsPayload {
   start_number?: number | null
   weight_percent?: number | null
   is_mandatory?: boolean
+  /** תאריך ההגשה של הראשונה, וכל כמה שבועות הבאה - ריק = בלי תאריכים */
+  first_due_date?: string | null
+  interval_weeks?: number | null
 }
 
 export function useBatchAddAssignments(courseId: number) {
