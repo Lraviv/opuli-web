@@ -18,7 +18,7 @@ const YEAR = new Date().getFullYear()
 
 // עמודים עם פריסת שתי עמודות במחשב - מקבלים רוחב תוכן רחב יותר
 function isWidePage(pathname: string): boolean {
-  return pathname === '/' || /^\/(courses|degrees)\/\d+\/?$/.test(pathname)
+  return pathname === '/' || pathname === '/schedule' || /^\/(courses|degrees)\/\d+\/?$/.test(pathname)
 }
 
 export function Shell({ children }: { children: ReactNode }) {
