@@ -93,7 +93,7 @@ export default function DegreeDetail() {
 
   const myCourses = courses ?? []
   const requirements = (
-    <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={degree.target_credits} onCategoryClick={catalog?.length ? showCategory : undefined} />
+    <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={degree.target_credits} degreeName={degree.name} institution={degree.institution} onCategoryClick={catalog?.length ? showCategory : undefined} />
   )
 
   return (
@@ -206,7 +206,8 @@ function ProgressCard({ courses, target }: { courses: CourseRead[]; target: numb
       <div className="dd-summary">
         {SUMMARY.map((s) => (
           <Link key={s.status} to={`/courses?tab=${s.tab}`} className="dd-summary__item">
-            <strong>{courses.filter((c) => c.status === s.status).length}</strong>
+            {/* "הושלמו" סופר רק קורסים שעברו, כמו בבית; קורס שלא עבר לא נספר */}
+            <strong>{s.status === 'done' ? done.length : courses.filter((c) => c.status === s.status).length}</strong>
             <span>{s.label}</span>
           </Link>
         ))}

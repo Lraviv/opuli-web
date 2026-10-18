@@ -41,6 +41,8 @@ export interface DegreeTemplateRead {
   institution: string
   target_credits: number
   course_count: number
+  /** דרישות התואר לפי הידיעון (חובה = סכום הקורסים, null = אין יעד ידוע) */
+  requirements: { category: string; min_credits: number | null }[]
 }
 
 /** מתי הקורס נפתח, דרישות קדם ונושא - לפי רשימת הקורסים של האו"פ (null לקורס שלא ברשימה) */
@@ -67,6 +69,8 @@ export interface CatalogCourseRead {
   recommended_semester: string | null
   notes: string | null
   already_selected: boolean
+  /** מספר הקורס מהתבנית, null בקורס שנוסף ידנית */
+  course_code: string | null
   info: CourseInfo | null
 }
 

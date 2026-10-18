@@ -24,8 +24,13 @@ export function statsFor(category: string, courses: CourseRead[], catalog: Catal
   return { done: sum('done'), current: sum('current'), planned: sum('planned'), unselectedMandatory }
 }
 
-/** קטגוריות הקטלוג לפי סדר הופעה, עם דרישה מוצעת: בקטגוריית חובה - סכום נ"ז הקורסים בה; בשאר - ריק. */
-export function suggestFromCatalog(catalog: CatalogCourseRead[]): { category: string; min_credits: number | null }[] {
+/** קטגוריות הקטלוג לפי סדר הופעה, עם דרישה מוצעת: בקטגוריית חובה - סכום נ"ז הקורסים בה; בשאר - מתבנית התואר
+ * (templateDefaults) אם יש, אחרת ריק. */
+export function suggestFromCatalog(
+  catalog: CatalogCourseRead[],
+  templateDefaults: { category: string; min_credits: number | null }[] = [],
+): { category: string; min_credits: number | null }[] {
+  const defaults = new Map(templateDefaults.map((r) => [r.category, r.min_credits]))
   const order: string[] = []
   const sums = new Map<string, number>()
   for (const c of catalog) {
@@ -34,5 +39,8 @@ export function suggestFromCatalog(catalog: CatalogCourseRead[]): { category: st
     if (!sums.has(cat)) order.push(cat)
     sums.set(cat, (sums.get(cat) ?? 0) + c.credits)
   }
-  return order.map((category) => ({ category, min_credits: isMandatoryCategory(category) ? sums.get(category)! : null }))
+  return order.map((category) => ({
+    category,
+    min_credits: isMandatoryCategory(category) ? sums.get(category)! : (defaults.get(category) ?? null),
+  }))
 }

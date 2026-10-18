@@ -120,7 +120,7 @@ function PlanRow({ entry, onAdd, busy }: { entry: PlanEntry; onAdd: () => void; 
       <div className="sp-row__body">
         <p className="sp-row__title">{course.name}</p>
         <p className="sp-row__meta">
-          {course.credits} נ"ז{course.category ? ` · ${course.category}` : ''}
+          {course.course_code ? `${course.course_code} · ` : ''}{course.credits} נ"ז{course.category ? ` · ${course.category}` : ''}
           {entry.status === 'unknown' && course.info?.schedule_label ? ` · ${course.info.schedule_label}` : ''}
         </p>
         {warning && (

@@ -133,6 +133,7 @@
 }
 .dr-editor__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-two);
 }
@@ -142,6 +143,12 @@
 }
 .dr-editor__row .dr-editor__credits {
   flex: 0 0 90px;
+}
+.dr-editor__reset {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
 }
 .dr-add {
   align-self: flex-start;

@@ -26,7 +26,7 @@ export function isFiltered(f: CatalogFilter): boolean {
 
 export function matchesFilter(c: CatalogCourseRead, f: CatalogFilter): boolean {
   const q = f.query.trim().toLowerCase()
-  if (q && !(c.name.toLowerCase().includes(q) || c.category?.toLowerCase().includes(q) || c.info?.subjects.some((s) => s.toLowerCase().includes(q)))) {
+  if (q && !(c.name.toLowerCase().includes(q) || c.course_code?.includes(q) || c.category?.toLowerCase().includes(q) || c.info?.subjects.some((s) => s.toLowerCase().includes(q)))) {
     return false
   }
   if (f.category != null && categoryOf(c) !== f.category) return false

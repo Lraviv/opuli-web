@@ -2,7 +2,7 @@
 // מריצים בכמה אזורי זמן כדי לתפוס באגים של UTC מול שעון מקומי.
 import assert from 'node:assert/strict'
 import { finalGrade, requiredExamGrade, eligibility, effectiveExamWeight, isFailedCourse, countsTowardDegree } from '../src/lib/grades.ts'
-import { statsFor } from '../src/lib/requirements.ts'
+import { statsFor, suggestFromCatalog } from '../src/lib/requirements.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { EMPTY_FILTER, catalogSemesters, groupCatalog, isFiltered, matchesFilter, openByDefault } from '../src/lib/catalog.ts'
 import { relativeTime } from '../src/lib/tips.ts'
@@ -159,7 +159,7 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   })
   let nextId = 1
   const cat = (name: string, code: string, i: any, selected = false) =>
-    ({ id: nextId++, degree_id: 1, name, credits: 4, category: 'חובה', recommended_semester: null, notes: `מספר קורס: ${code}`, already_selected: selected, info: i }) as any
+    ({ id: nextId++, degree_id: 1, name, credits: 4, category: 'חובה', recommended_semester: null, notes: `מספר קורס: ${code}`, already_selected: selected, course_code: code, info: i }) as any
   const mine = (name: string, status: string, code: string | null = null) => ({ name, status, course_code: code }) as any
 
   assert.equal(normalizeName('הקורס חשבון אינפיניטסימלי 1 (20474).'), 'חשבון אינפיניטסימלי 1')
@@ -207,7 +207,7 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   // קטלוג התואר: סינון וקיבוץ
   const info = (semesters: string[], has_prerequisites: boolean | null) => ({ semesters, every_year: true, schedule_label: '', has_prerequisites, subjects: ['גרפים'], required_knowledge: [], recommended_knowledge: [] })
   const row = (id: number, name: string, category: string | null, selected: boolean, i: ReturnType<typeof info> | null = null) => ({
-    id, degree_id: 1, name, credits: 6, category, recommended_semester: null, notes: null, already_selected: selected, info: i,
+    id, degree_id: 1, name, credits: 6, category, recommended_semester: null, notes: null, already_selected: selected, course_code: id === 1 ? '20417' : null, info: i,
   })
   const catalog = [
     row(1, 'אלגוריתמים', 'חובה - מדעי המחשב', false, info(['א', 'ב'], true)),
@@ -226,9 +226,26 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, noPrerequisites: true })).map((c) => c.id), [2, 3])
   assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, category: 'בלי קטגוריה' })).map((c) => c.id), [4])
   assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, query: 'גרפ' })).map((c) => c.id), [1, 2, 3])
+  // חיפוש לפי מספר קורס
+  assert.deepEqual(catalog.filter((c) => matchesFilter(c, { ...EMPTY_FILTER, query: '20417' })).map((c) => c.id), [1])
   assert.deepEqual(catalogSemesters(catalog), ['א', 'ב', 'ג'])
   const groups = groupCatalog(catalog, EMPTY_FILTER)
   assert.equal(openByDefault(groups[0]), true)
   assert.equal(openByDefault(groups[1]), false)
   console.log('catalog tests passed')
+}
+
+{
+  // דרישות מוצעות: חובה = סכום הקטלוג, השאר מהתבנית
+  const row = (name: string, credits: number, category: string) =>
+    ({ id: 0, degree_id: 1, name, credits, category, recommended_semester: null, notes: null, already_selected: false, course_code: null, info: null })
+  const catalog = [row('א', 4, 'חובה - מתמטיקה'), row('ב', 6, 'חובה - מתמטיקה'), row('ג', 4, 'בחירה'), row('ד', 3, 'סמינר')]
+  assert.deepEqual(suggestFromCatalog(catalog), [
+    { category: 'חובה - מתמטיקה', min_credits: 10 },
+    { category: 'בחירה', min_credits: null },
+    { category: 'סמינר', min_credits: null },
+  ])
+  const fromTemplate = suggestFromCatalog(catalog, [{ category: 'בחירה', min_credits: 20 }, { category: 'חובה - מתמטיקה', min_credits: 99 }])
+  assert.deepEqual(fromTemplate.map((r) => r.min_credits), [10, 20, null])
+  console.log('requirements suggestion tests passed')
 }

@@ -55,3 +55,18 @@ def test_prior_knowledge_from_course_page():
     # קורס כלכלה שלא ברשימת המחלקה - יש ידע קודם, בלי סמסטרים
     econ = get_course_info("10917")
     assert econ.has_prerequisites and econ.schedule_label == "" and econ.required_knowledge
+
+
+def test_template_degree_starts_with_requirements(client):
+    h = register_and_login(client, "reqs@example.com")["headers"]
+    did = client.post("/degrees", json={"name": "cs", "template": "cs_open_university"}, headers=h).json()["id"]
+    reqs = {r["category"]: r["min_credits"] for r in client.get(f"/degrees/{did}/requirements", headers=h).json()}
+    assert reqs == {"חובה - תשתית מתמטית": 35, "חובה - מדעי המחשב": 42, "בחירה - מדעי המחשב": 37, "סמינר": 3, "סדנה": 3}
+    assert sum(reqs.values()) == 120
+    catalog = client.get(f"/degrees/{did}/catalog", headers=h).json()
+    assert next(c for c in catalog if c["name"] == "אלגוריתמים")["course_code"] == "20417"
+    templates = {t["key"]: t for t in client.get("/degree-templates", headers=h).json()}
+    assert templates["cs_open_university"]["requirements"][2] == {"category": "בחירה - מדעי המחשב", "min_credits": 37}
+    # בלי תבנית - אין דרישות
+    plain = client.post("/degrees", json={"name": "x"}, headers=h).json()["id"]
+    assert client.get(f"/degrees/{plain}/requirements", headers=h).json() == []

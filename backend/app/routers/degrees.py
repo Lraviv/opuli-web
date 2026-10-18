@@ -38,6 +38,7 @@ def list_degree_templates():
             institution=t.institution,
             target_credits=t.target_credits,
             course_count=len(t.courses),
+            requirements=[{"category": c, "min_credits": m} for c, m in t.requirements()],
         )
         for t in TEMPLATES.values()
     ]
@@ -91,6 +92,9 @@ def create_degree(
                     notes=f"מספר קורס: {course.code}" if course.code else None,
                 )
             )
+        # דרישות התואר נטענות יחד עם הקטלוג, כדי שהתואר ייפתח מוכן
+        for i, (category, min_credits) in enumerate(template.requirements()):
+            session.add(DegreeRequirement(degree_id=degree.id, category=category, min_credits=min_credits, sort_order=i))
         session.commit()
 
     return degree

@@ -27,6 +27,20 @@ class DegreeTemplate:
     institution: str
     target_credits: float
     courses: tuple[TemplateCourse, ...]
+    # דרישות התואר לפי הידיעון: (קטגוריה, נ"ז נדרשות). None = אין יעד ידוע.
+    # קטגוריות החובה מחושבות מסכום הקורסים (ראו requirements()) ולא נכתבות כאן.
+    elective_requirements: tuple[tuple[str, float | None], ...] = ()
+
+    def requirements(self) -> list[tuple[str, float | None]]:
+        """כל הקטגוריות לפי סדר הופעתן בקטלוג: בחובה - סכום הנ"ז, בשאר - מהידיעון."""
+        electives = dict(self.elective_requirements)
+        sums: dict[str, float] = {}
+        for course in self.courses:
+            sums[course.category] = sums.get(course.category, 0) + course.credits
+        return [
+            (category, total if category.startswith("חובה") else electives.get(category))
+            for category, total in sums.items()
+        ]
 
 
 def _courses(category: str, rows: list[tuple[str, float, str]]) -> list[TemplateCourse]:
@@ -234,6 +248,8 @@ TEMPLATES: dict[str, DegreeTemplate] = {
         institution="האוניברסיטה הפתוחה",
         target_credits=120,
         courses=tuple(_CS_MATH + _CS_CORE + _CS_ELECTIVE + _CS_SEMINAR + _CS_WORKSHOP),
+        # סמינר אחד וסדנה אחת (3 נ"ז כל אחד); הבחירה היא היתרה עד 120 (35 + 42 חובה)
+        elective_requirements=(("בחירה - מדעי המחשב", 37), ("סמינר", 3), ("סדנה", 3)),
     ),
     "econ_cs_open_university": DegreeTemplate(
         key="econ_cs_open_university",
@@ -252,6 +268,9 @@ TEMPLATES: dict[str, DegreeTemplate] = {
             + _CS_SEMINAR
             + _CS_WORKSHOP
         ),
+        # רק מה שהידיעון קובע במפורש: לפחות 3 קורסים מקבוצה א (4 נ"ז כל אחד) ועבודה סמינריונית
+        # אחת. החלוקה בין קבוצה ב, הבחירה במדעי המחשב והסמינר/סדנה נשארת למילוי ידני.
+        elective_requirements=(("בחירה - כלכלה (קבוצה א)", 12), ("סמינר - כלכלה", 6)),
     ),
 }
 

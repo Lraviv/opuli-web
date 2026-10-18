@@ -103,6 +103,13 @@ class DegreeTemplateRead(BaseModel):
     institution: str
     target_credits: float
     course_count: int
+    # דרישות התואר מהתבנית - משמשות גם להצעה בתואר קיים שעוד אין לו דרישות
+    requirements: list["TemplateRequirement"] = []
+
+
+class TemplateRequirement(BaseModel):
+    category: str
+    min_credits: float | None
 
 
 # ---------------------------------------------------------------------------
@@ -166,6 +173,12 @@ class CatalogCourseRead(BaseModel):
     already_selected: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def course_code(self) -> str | None:
+        # מספר הקורס מהתבנית (נשמר ב-notes) - בשביל חיפוש לפי מספר ותצוגה בשורה
+        return code_from_catalog_notes(self.notes)
 
     @computed_field
     @property

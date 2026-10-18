@@ -79,7 +79,7 @@ export default function Home() {
     return (
       <div>
         <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
-        <p className="home-subgreeting">ברוכים הבאים! בואו נסדר את התואר שלך</p>
+        <p className="home-subgreeting">ברוכים הבאים! בואו נסדר את התואר שלכם</p>
         <Card className="home-welcome">
           <div className="home-welcome__icon" aria-hidden>
             🎓
