@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     feedback_to_email: str = "lihirweb@gmail.com"
     feedback_from_email: str = "OpuLi Feedback <onboarding@resend.dev>"
 
+    # מיילים של מנהלות הפורום (מופרדים בפסיקים): יכולות לנעוץ ולהסתיר פוסטים.
+    # דיווחים על פוסטים נשלחים ל-feedback_to_email דרך Resend.
+    admin_emails: str = ""
+
     # תזכורות במייל למשתמשים - נשלחות ב-SMTP (למשל Gmail עם App Password, או
     # Brevo). Resend לא מתאים כאן: בלי דומיין מאומת הוא שולח רק לבעל החשבון.
     # smtp_host ריק = תזכורות המייל כבויות (שום דבר לא נשלח ולא מסומן כנשלח).

@@ -12,6 +12,7 @@ from .routers.courses import router as courses_router
 from .routers.degrees import router as degrees_router
 from .routers.exams import router as exams_router
 from .routers.feedback import router as feedback_router
+from .routers.forum import router as forum_router
 from .routers.internal import router as internal_router
 from .routers.planner import router as planner_router
 from .routers.push_tokens import router as push_tokens_router
@@ -68,6 +69,7 @@ app.include_router(reminders_router)
 app.include_router(feedback_router)
 app.include_router(study_topics_router)
 app.include_router(tips_router)
+app.include_router(forum_router)
 app.include_router(planner_router)
 app.include_router(calendar_router)
 app.include_router(internal_router)

@@ -68,7 +68,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-The tests run against a temporary SQLite database (with foreign keys enforced) and cover: sign-up/sign-in/token refresh, creating a degree and its course catalog, picking a catalog course (including "already picked"), manual courses, progress items, exams with default and custom reminders, push sending through `/internal/check-reminders` (with the network call mocked), course tips, and isolation between users (one user can't touch another user's data).
+The tests run against a temporary SQLite database (with foreign keys enforced) and cover: sign-up/sign-in/token refresh, creating a degree and its course catalog, picking a catalog course (including "already picked"), manual courses, progress items, exams with default and custom reminders, push sending through `/internal/check-reminders` (with the network call mocked), course tips, the community forum (including event RSVPs and who can see attendee emails), and isolation between users (one user can't touch another user's data).
 
 ## Quick check that everything works
 
@@ -100,6 +100,7 @@ backend/
       courses.py       # /courses, /courses/{id}/items, /items/{id}
       exams.py         # /exams, /courses/{id}/exams, /exams/{id}
       tips.py          # /courses/{id}/tips (shared course tips and votes)
+      forum.py         # /forum/... (community forum per institution: posts, events, comments, reports)
       push_tokens.py   # /push-tokens
       internal.py      # /internal/check-reminders (for the external trigger)
       ...              # calendar, feedback, planner, reminders, semesters, study_topics
