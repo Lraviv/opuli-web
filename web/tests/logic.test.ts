@@ -248,6 +248,9 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   ])
   const fromTemplate = suggestFromCatalog(catalog, [{ category: 'בחירה', min_credits: 20 }, { category: 'חובה - מתמטיקה', min_credits: 99 }])
   assert.deepEqual(fromTemplate.map((r) => r.min_credits), [10, 20, null])
+  // קטגוריה מהתבנית בלי קורסים בקטלוג (בחירה חופשית) נשארת בסוף
+  const withFree = suggestFromCatalog(catalog, [{ category: 'בחירה חופשית', min_credits: 9 }])
+  assert.deepEqual(withFree.at(-1), { category: 'בחירה חופשית', min_credits: 9 })
   console.log('requirements suggestion tests passed')
 }
 

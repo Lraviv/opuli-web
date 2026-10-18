@@ -61,12 +61,14 @@ def test_template_degree_starts_with_requirements(client):
     h = register_and_login(client, "reqs@example.com")["headers"]
     did = client.post("/degrees", json={"name": "cs", "template": "cs_open_university"}, headers=h).json()["id"]
     reqs = {r["category"]: r["min_credits"] for r in client.get(f"/degrees/{did}/requirements", headers=h).json()}
-    assert reqs == {"חובה - תשתית מתמטית": 35, "חובה - מדעי המחשב": 42, "בחירה - מדעי המחשב": 37, "סמינר": 3, "סדנה": 3}
+    assert reqs == {"חובה - תשתית מתמטית": 35, "חובה - מדעי המחשב": 42, "בחירה - מדעי המחשב": 28, "סמינר": 3, "סדנה": 3, "בחירה חופשית": 9}
     assert sum(reqs.values()) == 120
     catalog = client.get(f"/degrees/{did}/catalog", headers=h).json()
     assert next(c for c in catalog if c["name"] == "אלגוריתמים")["course_code"] == "20417"
     templates = {t["key"]: t for t in client.get("/degree-templates", headers=h).json()}
-    assert templates["cs_open_university"]["requirements"][2] == {"category": "בחירה - מדעי המחשב", "min_credits": 37}
+    assert templates["cs_open_university"]["requirements"][2] == {"category": "בחירה - מדעי המחשב", "min_credits": 28}
+    econ = {r["category"]: r["min_credits"] for r in templates["econ_cs_open_university"]["requirements"]}
+    assert sum(m for m in econ.values() if m) == 125 and econ["סדנה"] is None
     # בלי תבנית - אין דרישות
     plain = client.post("/degrees", json={"name": "x"}, headers=h).json()["id"]
     assert client.get(f"/degrees/{plain}/requirements", headers=h).json() == []

@@ -25,7 +25,7 @@ export function statsFor(category: string, courses: CourseRead[], catalog: Catal
 }
 
 /** קטגוריות הקטלוג לפי סדר הופעה, עם דרישה מוצעת: בקטגוריית חובה - סכום נ"ז הקורסים בה; בשאר - מתבנית התואר
- * (templateDefaults) אם יש, אחרת ריק. */
+ * (templateDefaults) אם יש, אחרת ריק. קטגוריות של התבנית שאין להן קורסים בקטלוג (בחירה חופשית) נוספות בסוף. */
 export function suggestFromCatalog(
   catalog: CatalogCourseRead[],
   templateDefaults: { category: string; min_credits: number | null }[] = [],
@@ -39,8 +39,9 @@ export function suggestFromCatalog(
     if (!sums.has(cat)) order.push(cat)
     sums.set(cat, (sums.get(cat) ?? 0) + c.credits)
   }
-  return order.map((category) => ({
+  const fromCatalog = order.map((category) => ({
     category,
     min_credits: isMandatoryCategory(category) ? sums.get(category)! : (defaults.get(category) ?? null),
   }))
+  return [...fromCatalog, ...templateDefaults.filter((r) => !sums.has(r.category))]
 }
