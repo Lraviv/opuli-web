@@ -8,6 +8,7 @@ import { EMPTY_FILTER, catalogSemesters, groupCatalog, isFiltered, matchesFilter
 import { relativeTime } from '../src/lib/tips.ts'
 import { currentSemester, parseSemester, semesterName, semesterToAdd } from '../src/lib/semesters.ts'
 import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
+import { emailList, eventDayParts, formatEventWhen, isEventCategory, isEventOver, localToIso } from '../src/lib/forum.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays, defaultWeekStart } from '../src/lib/schedule.ts'
 
 const rules = { examWeight: null, minExamGrade: null, passGrade: null, minAssignmentsCount: null, minAssignmentsWeight: null, shield: false }
@@ -267,4 +268,26 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   assert.equal(semesterName(semesterToAdd([], new Date(2026, 9, 18))), '2027ב')
   assert.equal(semesterName(semesterToAdd(['2027ב', '2027ג'], new Date(2026, 9, 18))), '2028א')
   console.log('semester tests passed')
+}
+
+{
+  // פורום: תאריכי אירועים נשמרים ב-UTC ומוצגים בשעון מקומי
+  const startIso = localToIso('2026-10-22', '19:00')
+  assert.equal(new Date(startIso).getHours(), 19)
+  assert.equal(new Date(startIso).getDate(), 22)
+  assert.equal(eventDayParts(startIso).day, '22')
+  const endIso = localToIso('2026-10-22', '21:30')
+  assert.match(formatEventWhen(startIso, endIso), /· 19:00 עד 21:30$/)
+  assert.match(formatEventWhen(startIso, null), /· 19:00$/)
+  // סיום ביום אחר מקבל גם תאריך
+  assert.match(formatEventWhen(startIso, localToIso('2026-10-23', '02:00')), /עד 23 .* 02:00$/)
+  // אירוע נגמר לפי שעת הסיום, ובלעדיה לפי שעת ההתחלה
+  const now = new Date(2026, 9, 22, 20, 0).getTime()
+  assert.equal(isEventOver(startIso, endIso, now), false)
+  assert.equal(isEventOver(startIso, null, now), true)
+  assert.equal(isEventCategory('study'), true)
+  assert.equal(isEventCategory('party'), true)
+  assert.equal(isEventCategory('tip'), false)
+  assert.equal(emailList([{ email: 'a@x.com' }, { email: 'b@y.org' }]), 'a@x.com, b@y.org')
+  console.log('forum tests passed')
 }

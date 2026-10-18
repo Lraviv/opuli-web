@@ -38,6 +38,9 @@ Create a personal subscription link and add it once to Google Calendar, Apple or
 ### Tips from other students
 Every course has a "tips from students" tab: a shared discussion for everyone taking the same course at the same institution. Post tips and questions, reply in threads, and upvote or downvote anonymously. Sort by most recommended, newest or oldest.
 
+### Community
+A forum for every student at your institution, beyond a single course. Share tips, ask general questions, and organize study meetups and student parties. Events show the date and a general location; the exact address appears only after you RSVP, and the organizer sees the names and emails of who's coming. Upvote, save posts, comment in threads, and report anything that doesn't belong.
+
 ### And more
 - Quick links to Sheilta, Opal, recordings and the exam archive, on the home screen and in every course
 - Lesson tracking and study topics to prepare for the exam
@@ -82,7 +85,7 @@ More details in [backend/README.md](backend/README.md) and [web/README.md](web/R
 ### Tests
 
 ```bash
-cd backend && pytest        # API: permissions, validation, calendar export, tips
+cd backend && pytest        # API: permissions, validation, calendar export, tips, forum
 cd web && npm test          # grade and schedule logic, across several time zones
 ```
 

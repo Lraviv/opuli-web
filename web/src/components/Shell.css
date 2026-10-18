@@ -126,6 +126,11 @@
   color: var(--color-text-secondary);
 }
 
+/* כפתור הפרופיל העליון - רק בטלפון */
+.shell__profile-chip {
+  display: none;
+}
+
 /* הסרגל וה-footer תמיד ברוחב הרחב כדי שלא יזוזו בין עמודים; התוכן רחב רק בעמודים
    הרחבים (בית, דף קורס, דף תואר). אחרי כללי הבסיס כדי לגבור עליהם */
 .shell__topbar-inner,
@@ -144,11 +149,27 @@
     background: transparent;
   }
   .shell__topbar-inner {
-    padding: 0;
+    padding: var(--space-three) var(--space-three) 0;
   }
-  .shell__topbar .shell__logo,
-  .shell__footer {
+  .shell__footer,
+  .shell__nav-link--profile {
     display: none;
+  }
+  .shell__profile-chip {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-background-element);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 19px;
+    line-height: 1;
+  }
+  .shell__profile-chip--active {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
   .shell__nav {
     position: fixed;
@@ -187,6 +208,6 @@
     max-width: 100%;
   }
   .shell__content {
-    padding: var(--space-four) var(--space-three) calc(80px + env(safe-area-inset-bottom));
+    padding: var(--space-two) var(--space-three) calc(80px + env(safe-area-inset-bottom));
   }
 }

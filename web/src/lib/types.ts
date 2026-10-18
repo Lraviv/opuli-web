@@ -238,3 +238,95 @@ export interface SharedStructureRead {
   students: number
   entered_by: string
 }
+
+// ---------------------------------------------------------------------------
+// קהילה (פורום)
+// ---------------------------------------------------------------------------
+
+export type ForumCategory = 'tip' | 'question' | 'study' | 'party' | 'community'
+export type ForumSort = 'new' | 'top'
+
+export interface ForumAuthor {
+  display_name: string
+  avatar_icon: string | null
+}
+
+export interface ForumEvent {
+  starts_at: string
+  ends_at: string | null
+  place_public: string | null
+  /** הכתובת המדויקת - רק למארגן/ת ולמי שאישר/ה הגעה */
+  place_private: string | null
+  going_count: number
+  i_am_going: boolean
+}
+
+export interface ForumPost {
+  id: number
+  category: ForumCategory
+  title: string
+  body: string
+  author: ForumAuthor | null
+  course: { code: string; name: string } | null
+  event: ForumEvent | null
+  score: number
+  voted: boolean
+  saved: boolean
+  comment_count: number
+  is_mine: boolean
+  pinned: boolean
+  hidden: boolean
+  edited: boolean
+  deleted: boolean
+  created_at: string
+}
+
+export interface ForumFeed {
+  linked: boolean
+  institution: string | null
+  is_admin: boolean
+  total: number
+  items: ForumPost[]
+}
+
+export interface ForumComment {
+  id: number
+  parent_id: number | null
+  author: ForumAuthor | null
+  reply_to_name: string | null
+  body: string
+  created_at: string
+  edited: boolean
+  deleted: boolean
+  is_mine: boolean
+  replies: ForumComment[]
+}
+
+export interface ForumPostDetail {
+  post: ForumPost
+  comments: ForumComment[]
+}
+
+export interface ForumAttendee {
+  display_name: string
+  email: string
+  avatar_icon: string | null
+  created_at: string
+}
+
+export interface ForumCourseActivity {
+  course_id: number
+  name: string
+  post_count: number
+}
+
+export interface ForumPostCreate {
+  category: ForumCategory
+  title: string
+  body: string
+  course_id?: number | null
+  event_starts_at?: string | null
+  event_ends_at?: string | null
+  place_public?: string | null
+  place_private?: string | null
+}

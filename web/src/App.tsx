@@ -14,6 +14,8 @@ import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
 import Schedule from '@/pages/Schedule'
 import Exams from '@/pages/Exams'
+import Community from '@/pages/Community'
+import CommunityPost from '@/pages/CommunityPost'
 import InfoPage from '@/pages/Info'
 import type { InfoPageId } from '@/pages/Info'
 import { InfoLayout } from '@/components/InfoLayout'
@@ -126,6 +128,22 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Schedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/community"
+        element={
+          <ProtectedRoute>
+            <Community />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/community/posts/:postId"
+        element={
+          <ProtectedRoute>
+            <CommunityPost />
           </ProtectedRoute>
         }
       />

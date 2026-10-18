@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
+import { Avatar } from '@/components/Avatar'
+import { linkify } from '@/lib/linkify'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
 import { SkeletonList } from '@/components/Skeleton'
@@ -24,27 +26,6 @@ const SORTS: { key: TipSort; label: string }[] = [
   { key: 'new', label: 'הכי חדשות' },
   { key: 'old', label: 'הכי ישנות' },
 ]
-
-// טקסט בלבד; כתובות הופכות לקישורים שנפתחים בלשונית חדשה
-function linkify(text: string): ReactNode[] {
-  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-    i % 2 === 1 ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer nofollow ugc">
-        {part}
-      </a>
-    ) : (
-      part
-    ),
-  )
-}
-
-function Avatar({ name, icon, small }: { name: string; icon: string | null; small?: boolean }) {
-  return (
-    <span className={`tp-avatar${small ? ' tp-avatar--small' : ''}`} aria-hidden>
-      {icon || name.charAt(0)}
-    </span>
-  )
-}
 
 const ARROW_UP = 'M5 1.5 9 7.5H1z'
 const ARROW_DOWN = 'M5 8.5 1 2.5h8z'
