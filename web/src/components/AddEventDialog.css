@@ -1,0 +1,219 @@
+/* חלון "הוספה ללו"ז": במחשב באמצע המסך, בטלפון מגירה מלמטה */
+.aev {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-background-element);
+  color: var(--color-text);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.2);
+  overflow: auto;
+}
+.aev::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+.aev__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-three);
+  padding: var(--space-four);
+}
+.aev__grab {
+  display: none;
+}
+.aev__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.aev__head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.aev__close {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.aev__close:hover {
+  background: var(--color-background-selected);
+}
+
+.aev__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two);
+}
+.aev__type {
+  --type-color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background-element);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.aev__type--assignment {
+  --type-color: var(--color-warning);
+}
+.aev__type--exam {
+  --type-color: var(--color-danger);
+}
+.aev__type--session {
+  --type-color: var(--color-primary);
+}
+.aev__type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--type-color);
+}
+.aev__type--on {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-background-element);
+}
+.aev__type:focus-visible,
+.aev__seg button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.aev__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-three);
+}
+.aev__row--when {
+  flex-wrap: nowrap;
+}
+.aev__field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.aev__row > .aev__field {
+  flex: 1 1 200px;
+}
+.aev__row--when .aev__field {
+  flex: 1 1 0;
+}
+.aev__row--when .aev__field--date {
+  flex: 1.6 1 0;
+}
+.aev__field > select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 15px;
+}
+.aev__seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-background-selected);
+}
+.aev__seg button {
+  flex: 1 1 0;
+  min-height: 38px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.aev__seg .aev__seg--on {
+  background: var(--color-background-element);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.aev__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.aev__check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+.aev__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.aev__empty a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.aev__error {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-danger);
+}
+.aev__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-two);
+}
+
+@media (max-width: 640px) {
+  .aev {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+  }
+  .aev__form {
+    padding: var(--space-two) var(--space-three) calc(var(--space-three) + env(safe-area-inset-bottom));
+  }
+  .aev__grab {
+    display: block;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-border);
+  }
+  .aev__row--when {
+    flex-wrap: wrap;
+  }
+  .aev__row--when .aev__field--date {
+    flex: 1 1 100%;
+  }
+  .aev__actions .ui-button {
+    flex: 1 1 0;
+  }
+}
