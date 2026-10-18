@@ -7,6 +7,7 @@ from .config import settings
 from .db import create_db_and_tables
 from .routers.auth import me_router, router as auth_router
 from .routers.calendar import router as calendar_router
+from .routers.course_structure import router as course_structure_router
 from .routers.courses import router as courses_router
 from .routers.degrees import router as degrees_router
 from .routers.exams import router as exams_router
@@ -59,6 +60,7 @@ app.include_router(auth_router)
 app.include_router(me_router)
 app.include_router(degrees_router)
 app.include_router(courses_router)
+app.include_router(course_structure_router)
 app.include_router(exams_router)
 app.include_router(push_tokens_router)
 app.include_router(semesters_router)

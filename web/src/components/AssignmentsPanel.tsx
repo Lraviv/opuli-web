@@ -4,8 +4,8 @@ import { Button, Card, DateInput, EmptyState, Input } from '@/components/ui'
 import { CourseItemRow } from '@/components/CourseItemRow'
 import { eligibility, formatGrade, rulesFromCourse } from '@/lib/grades'
 import { parseOptionalNumber } from '@/lib/items'
-import { useAddCourseItem, useBatchAddAssignments } from '@/lib/queries'
-import type { AssignmentKind, CourseItemRead, CourseRead } from '@/lib/types'
+import { useAddCourseItem, useApplySharedStructure, useBatchAddAssignments, useSharedStructure } from '@/lib/queries'
+import type { AssignmentKind, CourseItemRead, CourseRead, SharedStructureRead } from '@/lib/types'
 import './AssignmentsPanel.css'
 
 const KIND_OPTIONS: { value: AssignmentKind; label: string }[] = [
@@ -145,6 +145,8 @@ export function AssignmentsPanel({ course, assignments, onEditRules }: { course:
           )}
         </Card>
       )}
+
+      {sorted.length === 0 && mode === null && <SharedStructureOffer courseId={course.id} />}
 
       <Card>
         {sorted.length === 0 ? (
@@ -309,5 +311,47 @@ function EligibilityLine({
         )}
       </div>
     </div>
+  )
+}
+
+/** "4 ממ"נים · 30% מהציון · חובה להגיש 3" */
+function describeStructure(s: SharedStructureRead): string {
+  const count = (kind: string, one: string, many: string) => {
+    const n = s.assignments.filter((a) => a.kind === kind).length
+    return n === 0 ? null : n === 1 ? one : `${n} ${many}`
+  }
+  const parts = [count('mmn', 'ממ"ן אחד', 'ממ"נים'), count('mmh', 'ממ"ח אחד', 'ממ"חים'), count('other', 'מטלה אחת', 'מטלות')].filter(Boolean)
+  const weight = s.assignments.reduce((sum, a) => sum + (a.weight_percent ?? 0), 0)
+  if (weight > 0) parts.push(`${formatGrade(weight)}% מהציון`)
+  if (s.rules.min_assignments_count) parts.push(`חובה להגיש ${s.rules.min_assignments_count}`)
+  else if (s.assignments.some((a) => a.is_mandatory)) parts.push(`${s.assignments.filter((a) => a.is_mandatory).length} מטלות חובה`)
+  return parts.join(' · ')
+}
+
+/** בקורס בלי מטלות: הצעה להשתמש במבנה שסטודנטים אחרים כבר הזינו לאותו קורס */
+function SharedStructureOffer({ courseId }: { courseId: number }) {
+  const { data: structure } = useSharedStructure(courseId, true)
+  const apply = useApplySharedStructure(courseId)
+  if (!structure) return null
+  const others = structure.students - 1
+  return (
+    <Card className="ap-shared">
+      <p className="ap-shared__title">יש מבנה מוכן לקורס הזה</p>
+      <p className="ap-shared__summary">{describeStructure(structure)}</p>
+      <p className="ap-shared__meta">
+        הוזן על ידי {structure.entered_by}
+        {others > 0 ? ` ועוד ${others === 1 ? 'סטודנט אחד' : `${others} סטודנטים`} שמשתמשים בו` : ''}. נשאר רק להוסיף תאריכי הגשה.
+      </p>
+      {apply.isError && (
+        <p className="ap-shared__error" role="alert">
+          {apply.error instanceof Error ? apply.error.message : 'לא הצלחנו להעתיק את המבנה'}
+        </p>
+      )}
+      <div className="ap-form__actions">
+        <Button type="button" disabled={apply.isPending} onClick={() => apply.mutate()}>
+          שימוש במבנה הזה
+        </Button>
+      </div>
+    </Card>
   )
 }

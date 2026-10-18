@@ -218,3 +218,19 @@ export interface TipsPage {
   total: number
   items: TipRead[]
 }
+
+/** מבנה קורס שסטודנטים אחרים הזינו (מטלות, משקלים וכללי ציון - בלי תאריכים וציונים) */
+export interface SharedStructureRead {
+  assignments: { title: string; kind: AssignmentKind | null; weight_percent: number | null; is_mandatory: boolean }[]
+  rules: {
+    exam_weight: number | null
+    min_exam_grade: number | null
+    pass_grade: number | null
+    min_assignments_count: number | null
+    min_assignments_weight: number | null
+    assignments_shield: boolean
+  }
+  /** כמה סטודנטים (חוץ ממך) משתמשים במבנה הזה */
+  students: number
+  entered_by: string
+}
