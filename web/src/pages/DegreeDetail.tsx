@@ -20,12 +20,12 @@ import './DegreeDetail.css'
 const SUMMARY: { status: CourseStatus; label: string; tab: string }[] = [
   { status: 'done', label: 'הושלמו', tab: 'done' },
   { status: 'current', label: 'בתהליך', tab: 'current' },
-  { status: 'planned', label: 'בתכנון', tab: 'plan' },
+  { status: 'planned', label: 'בתכנון', tab: '' },
 ]
 
 // במחשב הדרישות בטור צדדי קבוע, ובטלפון הן לשונית
 type Tab = 'requirements' | 'plan' | 'catalog'
-const TAB_LABELS: Record<Tab, string> = { requirements: 'דרישות', plan: 'מה לקחת', catalog: 'קטלוג' }
+const TAB_LABELS: Record<Tab, string> = { requirements: 'דרישות', plan: 'תכנון', catalog: 'קטלוג' }
 
 export default function DegreeDetail() {
   const { degreeId } = useParams()
@@ -50,7 +50,7 @@ export default function DegreeDetail() {
     category: params.get('category'),
   }))
   const [chosenTab, setChosenTab] = useState<Tab | null>(() =>
-    hash === '#catalog' || params.has('show') || params.has('category') ? 'catalog' : null,
+    hash === '#catalog' || params.has('show') || params.has('category') ? 'catalog' : params.get('tab') === 'plan' ? 'plan' : null,
   )
   const tabsRef = useRef<HTMLDivElement>(null)
 
@@ -60,9 +60,9 @@ export default function DegreeDetail() {
     if (hash === '#catalog' && catalogLoaded) tabsRef.current?.scrollIntoView()
   }, [hash, catalogLoaded])
 
-  const hasPlanner = !!catalog?.some((c) => c.info)
-  const tabs: Tab[] = [...(wide ? [] : (['requirements'] as Tab[])), ...(hasPlanner ? (['plan'] as Tab[]) : []), 'catalog']
-  const defaultTab: Tab = wide ? (hasPlanner ? 'plan' : 'catalog') : 'requirements'
+  // תכנון הסמסטרים נמצא רק כאן (גם בתואר בלי תבנית - שם פשוט אין הצעות לפי סמסטר)
+  const tabs: Tab[] = [...(wide ? [] : (['requirements'] as Tab[])), 'plan', 'catalog']
+  const defaultTab: Tab = wide ? 'plan' : 'requirements'
   const tab = chosenTab && tabs.includes(chosenTab) ? chosenTab : defaultTab
 
   function showCategory(category: string) {
@@ -93,7 +93,7 @@ export default function DegreeDetail() {
 
   const myCourses = courses ?? []
   const requirements = (
-    <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={degree.target_credits} onCategoryClick={catalog?.length ? showCategory : undefined} />
+    <DegreeRequirements degreeId={id} courses={myCourses} catalog={catalog ?? []} targetCredits={degree.target_credits} degreeName={degree.name} institution={degree.institution} onCategoryClick={catalog?.length ? showCategory : undefined} />
   )
 
   return (
@@ -139,7 +139,7 @@ export default function DegreeDetail() {
 
       <div className="dd-layout">
         <aside className="dd-side" aria-label="ההתקדמות שלי בתואר">
-          <ProgressCard courses={myCourses} target={degree.target_credits} />
+          <ProgressCard courses={myCourses} target={degree.target_credits} onPlanClick={() => setChosenTab('plan')} />
           {wide && requirements}
         </aside>
 
@@ -156,7 +156,7 @@ export default function DegreeDetail() {
                 className={`dd-tab${tab === t ? ' dd-tab--active' : ''}`}
                 onClick={() => setChosenTab(t)}
               >
-                {wide && t === 'plan' ? 'מה לקחת בסמסטר' : TAB_LABELS[t]}
+                {wide && t === 'plan' ? 'תכנון סמסטרים' : TAB_LABELS[t]}
                 {t === 'catalog' && catalog && catalog.length > 0 && <span className="dd-tab__count">{catalog.length}</span>}
               </button>
             ))}
@@ -173,7 +173,7 @@ export default function DegreeDetail() {
 }
 
 /** נ"ז מול היעד (הושלם / בתהליך / בתכנון), מספר הקורסים בכל מצב וממוצע משוקלל */
-function ProgressCard({ courses, target }: { courses: CourseRead[]; target: number | null }) {
+function ProgressCard({ courses, target, onPlanClick }: { courses: CourseRead[]; target: number | null; onPlanClick: () => void }) {
   const done = courses.filter(countsTowardDegree)
   const credits = (status: CourseStatus) => courses.filter((c) => c.status === status).reduce((sum, c) => sum + c.credits, 0)
   const earned = done.reduce((sum, c) => sum + c.credits, 0)
@@ -204,12 +204,26 @@ function ProgressCard({ courses, target }: { courses: CourseRead[]; target: numb
         </div>
       ) : null}
       <div className="dd-summary">
-        {SUMMARY.map((s) => (
-          <Link key={s.status} to={`/courses?tab=${s.tab}`} className="dd-summary__item">
-            <strong>{courses.filter((c) => c.status === s.status).length}</strong>
-            <span>{s.label}</span>
-          </Link>
-        ))}
+        {SUMMARY.map((s) => {
+          // "הושלמו" סופר רק קורסים שעברו, כמו בבית; קורס שלא עבר לא נספר
+          const count = s.status === 'done' ? done.length : courses.filter((c) => c.status === s.status).length
+          const content = (
+            <>
+              <strong>{count}</strong>
+              <span>{s.label}</span>
+            </>
+          )
+          // הקורסים המתוכננים מנוהלים בלשונית התכנון של המסך הזה
+          return s.status === 'planned' ? (
+            <button key={s.status} type="button" className="dd-summary__item dd-summary__item--button" onClick={onPlanClick}>
+              {content}
+            </button>
+          ) : (
+            <Link key={s.status} to={`/courses?tab=${s.tab}`} className="dd-summary__item">
+              {content}
+            </Link>
+          )
+        })}
         <div className="dd-summary__item">
           <strong>{average != null ? average.toFixed(1) : '—'}</strong>
           <span>ממוצע</span>

@@ -70,7 +70,7 @@ export function DegreeCatalog({
       <div className="dc-controls">
         <Input
           type="search"
-          placeholder="חיפוש לפי שם, קטגוריה או נושא…"
+          placeholder="חיפוש לפי שם, מספר קורס, קטגוריה או נושא…"
           aria-label="חיפוש בקטלוג"
           value={filter.query}
           onChange={(e) => patch({ query: e.target.value })}
@@ -221,7 +221,7 @@ function CatalogRow({
       <span className="dc-row__title">{c.name}</span>
       <span className="dc-row__meta">
         <span>
-          {c.credits} נ"ז{info?.schedule_label ? ` · ${info.schedule_label}` : ''}
+          {c.course_code ? `${c.course_code} · ` : ''}{c.credits} נ"ז{info?.schedule_label ? ` · ${info.schedule_label}` : ''}
         </span>
         {info?.has_prerequisites != null && (
           <span className={`dc-prereq dc-prereq--${info.has_prerequisites ? 'yes' : 'no'}`}>{info.has_prerequisites ? 'דורש ידע קודם' : 'ללא ידע קודם'}</span>

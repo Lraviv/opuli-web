@@ -55,3 +55,39 @@ def test_prior_knowledge_from_course_page():
     # קורס כלכלה שלא ברשימת המחלקה - יש ידע קודם, בלי סמסטרים
     econ = get_course_info("10917")
     assert econ.has_prerequisites and econ.schedule_label == "" and econ.required_knowledge
+
+
+def test_template_degree_starts_with_requirements(client):
+    h = register_and_login(client, "reqs@example.com")["headers"]
+    did = client.post("/degrees", json={"name": "cs", "template": "cs_open_university"}, headers=h).json()["id"]
+    reqs = {r["category"]: r["min_credits"] for r in client.get(f"/degrees/{did}/requirements", headers=h).json()}
+    assert reqs == {"חובה - תשתית מתמטית": 35, "חובה - מדעי המחשב": 42, "בחירה - מדעי המחשב": 28, "סמינר": 3, "סדנה": 3, "בחירה חופשית": 9}
+    assert sum(reqs.values()) == 120
+    catalog = client.get(f"/degrees/{did}/catalog", headers=h).json()
+    assert next(c for c in catalog if c["name"] == "אלגוריתמים")["course_code"] == "20417"
+    templates = {t["key"]: t for t in client.get("/degree-templates", headers=h).json()}
+    assert templates["cs_open_university"]["requirements"][2] == {"category": "בחירה - מדעי המחשב", "min_credits": 28}
+    econ = {r["category"]: r["min_credits"] for r in templates["econ_cs_open_university"]["requirements"]}
+    assert sum(m for m in econ.values() if m) == 125 and econ["סדנה"] is None
+    # בלי תבנית - אין דרישות
+    plain = client.post("/degrees", json={"name": "x"}, headers=h).json()["id"]
+    assert client.get(f"/degrees/{plain}/requirements", headers=h).json() == []
+
+
+def test_select_from_catalog_into_semester(client):
+    h = register_and_login(client, "plan@example.com")["headers"]
+    did = client.post("/degrees", json={"name": "cs", "template": "cs_open_university"}, headers=h).json()["id"]
+    sem = client.post(f"/degrees/{did}/semesters", json={"name": "2027ב"}, headers=h).json()
+    algo = next(c for c in client.get(f"/degrees/{did}/catalog", headers=h).json() if c["name"] == "אלגוריתמים")
+    course = client.post(f"/catalog-courses/{algo['id']}/select", json={"semester_id": sem["id"]}, headers=h).json()
+    assert course["status"] == "planned" and course["semester_id"] == sem["id"]
+    # סמסטר של תואר אחר נדחה
+    other = client.post("/degrees", json={"name": "y"}, headers=h).json()["id"]
+    other_sem = client.post(f"/degrees/{other}/semesters", json={"name": "2027א"}, headers=h).json()
+    r = client.post(f"/catalog-courses/{algo['id']}/select", json={"semester_id": other_sem["id"]}, headers=h)
+    assert r.status_code == 400
+    # וסמסטר של משתמש/ת אחר/ת - לא נמצא
+    h2 = register_and_login(client, "plan2@example.com")["headers"]
+    d2 = client.post("/degrees", json={"name": "z"}, headers=h2).json()["id"]
+    s2 = client.post(f"/degrees/{d2}/semesters", json={"name": "2027א"}, headers=h2).json()
+    assert client.post(f"/catalog-courses/{algo['id']}/select", json={"semester_id": s2["id"]}, headers=h).status_code == 404

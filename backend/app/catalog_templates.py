@@ -27,6 +27,22 @@ class DegreeTemplate:
     institution: str
     target_credits: float
     courses: tuple[TemplateCourse, ...]
+    # דרישות התואר לפי הידיעון: (קטגוריה, נ"ז נדרשות). None = אין יעד ידוע.
+    # קטגוריות החובה מחושבות מסכום הקורסים (ראו requirements()) ולא נכתבות כאן.
+    elective_requirements: tuple[tuple[str, float | None], ...] = ()
+
+    def requirements(self) -> list[tuple[str, float | None]]:
+        """כל הקטגוריות לפי סדר הופעתן בקטלוג: בחובה - סכום הנ"ז, בשאר - מהידיעון.
+        קטגוריות מהידיעון שאין להן קורסים בקטלוג (למשל בחירה חופשית) נוספות בסוף."""
+        electives = dict(self.elective_requirements)
+        sums: dict[str, float] = {}
+        for course in self.courses:
+            sums[course.category] = sums.get(course.category, 0) + course.credits
+        in_catalog = [
+            (category, total if category.startswith("חובה") else electives.get(category))
+            for category, total in sums.items()
+        ]
+        return in_catalog + [(c, m) for c, m in self.elective_requirements if c not in sums]
 
 
 def _courses(category: str, rows: list[tuple[str, float, str]]) -> list[TemplateCourse]:
@@ -234,6 +250,14 @@ TEMPLATES: dict[str, DegreeTemplate] = {
         institution="האוניברסיטה הפתוחה",
         target_credits=120,
         courses=tuple(_CS_MATH + _CS_CORE + _CS_ELECTIVE + _CS_SEMINAR + _CS_WORKSHOP),
+        # לפי הידיעון: 35 מתמטיקה + 42 חובה + 28 בחירה + סמינר 3 + סדנה 3 + 9 לימודי בחירה
+        # (כל קורס באו"פ שאינו סמינריון, לכן אין להם קורסים בקטלוג) = 120
+        elective_requirements=(
+            ("בחירה - מדעי המחשב", 28),
+            ("סמינר", 3),
+            ("סדנה", 3),
+            ("בחירה חופשית", 9),
+        ),
     ),
     "econ_cs_open_university": DegreeTemplate(
         key="econ_cs_open_university",
@@ -251,6 +275,17 @@ TEMPLATES: dict[str, DegreeTemplate] = {
             + _ECS_CS_ELECTIVE
             + _CS_SEMINAR
             + _CS_WORKSHOP
+        ),
+        # לפי הידיעון: 14 תשתית + כלכלה 64 (37 חובה + 21 בחירה + 6 עבודה סמינריונית)
+        # + מדעי המחשב 47 (24 חובה + 20 בחירה + 3 סמינריון) = 125.
+        # 21 נ"ז הבחירה בכלכלה מחולקות: לפחות 3 קורסים מקבוצה א (12), והשאר (9) בקבוצה ב.
+        # הסמינריון במדמ"ח הוא סמינר או סדנה - היעד (3) רשום על הסמינר, והסדנה בלי יעד.
+        elective_requirements=(
+            ("בחירה - כלכלה (קבוצה א)", 12),
+            ("בחירה - כלכלה (קבוצה ב)", 9),
+            ("סמינר - כלכלה", 6),
+            ("בחירה - מדעי המחשב", 20),
+            ("סמינר", 3),
         ),
     ),
 }

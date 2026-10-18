@@ -2,10 +2,10 @@ import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Button, Card, EmptyState, IconButton, Input } from '@/components/ui'
 import { countsTowardDegree, formatGrade } from '@/lib/grades'
-import { statsFor, suggestFromCatalog } from '@/lib/requirements'
+import { isMandatoryCategory, statsFor, suggestFromCatalog } from '@/lib/requirements'
 import type { RowStats } from '@/lib/requirements'
 import { Skeleton } from '@/components/Skeleton'
-import { useReplaceDegreeRequirements, useDegreeRequirements } from '@/lib/queries'
+import { useDegreeTemplates, useReplaceDegreeRequirements, useDegreeRequirements } from '@/lib/queries'
 import type { CatalogCourseRead, CourseRead, DegreeRequirementRead } from '@/lib/types'
 import './DegreeRequirements.css'
 
@@ -15,12 +15,17 @@ export function DegreeRequirements({
   courses,
   catalog,
   targetCredits = null,
+  degreeName,
+  institution = null,
   onCategoryClick,
 }: {
   degreeId: number
   courses: CourseRead[]
   catalog: CatalogCourseRead[]
   targetCredits?: number | null
+  /** שם התואר והמוסד - לזיהוי התבנית שממנה נוצר, בשביל הדרישות המוצעות */
+  degreeName?: string
+  institution?: string | null
   /** לחיצה על שם קטגוריה - מציגה את הקורסים שלה בקטלוג */
   onCategoryClick?: (category: string) => void
 }) {
@@ -34,7 +39,15 @@ export function DegreeRequirements({
     .filter((c) => countsTowardDegree(c) && !categories.has((c.category ?? '').trim()))
     .reduce((s, c) => s + c.credits, 0)
 
-  const suggestion = suggestFromCatalog(catalog)
+  // תואר שנוצר מתבנית מקבל את הדרישות כבר ביצירה; לתואר ישן בלי דרישות מציעים את אלה של התבנית
+  const { data: templates } = useDegreeTemplates()
+  const template = templates?.find((t) => t.name === degreeName && t.institution === (institution ?? ''))
+  const suggestion = suggestFromCatalog(catalog, template?.requirements)
+  const catalogSums = new Map(
+    suggestFromCatalog(catalog)
+      .filter((s) => isMandatoryCategory(s.category))
+      .map((s) => [s.category, s.min_credits!]),
+  )
 
   const header = (
     <div className="dr-header">
@@ -53,6 +66,7 @@ export function DegreeRequirements({
         header={header}
         initial={list.length ? list.map((r) => ({ category: r.category, min_credits: r.min_credits })) : suggestion}
         categories={suggestion.map((s) => s.category)}
+        catalogSums={catalogSums}
         targetCredits={targetCredits}
         busy={replace.isPending}
         onCancel={() => setEditing(false)}
@@ -82,7 +96,9 @@ export function DegreeRequirements({
             title="עוד לא הוגדרו דרישות"
             subtitle={
               suggestion.length
-                ? 'נטען את הקטגוריות מהקטלוג. בקטגוריות החובה הדרישה תמולא אוטומטית, ובשאר תמלאו לפי הידיעון.'
+                ? template
+                  ? 'נטען את הקטגוריות ואת הנ"ז הנדרשות מתבנית התואר.'
+                  : 'נטען את הקטגוריות מהקטלוג. בקטגוריות החובה הדרישה תמולא אוטומטית, ובשאר תמלאו לפי הידיעון.'
                 : 'מגדירים כמה נ"ז צריך בכל קטגוריה (חובה, בחירה, סמינר...) ועוקבים אחרי ההתקדמות.'
             }
           />
@@ -160,7 +176,8 @@ function RequirementRow({
             : stats.current + stats.planned > 0
               ? `${formatGrade(stats.current + stats.planned)} נ"ז בתהליך או בתכנון · אין יעד`
               : 'אין יעד נ"ז (אפשר להגדיר בעריכה)'}
-        {stats.unselectedMandatory > 0 && ` · ${stats.unselectedMandatory} קורסי חובה לא נבחרו`}
+        {stats.unselectedMandatory === 1 && ' · קורס חובה אחד שעוד לא בחרת'}
+        {stats.unselectedMandatory > 1 && ` · ${stats.unselectedMandatory} קורסי חובה שעוד לא בחרת`}
       </p>
     </li>
   )
@@ -170,6 +187,7 @@ function RequirementsEditor({
   header,
   initial,
   categories,
+  catalogSums,
   targetCredits,
   busy,
   onSave,
@@ -178,6 +196,8 @@ function RequirementsEditor({
   header: ReactNode
   initial: { category: string; min_credits: number | null }[]
   categories: string[]
+  /** בקטגוריות חובה: סכום הנ"ז של הקורסים בקטלוג - הערך ש"איפוס לפי הקטלוג" מחזיר */
+  catalogSums: Map<string, number>
   targetCredits: number | null
   busy: boolean
   onSave: (rows: { category: string; min_credits: number | null }[]) => Promise<void>
@@ -242,6 +262,11 @@ function RequirementsEditor({
               onChange={(e) => setRows((prev) => prev.map((r) => (r.key === row.key ? { ...r, credits: e.target.value } : r)))}
             />
             <IconButton icon="delete" tone="danger" label={`הסרת ${row.category || 'השורה'}`} onClick={() => setRows((prev) => prev.filter((r) => r.key !== row.key))} />
+            <ResetToCatalog
+              expected={catalogSums.get(row.category.trim())}
+              value={row.credits}
+              onReset={(v) => setRows((prev) => prev.map((r) => (r.key === row.key ? { ...r, credits: String(v) } : r)))}
+            />
           </div>
         ))}
         <button type="button" className="dr-link dr-add" onClick={() => setRows((prev) => [...prev, { key: nextKey(), category: '', credits: '' }])}>
@@ -267,5 +292,18 @@ function RequirementsEditor({
         </div>
       </form>
     </Card>
+  )
+}
+
+/** בקטגוריית חובה שהנ"ז בה שונה מסכום הקורסים בקטלוג - מציג את הערך מהקטלוג וכפתור להחזיר אליו */
+function ResetToCatalog({ expected, value, onReset }: { expected: number | undefined; value: string; onReset: (v: number) => void }) {
+  if (expected == null || Number(value) === expected) return null
+  return (
+    <p className="dr-editor__reset">
+      לפי הקטלוג: {formatGrade(expected)} נ"ז ·{' '}
+      <button type="button" className="dr-link" onClick={() => onReset(expected)}>
+        איפוס לפי הקטלוג
+      </button>
+    </p>
   )
 }
