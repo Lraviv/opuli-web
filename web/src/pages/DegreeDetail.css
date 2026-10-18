@@ -86,8 +86,15 @@
   border-radius: 10px;
   color: var(--color-text);
 }
-a.dd-summary__item:hover {
+a.dd-summary__item:hover,
+button.dd-summary__item:hover {
   background: var(--color-background-selected);
+}
+.dd-summary__item--button {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
 }
 .dd-summary__item strong {
   font-size: 18px;

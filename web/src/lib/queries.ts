@@ -97,6 +97,8 @@ export interface CatalogCourseSelectPayload {
   status?: CourseStatus
   semester?: string | null
   grade?: number | null
+  /** שיבוץ ישר לסמסטר בלוח התכנון */
+  semester_id?: number | null
 }
 
 export function useSelectCatalogCourse(degreeId: number) {

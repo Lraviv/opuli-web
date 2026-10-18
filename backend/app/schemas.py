@@ -191,6 +191,8 @@ class CatalogCourseSelect(BaseModel):
 
     status: CourseStatus = CourseStatus.planned
     semester: str | None = None
+    # שיבוץ ישר לסמסטר בלוח התכנון (מ"+" במסך התכנון). חייב להיות סמסטר של אותו תואר
+    semester_id: int | None = None
     grade: float | None = None
 
 

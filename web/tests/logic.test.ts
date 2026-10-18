@@ -6,6 +6,7 @@ import { statsFor, suggestFromCatalog } from '../src/lib/requirements.ts'
 import { normalizeUrl } from '../src/lib/links.ts'
 import { EMPTY_FILTER, catalogSemesters, groupCatalog, isFiltered, matchesFilter, openByDefault } from '../src/lib/catalog.ts'
 import { relativeTime } from '../src/lib/tips.ts'
+import { currentSemester, parseSemester, semesterName, semesterToAdd } from '../src/lib/semesters.ts'
 import { collectUpcoming, groupByHorizon, horizonOf, relativeDays, weekSummary } from '../src/lib/upcoming.ts'
 import { sessionOccursOn, parseDateKey, dateKey, startOfWeek, buildAgenda, addDays, defaultWeekStart } from '../src/lib/schedule.ts'
 
@@ -248,4 +249,19 @@ assert.equal(dateKey(defaultWeekStart(new Date(2026, 9, 15, 10))), '2026-10-11')
   const fromTemplate = suggestFromCatalog(catalog, [{ category: 'בחירה', min_credits: 20 }, { category: 'חובה - מתמטיקה', min_credits: 99 }])
   assert.deepEqual(fromTemplate.map((r) => r.min_credits), [10, 20, null])
   console.log('requirements suggestion tests passed')
+}
+
+{
+  // שמות סמסטרים בשיטת האו"פ
+  assert.deepEqual(parseSemester('2027א'), { year: 2027, letter: 'א' })
+  assert.deepEqual(parseSemester('2027 ב'), { year: 2027, letter: 'ב' })
+  assert.deepEqual(parseSemester('סמסטר אביב 2027'), { year: 2027, letter: 'ב' })
+  assert.deepEqual(parseSemester('סמסטר חורף 2026'), { year: 2026, letter: 'א' })
+  assert.equal(parseSemester('השנה הבאה'), null)
+  assert.deepEqual(currentSemester(new Date(2026, 9, 18)), { year: 2027, letter: 'א' })
+  assert.deepEqual(currentSemester(new Date(2027, 2, 1)), { year: 2027, letter: 'ב' })
+  assert.deepEqual(currentSemester(new Date(2027, 7, 1)), { year: 2027, letter: 'ג' })
+  assert.equal(semesterName(semesterToAdd([], new Date(2026, 9, 18))), '2027ב')
+  assert.equal(semesterName(semesterToAdd(['2027ב', '2027ג'], new Date(2026, 9, 18))), '2028א')
+  console.log('semester tests passed')
 }

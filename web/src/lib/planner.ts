@@ -85,7 +85,7 @@ function catalogCode(c: CatalogCourseRead): string | null {
   return c.notes?.match(CODE_RE)?.[0] ?? null
 }
 
-export function planSemester(semester: SemesterLetter, catalog: CatalogCourseRead[], myCourses: CourseRead[]): SemesterPlan {
+export function planSemester(semester: SemesterLetter | null, catalog: CatalogCourseRead[], myCourses: CourseRead[]): SemesterPlan {
   // מה שסיימת או לומדת עכשיו ייחשב כידע קודם לסמסטר הבא
   const taken = takenFrom(myCourses.filter((c) => c.status === 'done' || c.status === 'current'))
   const known = takenFrom([...myCourses, ...catalog.map((c) => ({ name: c.name, course_code: catalogCode(c) }))])
@@ -94,7 +94,7 @@ export function planSemester(semester: SemesterLetter, catalog: CatalogCourseRea
   for (const course of catalog) {
     if (course.already_selected) continue
     const info = course.info
-    if (info?.every_year && !info.semesters.includes(semester)) {
+    if (semester && info?.every_year && !info.semesters.includes(semester)) {
       plan.notOffered++
       continue
     }

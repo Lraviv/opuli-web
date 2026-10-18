@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ..authz import get_catalog_course_in_own_degree, get_owned_degree
+from ..authz import get_catalog_course_in_own_degree, get_owned_degree, get_owned_semester
 from ..catalog_templates import TEMPLATES, get_template
 from ..db import get_session
 from ..deps import get_current_user
@@ -258,6 +258,10 @@ def select_catalog_course(
     וצריך לקחת אותו שוב) - כל בחירה יוצרת רשומת Course נפרדת.
     """
     catalog_course = get_catalog_course_in_own_degree(catalog_course_id, current_user.id, session)
+    if payload.semester_id is not None:
+        semester = get_owned_semester(payload.semester_id, current_user.id, session)
+        if semester.degree_id != catalog_course.degree_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="הסמסטר שייך לתואר אחר")
 
     course = Course(
         user_id=current_user.id,
@@ -268,6 +272,7 @@ def select_catalog_course(
         category=catalog_course.category,
         status=payload.status,
         semester=payload.semester,
+        semester_id=payload.semester_id,
         grade=payload.grade,
         course_code=code_from_catalog_notes(catalog_course.notes),
     )

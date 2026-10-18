@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
-import { NewSemesterForm, SemesterBoard } from '@/components/SemesterBoard'
 import { GradeInput } from '@/components/GradeInput'
 import { isFailedCourse } from '@/lib/grades'
 import { SkeletonList } from '@/components/Skeleton'
@@ -10,10 +9,9 @@ import { useCourses, useCreateCourse, useDegrees } from '@/lib/queries'
 import type { CourseStatus } from '@/lib/types'
 import './Courses.css'
 
-// מסך הקורסים = ניהול הקורסים האישיים: רשימות לפי סטטוס, הוספה ידנית (המקום
-// היחיד), ולוח תכנון הסמסטרים. בחירה מהקטלוג נעשית במסך התואר.
-// בלי 'planned': קורסים מתוכננים מנוהלים דרך טאב "תכנון" (לוח הסמסטרים),
-// שמציג אותם מאורגנים לפי סמסטר ולא כרשימה שטוחה - ראו mobile/courses/index.tsx
+// מסך הקורסים = ניהול הקורסים האישיים: רשימות לפי סטטוס והוספה ידנית (המקום
+// היחיד). בחירה מהקטלוג ותכנון הסמסטרים נעשים במסך התואר: הלשונית "תכנון"
+// מובילה לשם, ורק בלי תואר היא מציגה כאן רשימה שטוחה של הקורסים המתוכננים.
 type ListTab = CourseStatus | 'plan'
 const TAB_ITEMS: { key: ListTab; label: string }[] = [
   { key: 'current', label: 'בתהליך' },
@@ -33,7 +31,7 @@ export default function Courses() {
   const [search, setSearch] = useState('')
 
   const { data: degrees } = useDegrees()
-  const coursesQuery = useCourses({ status: tab === 'plan' ? undefined : tab })
+  const coursesQuery = useCourses({ status: tab === 'plan' ? 'planned' : tab })
   const createCourse = useCreateCourse()
   const { data: allCourses } = useCourses()
   const tabCount = (key: ListTab) => (allCourses ?? []).filter((c) => c.status === (key === 'plan' ? 'planned' : key)).length
@@ -67,6 +65,10 @@ export default function Courses() {
   }
 
   const catalogLink = degrees && degrees.length > 0 ? `/degrees/${degrees[0].id}?show=unselected#catalog` : null
+  const planLink = degrees && degrees.length > 0 ? `/degrees/${degrees[0].id}?tab=plan` : null
+
+  // תכנון הסמסטרים נמצא במסך התואר
+  if (tab === 'plan' && planLink) return <Navigate to={planLink} replace />
 
   return (
     <div>
@@ -108,70 +110,66 @@ export default function Courses() {
       )}
 
       <div className="courses-tabs" role="tablist">
-        {TAB_ITEMS.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={tab === t.key}
-            className={`courses-tab${tab === t.key ? ' courses-tab--active' : ''}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-            <span className="courses-tab__count">{tabCount(t.key)}</span>
-          </button>
-        ))}
+        {TAB_ITEMS.map((t) => {
+          const label = (
+            <>
+              {t.label}
+              <span className="courses-tab__count">{tabCount(t.key)}</span>
+            </>
+          )
+          return t.key === 'plan' && planLink ? (
+            <Link key={t.key} to={planLink} role="tab" aria-selected={false} className="courses-tab">
+              {label}
+            </Link>
+          ) : (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={tab === t.key}
+              className={`courses-tab${tab === t.key ? ' courses-tab--active' : ''}`}
+              onClick={() => setTab(t.key)}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
 
-      {tab === 'plan' && degrees && degrees.length > 0 && <NewSemesterForm degreeId={degrees[0].id} />}
+      <Input
+        type="search"
+        className="courses-search"
+        placeholder="חיפוש קורס…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-      {!(tab === 'plan' && !degrees?.length) && (
-        <Input
-          type="search"
-          className="courses-search"
-          placeholder={tab === 'plan' ? 'חיפוש קורס בתכנון…' : 'חיפוש קורס…'}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      )}
-
-      {tab === 'plan' ? (
-        degrees && degrees.length > 0 ? (
-          <SemesterBoard degreeId={degrees[0].id} search={search} />
+      <Card>
+        {coursesQuery.isLoading ? (
+          <SkeletonList rows={4} pill={false} />
+        ) : !filteredCourses || filteredCourses.length === 0 ? (
+          <EmptyState
+            title={search.trim() ? 'לא נמצאו קורסים תואמים לחיפוש' : 'אין כאן קורסים עדיין'}
+            subtitle={search.trim() ? undefined : 'אפשר לבחור קורס מהקטלוג במסך התואר, או להוסיף ידנית למעלה'}
+          />
         ) : (
-          <EmptyState title="הוסיפו תואר כדי לתכנן סמסטרים" />
-        )
-      ) : (
-        <>
-          <Card>
-            {coursesQuery.isLoading ? (
-              <SkeletonList rows={4} pill={false} />
-            ) : !filteredCourses || filteredCourses.length === 0 ? (
-              <EmptyState
-                title={search.trim() ? 'לא נמצאו קורסים תואמים לחיפוש' : 'אין כאן קורסים עדיין'}
-                subtitle={search.trim() ? undefined : 'אפשר לבחור קורס מהקטלוג במסך התואר, או להוסיף ידנית למעלה'}
-              />
-            ) : (
-              filteredCourses.map((course) => {
-                return (
-                  <div key={course.id} className="courses-row">
-                    <Link to={`/courses/${course.id}`} className="courses-row__link">
-                      <span className="courses-dot" style={{ background: STATUS_COLOR[course.status] }} />
-                      <div style={{ flex: 1 }}>
-                        <p className="courses-row__title">{course.name}</p>
-                        {course.semester && <p className="courses-row__subtitle">{course.semester}</p>}
-                      </div>
-                      <span className="courses-row__meta">{course.credits} נ"ז</span>
-                    </Link>
-                    {course.status === 'done' && <GradeInput key={course.grade ?? ''} course={course} />}
-                    {isFailedCourse(course) && <span className="failed-pill">לא עבר</span>}
+          filteredCourses.map((course) => {
+            return (
+              <div key={course.id} className="courses-row">
+                <Link to={`/courses/${course.id}`} className="courses-row__link">
+                  <span className="courses-dot" style={{ background: STATUS_COLOR[course.status] }} />
+                  <div style={{ flex: 1 }}>
+                    <p className="courses-row__title">{course.name}</p>
+                    {course.semester && <p className="courses-row__subtitle">{course.semester}</p>}
                   </div>
-                )
-              })
-            )}
-          </Card>
-
-        </>
-      )}
+                  <span className="courses-row__meta">{course.credits} נ"ז</span>
+                </Link>
+                {course.status === 'done' && <GradeInput key={course.grade ?? ''} course={course} />}
+                {isFailedCourse(course) && <span className="failed-pill">לא עבר</span>}
+              </div>
+            )
+          })
+        )}
+      </Card>
     </div>
   )
 }
