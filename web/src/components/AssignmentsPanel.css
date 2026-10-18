@@ -172,3 +172,31 @@
   padding: 8px 16px;
   font-size: 14px;
 }
+
+/* הצעת מבנה משותף (מטלות ומשקלים שסטודנטים אחרים הזינו) */
+.ui-card.ap-shared {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-three);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-background-element));
+}
+.ap-shared__title {
+  margin: 0;
+  font-weight: 700;
+}
+.ap-shared__summary {
+  margin: 0;
+  font-size: 15px;
+}
+.ap-shared__meta {
+  margin: 0 0 var(--space-two);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.ap-shared__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-danger);
+}

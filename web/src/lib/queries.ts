@@ -18,6 +18,7 @@ import type {
   ExamTerm,
   LinkRead,
   SemesterRead,
+  SharedStructureRead,
   StudyTopicRead,
   ThemeModePreference,
   TipRead,
@@ -503,6 +504,27 @@ export function useBatchAddAssignments(courseId: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['course-items', courseId] })
       qc.invalidateQueries({ queryKey: ['all-course-items'] })
+    },
+  })
+}
+
+/** מבנה הקורס שסטודנטים אחרים כבר הזינו - רק כשבקורס עוד אין מטלות */
+export function useSharedStructure(courseId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['shared-structure', courseId],
+    queryFn: () => api.get<SharedStructureRead | null>(`/courses/${courseId}/shared-structure`),
+    enabled,
+  })
+}
+
+export function useApplySharedStructure(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post<CourseItemRead[]>(`/courses/${courseId}/shared-structure/apply`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['course-items', courseId] })
+      qc.invalidateQueries({ queryKey: ['all-course-items'] })
+      qc.invalidateQueries({ queryKey: ['courses'] })
     },
   })
 }
