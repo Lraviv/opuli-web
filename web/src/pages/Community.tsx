@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { Button, DateInput, Input, TimeInput } from '@/components/ui'
 import { ForumPostCard } from '@/components/ForumPostCard'
 import { SkeletonList } from '@/components/Skeleton'
+import { TeamOptions } from '@/components/TeamOptions'
+import type { TeamFlags } from '@/components/TeamOptions'
 import { useCourses } from '@/lib/queries'
 import { useCreatePost, useForumCourseActivity, useForumFeed, useUpcomingEvents } from '@/lib/forumQueries'
 import type { ForumFilter } from '@/lib/forumQueries'
@@ -14,7 +16,7 @@ import './Community.css'
 
 const PAGE = 20
 
-function Composer({ onDone }: { onDone: () => void }) {
+function Composer({ onDone, isAdmin }: { onDone: () => void; isAdmin: boolean }) {
   const create = useCreatePost()
   const { data: courses } = useCourses({ status: 'current' })
   const [category, setCategory] = useState<ForumCategory>('question')
@@ -26,6 +28,7 @@ function Composer({ onDone }: { onDone: () => void }) {
   const [end, setEnd] = useState('')
   const [place, setPlace] = useState('')
   const [placePrivate, setPlacePrivate] = useState('')
+  const [team, setTeam] = useState<TeamFlags>({ as_team: false, pin: false, all_institutions: false })
   const isEvent = isEventCategory(category)
   const ready = title.trim() && body.trim() && (!isEvent || (date && start && place.trim()))
 
@@ -37,7 +40,8 @@ function Composer({ onDone }: { onDone: () => void }) {
         category,
         title: title.trim(),
         body: body.trim(),
-        course_id: courseId ? Number(courseId) : null,
+        course_id: courseId && !team.all_institutions ? Number(courseId) : null,
+        ...(isAdmin && team),
         ...(isEvent && {
           event_starts_at: localToIso(date, start),
           event_ends_at: end ? localToIso(date, end) : null,
@@ -106,7 +110,8 @@ function Composer({ onDone }: { onDone: () => void }) {
           />
         </div>
       )}
-      {courses && courses.length > 0 && (
+      {isAdmin && <TeamOptions value={team} onChange={setTeam} withAllInstitutions />}
+      {courses && courses.length > 0 && !team.all_institutions && (
         <select aria-label="קורס (לא חובה)" value={courseId} onChange={(e) => setCourseId(e.target.value)}>
           <option value="">בלי קורס</option>
           {courses.map((c) => (
@@ -117,7 +122,10 @@ function Composer({ onDone }: { onDone: () => void }) {
         </select>
       )}
       <div className="fr-composer__row">
-        <span className="tp-hint">הפוסט גלוי לסטודנטים מהמוסד שלך בלבד.</span>
+        <span className="tp-hint">
+          {team.all_institutions ? 'הפוסט יופיע בקהילות של כל המוסדות.' : 'הפוסט גלוי לסטודנטים מהמוסד שלך בלבד.'}
+          {team.as_team && ' יוצג בשם צוות OpuLi.'}
+        </span>
         <div className="fr-composer__buttons">
           <Button type="button" variant="secondary" onClick={onDone}>
             ביטול
@@ -246,7 +254,7 @@ export default function Community() {
             </div>
 
             {composing ? (
-              <Composer onDone={() => setComposing(false)} />
+              <Composer onDone={() => setComposing(false)} isAdmin={!!data?.is_admin} />
             ) : (
               <button type="button" className="fr-composer-open" onClick={() => setComposing(true)}>
                 <span className="tp-avatar tp-avatar--small" aria-hidden>

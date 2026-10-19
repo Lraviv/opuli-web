@@ -300,6 +300,9 @@ class CoursePost(SQLModel, table=True):
     # מחושבים מראש כדי שהמיון יהיה שאילתה פשוטה - מתעדכנים יחד עם הצבעה/תשובה
     score: int = Field(default=0)
     reply_count: int = Field(default=0)
+    # הודעה רשמית של מנהלת: מוצגת בשם "צוות OpuLi", ונעוצה מופיעה ראשונה
+    as_team: bool = Field(default=False)
+    pinned_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     edited_at: Optional[datetime] = None
     # תגובה ראשית שנמחקה ויש לה תשובות נשארת כ"התגובה נמחקה" כדי לשמור על השרשור
@@ -349,6 +352,8 @@ class ForumPost(SQLModel, table=True):
     pinned_at: Optional[datetime] = None
     # מוסתר ע"י מנהלת או אוטומטית אחרי כמה דיווחים
     hidden_at: Optional[datetime] = None
+    # פוסט רשמי של מנהלת: מוצג בשם "צוות OpuLi" במקום שם הכותבת
+    as_team: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
     edited_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

@@ -5,11 +5,14 @@ import { linkify } from '@/lib/linkify'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
 import { SkeletonList } from '@/components/Skeleton'
+import { TeamBadge, TeamOptions } from '@/components/TeamOptions'
+import type { TeamFlags } from '@/components/TeamOptions'
 import { useAuth } from '@/auth/AuthContext'
 import {
   useCourseTips,
   useCreateTip,
   useDeleteTip,
+  usePinTip,
   useTipReplies,
   useUpdateCourse,
   useUpdateTip,
@@ -82,17 +85,21 @@ function TipBody({
   tip,
   courseId,
   small,
+  canPin,
   onReply,
   children,
 }: {
   tip: TipRead
   courseId: number
   small?: boolean
+  /** מנהלת על תגובה ראשית */
+  canPin?: boolean
   onReply: () => void
   children?: ReactNode
 }) {
   const updateTip = useUpdateTip(courseId)
   const deleteTip = useDeleteTip(courseId)
+  const pinTip = usePinTip(courseId)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(tip.body)
@@ -133,6 +140,7 @@ function TipBody({
         <div className="tp-who">
           <span className="tp-name">
             {name}
+            {tip.official && <TeamBadge />}
             {tip.is_mine && <span className="tp-you">את/ה</span>}
           </span>
           <span className="tp-when">
@@ -140,9 +148,10 @@ function TipBody({
               {relativeTime(tip.created_at)}
             </time>
             {tip.edited && ' · נערך'}
+            {tip.pinned && ' · נעוץ'}
           </span>
         </div>
-        {tip.is_mine && (
+        {(tip.is_mine || canPin) && (
           <div className="tp-menu-wrap">
             <button
               type="button"
@@ -155,20 +164,36 @@ function TipBody({
             </button>
             {menuOpen && (
               <div className="tp-menu" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setDraft(tip.body)
-                    setEditing(true)
-                    setMenuOpen(false)
-                  }}
-                >
-                  עריכה
-                </button>
-                <button type="button" role="menuitem" className="tp-menu__danger" onClick={handleDelete}>
-                  מחיקה
-                </button>
+                {tip.is_mine && (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setDraft(tip.body)
+                        setEditing(true)
+                        setMenuOpen(false)
+                      }}
+                    >
+                      עריכה
+                    </button>
+                    <button type="button" role="menuitem" className="tp-menu__danger" onClick={handleDelete}>
+                      מחיקה
+                    </button>
+                  </>
+                )}
+                {canPin && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      pinTip.mutate({ id: tip.id, value: !tip.pinned })
+                    }}
+                  >
+                    {tip.pinned ? 'ביטול נעיצה' : 'נעיצה למעלה'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -254,7 +279,7 @@ function ReplyForm({
   )
 }
 
-function TipThread({ tip, courseId }: { tip: TipRead; courseId: number }) {
+function TipThread({ tip, courseId, isAdmin }: { tip: TipRead; courseId: number; isAdmin: boolean }) {
   const [expanded, setExpanded] = useState(false)
   // replyTarget = על איזו תגובה עונים (הראשית או תשובה בשרשור); null = תיבת התשובה סגורה
   const [replyTarget, setReplyTarget] = useState<TipRead | null>(null)
@@ -269,8 +294,8 @@ function TipThread({ tip, courseId }: { tip: TipRead; courseId: number }) {
   }
 
   return (
-    <article className="tp-post">
-      <TipBody tip={tip} courseId={courseId} onReply={() => openReply(tip)}>
+    <article className={`tp-post${tip.official ? ' tp-post--official' : ''}`}>
+      <TipBody tip={tip} courseId={courseId} canPin={isAdmin && !tip.deleted} onReply={() => openReply(tip)}>
         {tip.reply_count > 0 && !tip.deleted && <span className="tp-meta">{tip.reply_count} תגובות</span>}
       </TipBody>
 
@@ -303,22 +328,24 @@ function TipThread({ tip, courseId }: { tip: TipRead; courseId: number }) {
   )
 }
 
-function Composer({ courseId }: { courseId: number }) {
+function Composer({ courseId, isAdmin }: { courseId: number; isAdmin: boolean }) {
   const { user } = useAuth()
   const createTip = useCreateTip(courseId)
   const [text, setText] = useState('')
+  const [team, setTeam] = useState<TeamFlags>({ as_team: false, pin: false })
   const name = user?.display_name?.trim() || 'סטודנט/ית'
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    await createTip.mutateAsync({ body: text.trim() })
+    await createTip.mutateAsync({ body: text.trim(), ...(isAdmin && team) })
     setText('')
+    setTeam({ as_team: false, pin: false })
   }
 
   return (
     <form className="tp-composer" onSubmit={handleSubmit}>
-      <Avatar name={name} icon={user?.avatar_icon ?? null} />
+      {team.as_team ? <Avatar name="צוות OpuLi" icon="📣" /> : <Avatar name={name} icon={user?.avatar_icon ?? null} />}
       <div className="tp-composer__main">
         <textarea
           className="tp-textarea"
@@ -328,9 +355,12 @@ function Composer({ courseId }: { courseId: number }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+        {isAdmin && <TeamOptions value={team} onChange={setTeam} />}
         <div className="tp-composer__row">
           <span className="tp-hint">
-            {user?.display_name?.trim() ? (
+            {team.as_team ? (
+              <>יוצג בשם צוות OpuLi</>
+            ) : user?.display_name?.trim() ? (
               <>יוצג בשם {name}</>
             ) : (
               <>
@@ -416,7 +446,7 @@ export function CourseTips({ course }: { course: CourseRead }) {
         </p>
       )}
 
-      <Composer courseId={course.id} />
+      <Composer courseId={course.id} isAdmin={data.is_admin} />
 
       {data.total === 0 ? (
         <Card>
@@ -444,7 +474,7 @@ export function CourseTips({ course }: { course: CourseRead }) {
           </div>
 
           {data.items.map((tip) => (
-            <TipThread key={tip.id} tip={tip} courseId={course.id} />
+            <TipThread key={tip.id} tip={tip} courseId={course.id} isAdmin={data.is_admin} />
           ))}
 
           {data.items.length < data.total && (

@@ -211,6 +211,9 @@ export interface TipRead {
   /** ההצבעה של המשתמש/ת המחובר/ת בלבד: 1, -1 או 0 */
   my_vote: number
   is_mine: boolean
+  /** הודעה רשמית של צוות OpuLi */
+  official: boolean
+  pinned: boolean
   reply_count: number
   replies: TipRead[]
 }
@@ -218,6 +221,8 @@ export interface TipRead {
 export interface TipsPage {
   /** false = לקורס אין מספר קורס, ולכן אין לו דיון משותף */
   linked: boolean
+  /** מנהלת OpuLi - יכולה לפרסם בשם הצוות ולנעוץ */
+  is_admin: boolean
   course: { code: string; institution: string; name: string; participants: number } | null
   total: number
   items: TipRead[]
@@ -274,6 +279,8 @@ export interface ForumPost {
   saved: boolean
   comment_count: number
   is_mine: boolean
+  /** פוסט רשמי של צוות OpuLi */
+  official: boolean
   pinned: boolean
   hidden: boolean
   edited: boolean
@@ -329,4 +336,8 @@ export interface ForumPostCreate {
   event_ends_at?: string | null
   place_public?: string | null
   place_private?: string | null
+  /** למנהלות בלבד */
+  as_team?: boolean
+  pin?: boolean
+  all_institutions?: boolean
 }

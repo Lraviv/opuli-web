@@ -256,3 +256,39 @@ def test_rate_limit(client, monkeypatch):
     _post(client, h)
     r = client.post("/forum/posts", json={"category": "tip", "title": "x", "body": "y"}, headers=h)
     assert r.status_code == 429
+
+
+def test_admin_posts_as_team(client, monkeypatch):
+    admin = _student(client, "lihi@example.com")
+    h = _student(client, "noa@example.com")
+    other = _student(client, "tal@example.com", institution="הטכניון")
+
+    # סטודנט/ית רגיל/ה לא יכול/ה לפרסם בשם הצוות, לנעוץ או לפרסם לכל המוסדות
+    for flag in ("as_team", "pin", "all_institutions"):
+        r = client.post("/forum/posts", json={"category": "community", "title": "t", "body": "b", flag: True}, headers=h)
+        assert r.status_code == 403, flag
+
+    monkeypatch.setattr(settings, "admin_emails", "lihi@example.com")
+    local = _post(client, admin, category="community", title="מפגש פתיחה", as_team=True, pin=True)
+    assert local["official"] is True and local["pinned"] is True and local["is_mine"] is True
+    assert local["author"] == {"display_name": "צוות OpuLi", "avatar_icon": "📣"}
+
+    everyone = _post(client, admin, category="community", title="פיצ'ר חדש", as_team=True, all_institutions=True)
+    _post(client, h, title="פוסט רגיל")
+
+    feed = client.get("/forum/posts", headers=h).json()
+    titles = [p["title"] for p in feed["items"]]
+    assert titles[0] == "מפגש פתיחה"  # נעוץ ראשון
+    assert set(titles) == {"מפגש פתיחה", "פיצ'ר חדש", "פוסט רגיל"}
+    assert feed["items"][0]["author"]["display_name"] == "צוות OpuLi"
+
+    # מוסד אחר רואה רק את ההודעה לכל המוסדות, וגם יכול להגיב עליה
+    other_feed = client.get("/forum/posts", headers=other).json()
+    assert [p["title"] for p in other_feed["items"]] == ["פיצ'ר חדש"]
+    r = client.post(f"/forum/posts/{everyone['id']}/comments", json={"body": "יפה!"}, headers=other)
+    assert r.status_code == 201
+    assert client.get(f"/forum/posts/{local['id']}", headers=other).status_code == 404
+
+    # המנהלת עדיין יכולה לערוך ולמחוק את ההודעה
+    r = client.patch(f"/forum/posts/{everyone['id']}", json={"title": "פיצ'ר חדש: קהילה"}, headers=admin)
+    assert r.status_code == 200 and r.json()["official"] is True

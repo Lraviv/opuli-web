@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input } from '@/components/ui'
 import { Avatar } from '@/components/Avatar'
+import { TeamBadge } from '@/components/TeamOptions'
 import { linkify } from '@/lib/linkify'
 import {
   useAttendees,
@@ -176,7 +177,7 @@ export function ForumPostCard({ post, full, isAdmin }: { post: ForumPost; full?:
   }
 
   return (
-    <article className={`fr-post${post.hidden ? ' fr-post--hidden' : ''}`}>
+    <article className={`fr-post${post.hidden ? ' fr-post--hidden' : ''}${post.official ? ' fr-post--official' : ''}`}>
       <div className="tp-head">
         {post.deleted ? (
           <span className="tp-avatar" aria-hidden />
@@ -186,6 +187,7 @@ export function ForumPostCard({ post, full, isAdmin }: { post: ForumPost; full?:
         <div className="tp-who">
           <span className="tp-name">
             {post.deleted ? 'הפוסט נמחק' : name}
+            {post.official && <TeamBadge />}
             {post.is_mine && <span className="tp-you">את/ה</span>}
           </span>
           <span className="tp-when">
