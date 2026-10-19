@@ -578,3 +578,51 @@ a.sch-ev__title:hover {
     bottom: 100px;
   }
 }
+
+/* תזכורות */
+.sch-reminders {
+  min-width: 0;
+}
+.sch-rem-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-two);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.sch-rem-form > :first-child {
+  flex: 2 1 200px;
+}
+.sch-rem-form > :nth-child(2) {
+  flex: 1 1 180px;
+}
+.sch-rem-form--edit {
+  border-bottom: 0;
+}
+.sch-rem-form--edit + .sch-row,
+.sch-row + .sch-rem-form--edit {
+  border-top: 1px solid var(--color-border);
+}
+.sch-rem-form__actions {
+  display: flex;
+  gap: var(--space-two);
+}
+.sch-rem-empty {
+  margin: 0;
+  padding: 14px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.sch-row__meta--overdue {
+  color: var(--color-danger);
+}
+.sch-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-primary);
+  cursor: pointer;
+}

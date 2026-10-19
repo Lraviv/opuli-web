@@ -10,7 +10,6 @@ import Degrees from '@/pages/Degrees'
 import Courses from '@/pages/Courses'
 import DegreeDetail from '@/pages/DegreeDetail'
 import CourseDetail from '@/pages/CourseDetail'
-import Reminders from '@/pages/Reminders'
 import Profile from '@/pages/Profile'
 import Schedule from '@/pages/Schedule'
 import Exams from '@/pages/Exams'
@@ -149,11 +148,7 @@ export default function App() {
       />
       <Route
         path="/reminders"
-        element={
-          <ProtectedRoute>
-            <Reminders />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/schedule#reminders" replace />}
       />
       <Route
         path="/profile"
