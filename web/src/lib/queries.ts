@@ -687,8 +687,17 @@ function useInvalidateTips(courseId: number) {
 export function useCreateTip(courseId: number) {
   const invalidate = useInvalidateTips(courseId)
   return useMutation({
-    mutationFn: (payload: { body: string; parent_id?: number | null }) =>
+    mutationFn: (payload: { body: string; parent_id?: number | null; as_team?: boolean; pin?: boolean }) =>
       api.post<TipRead>(`/courses/${courseId}/tips`, payload),
+    onSuccess: invalidate,
+  })
+}
+
+/** נעיצה של תגובה ראשית בראש הדיון - למנהלות בלבד */
+export function usePinTip(courseId: number) {
+  const invalidate = useInvalidateTips(courseId)
+  return useMutation({
+    mutationFn: ({ id, value }: { id: number; value: boolean }) => api.put<TipRead>(`/tips/${id}/pin`, { value }),
     onSuccess: invalidate,
   })
 }

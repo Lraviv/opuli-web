@@ -41,6 +41,8 @@ Every course has a "tips from students" tab: a shared discussion for everyone ta
 ### Community
 A forum for every student at your institution, beyond a single course. Share tips, ask general questions, and organize study meetups and student parties. Events show the date and a general location; the exact address appears only after you RSVP, and the organizer sees the names and emails of who's coming. Upvote, save posts, comment in threads, and report anything that doesn't belong.
 
+Admins (the `ADMIN_EMAILS` setting) can post as "צוות OpuLi" with an official badge, in the community and in any course's tips tab, pin posts to the top, and send a community post to every institution at once.
+
 ### And more
 - Quick links to Sheilta, Opal, recordings and the exam archive, on the home screen and in every course
 - Lesson tracking and study topics to prepare for the exam

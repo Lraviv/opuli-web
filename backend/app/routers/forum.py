@@ -19,7 +19,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from ..authz import get_owned_course
+from ..authz import get_owned_course, is_admin
 from ..config import settings
 from ..db import get_session
 from ..deps import get_current_user
@@ -94,6 +94,10 @@ class PostCreate(BaseModel):
     event_ends_at: datetime | None = None
     place_public: str | None = Field(default=None, max_length=MAX_PLACE_PUBLIC)
     place_private: str | None = Field(default=None, max_length=MAX_PLACE_PRIVATE)
+    # למנהלות בלבד: פרסום בשם "צוות OpuLi", נעיצה מיד, ופרסום לכל המוסדות
+    as_team: bool = False
+    pin: bool = False
+    all_institutions: bool = False
 
     _req = field_validator("title", "body")(_strip_required)
     _opt = field_validator("place_public", "place_private")(_strip_optional)
@@ -161,6 +165,16 @@ class Author(BaseModel):
     avatar_icon: str | None = None
 
 
+TEAM_AUTHOR = Author(display_name="צוות OpuLi", avatar_icon="📣")
+# מוסד של פוסט שמופיע בפורומים של כל המוסדות (הודעות צוות)
+ALL_INSTITUTIONS = "*"
+
+
+def _in_forum(inst: str):
+    """תנאי SQL: פוסט שמופיע בפורום של המוסד - שלו, או הודעה לכל המוסדות."""
+    return ForumPost.institution.in_([inst, ALL_INSTITUTIONS])
+
+
 class CourseTag(BaseModel):
     code: str
     name: str
@@ -189,6 +203,8 @@ class PostRead(BaseModel):
     saved: bool
     comment_count: int
     is_mine: bool
+    # פוסט רשמי של צוות OpuLi
+    official: bool
     pinned: bool
     hidden: bool
     edited: bool
@@ -253,9 +269,7 @@ def user_institution(user: User, session: Session) -> str | None:
     return None
 
 
-def _is_admin(user: User) -> bool:
-    admins = {e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()}
-    return user.email.lower() in admins
+_is_admin = is_admin
 
 
 def _require_institution(user: User, session: Session) -> str:
@@ -269,7 +283,7 @@ def _get_visible_post(post_id: int, user: User, session: Session) -> ForumPost:
     post = session.get(ForumPost, post_id)
     if (
         post is None
-        or post.institution != user_institution(user, session)
+        or post.institution not in (user_institution(user, session), ALL_INSTITUTIONS)
         or (post.hidden_at is not None and not _is_admin(user))
     ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="הפוסט לא נמצא")
@@ -347,7 +361,11 @@ def _serialize_posts(posts: list[ForumPost], user: User, session: Session) -> li
                 category=p.category,
                 title="" if deleted else p.title,
                 body="" if deleted else p.body,
-                author=None if deleted else Author(display_name=_name(author), avatar_icon=author.avatar_icon if author else None),
+                author=None
+                if deleted
+                else TEAM_AUTHOR
+                if p.as_team
+                else Author(display_name=_name(author), avatar_icon=author.avatar_icon if author else None),
                 course=CourseTag(code=shared.code, name=shared.name) if shared else None,
                 event=event,
                 score=p.score,
@@ -355,6 +373,7 @@ def _serialize_posts(posts: list[ForumPost], user: User, session: Session) -> li
                 saved=p.id in saved,
                 comment_count=p.comment_count,
                 is_mine=mine and not deleted,
+                official=p.as_team,
                 pinned=p.pinned_at is not None,
                 hidden=p.hidden_at is not None,
                 edited=p.edited_at is not None,
@@ -465,7 +484,7 @@ def list_posts(
     if inst is None:
         return FeedPage(linked=False, is_admin=admin)
 
-    conds = [ForumPost.institution == inst]
+    conds = [_in_forum(inst)]
     if not admin:
         conds.append(ForumPost.hidden_at.is_(None))
     if category:
@@ -510,7 +529,7 @@ def upcoming_events(
     posts = session.exec(
         select(ForumPost)
         .where(
-            ForumPost.institution == inst,
+            _in_forum(inst),
             ForumPost.event_starts_at.is_not(None),
             ForumPost.hidden_at.is_(None),
             ForumPost.deleted_at.is_(None),
@@ -582,13 +601,17 @@ def create_post(
     if payload.event_starts_at is not None and payload.event_starts_at < datetime.utcnow():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="תאריך האירוע כבר עבר")
 
+    if (payload.as_team or payload.pin or payload.all_institutions) and not _is_admin(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="רק מנהלות יכולות לפרסם בשם הצוות")
+
     shared_id = None
-    if payload.course_id is not None:
+    # קורס שייך למוסד אחד, אז בהודעה לכל המוסדות אין תגית קורס
+    if payload.course_id is not None and not payload.all_institutions:
         shared = resolve_shared_course(get_owned_course(payload.course_id, current_user.id, session), session)
         shared_id = shared.id if shared else None
 
     post = ForumPost(
-        institution=inst,
+        institution=ALL_INSTITUTIONS if payload.all_institutions else inst,
         user_id=current_user.id,
         category=payload.category,
         title=payload.title,
@@ -598,6 +621,8 @@ def create_post(
         event_ends_at=payload.event_ends_at,
         place_public=payload.place_public,
         place_private=payload.place_private,
+        as_team=payload.as_team,
+        pinned_at=datetime.utcnow() if payload.pin else None,
     )
     session.add(post)
     session.commit()

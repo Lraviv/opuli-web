@@ -47,7 +47,7 @@ def test_students_share_a_discussion(client):
 def test_course_without_code_is_not_linked(client):
     h = register_and_login(client, "solo@example.com")["headers"]
     cid = _course(client, h, code=None)
-    assert client.get(f"/courses/{cid}/tips", headers=h).json() == {"linked": False, "course": None, "total": 0, "items": []}
+    assert client.get(f"/courses/{cid}/tips", headers=h).json() == {"linked": False, "is_admin": False, "course": None, "total": 0, "items": []}
     assert client.post(f"/courses/{cid}/tips", json={"body": "x"}, headers=h).status_code == 400
 
     # הוספת מספר קורס מחברת לדיון
@@ -193,3 +193,35 @@ def test_econ_cs_template(client):
     assert by_name["עבודה סמינריונית בכלכלה"]["notes"] is None
     mandatory = sum(c["credits"] for c in catalog if c["category"].startswith("חובה"))
     assert mandatory == 14 + 37 + 24
+
+
+def test_admin_posts_and_pins_as_team(client, monkeypatch):
+    from app.config import settings
+
+    h1, c1, h2, c2 = _two_students(client)
+    r = client.post(f"/courses/{c1}/tips", json={"body": "הודעה", "as_team": True}, headers=h1)
+    assert r.status_code == 403
+
+    monkeypatch.setattr(settings, "admin_emails", "noa@example.com")
+    assert client.get(f"/courses/{c1}/tips", headers=h1).json()["is_admin"] is True
+    assert client.get(f"/courses/{c2}/tips", headers=h2).json()["is_admin"] is False
+
+    tip = _post(client, h2, c2, "עצה פופולרית")
+    client.put(f"/tips/{tip['id']}/vote", json={"value": 1}, headers=h1)
+    r = client.post(f"/courses/{c1}/tips", json={"body": "המבחן הוזז", "as_team": True, "pin": True}, headers=h1)
+    assert r.status_code == 201, r.text
+    team = r.json()
+    assert team["official"] is True and team["pinned"] is True
+    assert team["author"]["display_name"] == "צוות OpuLi"
+
+    # נעוצה ראשונה למרות שלעצה השנייה יש יותר קולות
+    items = client.get(f"/courses/{c2}/tips", headers=h2).json()["items"]
+    assert [t["id"] for t in items] == [team["id"], tip["id"]]
+
+    # נעיצה של תגובה קיימת - רק למנהלות, ורק לתגובה ראשית
+    assert client.put(f"/tips/{tip['id']}/pin", json={"value": True}, headers=h2).status_code == 403
+    reply = _post(client, h2, c2, "תודה", parent_id=team["id"])
+    assert client.put(f"/tips/{reply['id']}/pin", json={"value": True}, headers=h1).status_code == 400
+    assert client.put(f"/tips/{team['id']}/pin", json={"value": False}, headers=h1).json()["pinned"] is False
+    items = client.get(f"/courses/{c2}/tips", headers=h2).json()["items"]
+    assert items[0]["id"] == tip["id"]

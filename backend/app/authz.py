@@ -7,7 +7,14 @@
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
-from .models import CatalogCourse, Course, CourseItem, Degree, Exam, Semester
+from .config import settings
+from .models import CatalogCourse, Course, CourseItem, Degree, Exam, Semester, User
+
+
+def is_admin(user: User) -> bool:
+    """מנהלות OpuLi (ADMIN_EMAILS): מפרסמות בשם הצוות, נועצות ומסתירות פוסטים."""
+    admins = {e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()}
+    return user.email.lower() in admins
 
 
 def get_owned_degree(degree_id: int, user_id: int, session: Session) -> Degree:

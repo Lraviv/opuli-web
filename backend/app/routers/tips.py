@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from ..authz import get_owned_course
+from ..authz import get_owned_course, is_admin
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import Course, CoursePost, CoursePostVote, SharedCourse, User
@@ -38,6 +38,9 @@ def _clean_body(v: str) -> str:
 class TipCreate(BaseModel):
     body: str = Field(..., max_length=MAX_BODY)
     parent_id: int | None = None
+    # למנהלות בלבד: תגובה בשם "צוות OpuLi", ונעיצה בראש הדיון (רק לתגובה ראשית)
+    as_team: bool = False
+    pin: bool = False
 
     _clean = field_validator("body")(_clean_body)
 
@@ -57,6 +60,9 @@ class TipAuthor(BaseModel):
     avatar_icon: str | None = None
 
 
+TEAM_AUTHOR = TipAuthor(display_name="צוות OpuLi", avatar_icon="📣")
+
+
 class TipRead(BaseModel):
     id: int
     parent_id: int | None
@@ -69,6 +75,9 @@ class TipRead(BaseModel):
     score: int
     my_vote: int
     is_mine: bool
+    # הודעה רשמית של צוות OpuLi
+    official: bool = False
+    pinned: bool = False
     reply_count: int
     replies: list["TipRead"] = []
 
@@ -83,6 +92,7 @@ class SharedCourseInfo(BaseModel):
 class TipsPage(BaseModel):
     # False = לקורס אין מספר קורס, ולכן אין לו עדיין דיון משותף
     linked: bool
+    is_admin: bool = False
     course: SharedCourseInfo | None = None
     total: int = 0
     items: list[TipRead] = []
@@ -151,6 +161,8 @@ def _serialize(posts: list[CoursePost], user: User, session: Session) -> list[Ti
                 parent_id=p.parent_id,
                 author=None
                 if deleted
+                else TEAM_AUTHOR
+                if p.as_team
                 else TipAuthor(display_name=name(p.user_id), avatar_icon=author.avatar_icon if author else None),
                 reply_to_name=name(p.reply_to_user_id),
                 body="" if deleted else p.body,
@@ -160,6 +172,8 @@ def _serialize(posts: list[CoursePost], user: User, session: Session) -> list[Ti
                 score=p.score,
                 my_vote=votes.get(p.id, 0),
                 is_mine=p.user_id == user.id and not deleted,
+                official=p.as_team,
+                pinned=p.pinned_at is not None,
                 reply_count=p.reply_count,
             )
         )
@@ -192,7 +206,8 @@ def list_tips(
     else:
         # הכי מומלצות; בשוויון ניקוד (כולל כשהכול 0) - החדשה קודם
         order = (CoursePost.score.desc(), CoursePost.created_at.desc(), CoursePost.id.desc())
-    posts = session.exec(base.order_by(*order).offset(offset).limit(limit)).all()
+    pinned_first = CoursePost.pinned_at.is_(None)  # False (נעוצה) לפני True
+    posts = session.exec(base.order_by(pinned_first, *order).offset(offset).limit(limit)).all()
     total = session.exec(
         select(func.count()).select_from(CoursePost).where(
             CoursePost.shared_course_id == shared.id, CoursePost.parent_id.is_(None)
@@ -226,6 +241,7 @@ def list_tips(
 
     return TipsPage(
         linked=True,
+        is_admin=is_admin(current_user),
         course=SharedCourseInfo(
             code=shared.code, institution=shared.institution, name=shared.name, participants=participants
         ),
@@ -259,6 +275,10 @@ def create_tip(
     shared = _shared_for_course(course_id, current_user, session)
     if shared is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="צריך להוסיף מספר קורס כדי להצטרף לדיון")
+    if (payload.as_team or payload.pin) and not is_admin(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="רק מנהלות יכולות לפרסם בשם הצוות")
+    if payload.pin and payload.parent_id is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="אפשר לנעוץ רק תגובה ראשית")
 
     hour_ago = datetime.utcnow() - timedelta(hours=1)
     recent = session.exec(
@@ -290,6 +310,8 @@ def create_tip(
         parent_id=parent.id if parent else None,
         reply_to_user_id=reply_to_user_id,
         body=payload.body,
+        as_team=payload.as_team,
+        pinned_at=datetime.utcnow() if payload.pin else None,
     )
     session.add(post)
     if parent is not None:
@@ -386,6 +408,30 @@ def vote_tip(
     post.score = session.exec(
         select(func.coalesce(func.sum(CoursePostVote.value), 0)).where(CoursePostVote.post_id == post.id)
     ).one()
+    session.add(post)
+    session.commit()
+    session.refresh(post)
+    return _serialize([post], current_user, session)[0]
+
+
+class PinIn(BaseModel):
+    value: bool
+
+
+@router.put("/tips/{post_id}/pin", response_model=TipRead)
+def pin_tip(
+    post_id: int,
+    payload: PinIn,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """נעיצה / ביטול נעיצה של תגובה ראשית - למנהלות בלבד."""
+    if not is_admin(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="רק מנהלות יכולות לנעוץ")
+    post = _get_visible_post(post_id, current_user, session)
+    if post.parent_id is not None or post.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="אפשר לנעוץ רק תגובה ראשית")
+    post.pinned_at = datetime.utcnow() if payload.value else None
     session.add(post)
     session.commit()
     session.refresh(post)
