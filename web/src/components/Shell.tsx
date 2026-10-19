@@ -11,6 +11,7 @@ const NAV_ITEMS: { to: string; label: string; icon: NavIconName }[] = [
   { to: '/schedule', label: 'לו״ז', icon: 'schedule' },
   { to: '/degrees', label: 'התואר שלי', icon: 'degree' },
   { to: '/courses', label: 'קורסים', icon: 'courses' },
+  { to: '/community', label: 'קהילה', icon: 'community' },
   { to: '/profile', label: 'פרופיל', icon: 'profile' },
 ]
 
@@ -18,7 +19,7 @@ const YEAR = new Date().getFullYear()
 
 // עמודים עם פריסת שתי עמודות במחשב - מקבלים רוחב תוכן רחב יותר
 function isWidePage(pathname: string): boolean {
-  return pathname === '/' || pathname === '/schedule' || /^\/(courses|degrees)\/\d+\/?$/.test(pathname)
+  return pathname === '/' || pathname === '/schedule' || pathname === '/community' || /^\/(courses|degrees)\/\d+\/?$/.test(pathname)
 }
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -36,7 +37,9 @@ export function Shell({ children }: { children: ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
-                className={({ isActive }) => `shell__nav-link${isActive ? ' shell__nav-link--active' : ''}`}
+                className={({ isActive }) =>
+                  `shell__nav-link${isActive ? ' shell__nav-link--active' : ''}${item.to === '/profile' ? ' shell__nav-link--profile' : ''}`
+                }
               >
                 {item.to === '/profile' && user?.avatar_icon ? (
                   <span className="shell__nav-avatar" aria-hidden>
@@ -52,6 +55,14 @@ export function Shell({ children }: { children: ReactNode }) {
           <Link to="/" className="shell__logo">
             OpuLi
           </Link>
+          {/* בטלפון הפרופיל יוצא מהסרגל התחתון (שם יש "קהילה") ומופיע כאן למעלה */}
+          <NavLink
+            to="/profile"
+            aria-label="פרופיל"
+            className={({ isActive }) => `shell__profile-chip${isActive ? ' shell__profile-chip--active' : ''}`}
+          >
+            {user?.avatar_icon || <NavIcon name="profile" />}
+          </NavLink>
         </div>
       </header>
       <main className={`shell__content${wide ? ' shell__content--wide' : ''}`}>{children}</main>

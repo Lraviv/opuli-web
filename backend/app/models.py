@@ -315,3 +315,104 @@ class CoursePostVote(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id", primary_key=True)
     value: int  # 1 או -1
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ForumPost(SQLModel, table=True):
+    """פוסט בפורום הקהילה של מוסד (עצה, שאלה, מפגש לימוד, מסיבה/אירוע, קהילה).
+
+    הפורום משותף לכל הסטודנטים באותו מוסד (מנורמל, ראו tips.normalize_institution).
+    למפגשים ולאירועים יש גם תאריך ומקום; הכתובת המדויקת (place_private) נחשפת
+    רק לכותב/ת ולמי שאישר/ה הגעה.
+    """
+
+    __tablename__ = "forum_posts"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    institution: str = Field(index=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    # tip / question / study / party / community
+    category: str = Field(index=True)
+    title: str
+    body: str
+    # תגית קורס אופציונלית - לסינון "פוסטים על הקורס הזה"
+    shared_course_id: Optional[int] = Field(default=None, foreign_key="shared_courses.id", index=True)
+    event_starts_at: Optional[datetime] = None
+    event_ends_at: Optional[datetime] = None
+    # עיר או "זום" - גלוי לכולם
+    place_public: Optional[str] = None
+    # כתובת או קישור מדויק - רק לכותב/ת ולמגיעים
+    place_private: Optional[str] = None
+    # מחושבים מראש כדי שהמיון יהיה שאילתה פשוטה
+    score: int = Field(default=0)
+    comment_count: int = Field(default=0)
+    going_count: int = Field(default=0)
+    pinned_at: Optional[datetime] = None
+    # מוסתר ע"י מנהלת או אוטומטית אחרי כמה דיווחים
+    hidden_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    edited_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+class ForumComment(SQLModel, table=True):
+    """תגובה על פוסט בפורום. שרשור ברמה אחת, כמו בלשונית העצות."""
+
+    __tablename__ = "forum_comments"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="forum_posts.id", index=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    parent_id: Optional[int] = Field(default=None, foreign_key="forum_comments.id", index=True)
+    reply_to_user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    body: str
+    reply_count: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    edited_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    hidden_at: Optional[datetime] = None
+
+
+class ForumVote(SQLModel, table=True):
+    """הצבעה בעד (אנונימית) על פוסט. user_id רק למניעת כפילות, לא נחשף ב-API."""
+
+    __tablename__ = "forum_votes"
+
+    post_id: int = Field(foreign_key="forum_posts.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ForumRsvp(SQLModel, table=True):
+    """אישור הגעה למפגש/אירוע. השם והמייל נחשפים רק למארגן/ת (כותב/ת הפוסט)."""
+
+    __tablename__ = "forum_rsvps"
+
+    post_id: int = Field(foreign_key="forum_posts.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ForumSave(SQLModel, table=True):
+    __tablename__ = "forum_saves"
+
+    post_id: int = Field(foreign_key="forum_posts.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ForumReport(SQLModel, table=True):
+    """דיווח על פוסט או תגובה. כל משתמש/ת מדווח/ת פעם אחת על כל יעד."""
+
+    __tablename__ = "forum_reports"
+    __table_args__ = (
+        UniqueConstraint("target_type", "target_id", "reporter_id", name="uq_forum_reports_target_reporter"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    # "post" / "comment"
+    target_type: str
+    target_id: int = Field(index=True)
+    reporter_id: int = Field(foreign_key="users.id")
+    reason: str = Field(default="")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    resolved_at: Optional[datetime] = None
