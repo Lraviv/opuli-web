@@ -164,11 +164,61 @@ a.home-agenda__row:hover .cd-next__title {
 label.home-agenda__row {
   cursor: pointer;
 }
+/* סימון תזכורת כבוצעה: עיגול בסוף השורה (באותו מקום שבו לשאר הסוגים יש תגית).
+ * בריחוף מופיע בו ✓ והכותרת נחצית בקו - רואים מראש שלחיצה תסמן כבוצע */
 .home-agenda__check {
-  width: 20px;
-  height: 20px;
+  appearance: none;
   flex-shrink: 0;
-  accent-color: var(--color-primary);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 2px solid color-mix(in srgb, var(--color-text-secondary) 55%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.home-agenda__check::after {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -2px;
+  border: solid var(--color-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.home-agenda__row--reminder:hover .home-agenda__check,
+.home-agenda__check:focus-visible {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+.home-agenda__row--reminder:hover .home-agenda__check::after,
+.home-agenda__check:focus-visible::after {
+  opacity: 1;
+}
+.home-agenda__check:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.home-agenda__row--reminder .cd-next__title {
+  text-decoration: line-through transparent;
+  transition: text-decoration-color 0.15s, color 0.15s;
+}
+.home-agenda__row--reminder:hover .cd-next__title,
+.home-agenda__row--reminder:focus-within .cd-next__title {
+  text-decoration-color: currentColor;
+  color: var(--color-text-secondary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-agenda__check,
+  .home-agenda__check::after,
+  .home-agenda__row--reminder .cd-next__title {
+    transition: none;
+  }
 }
 .home-agenda__nodate {
   font-size: 17px;

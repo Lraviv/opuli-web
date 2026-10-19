@@ -244,7 +244,9 @@ function AgendaRow({ entry: e, course, now }: { entry: UpcomingEntry; course: Co
 
   if (e.kind === 'reminder') {
     return (
-      <label className="cd-next home-agenda__row">
+      <label className="cd-next home-agenda__row home-agenda__row--reminder">
+        {body}
+        {/* הסימון בסוף השורה, במקום התגית של שאר הסוגים - כך תיבות התאריך מתיישרות */}
         <input
           type="checkbox"
           className="home-agenda__check"
@@ -252,7 +254,6 @@ function AgendaRow({ entry: e, course, now }: { entry: UpcomingEntry; course: Co
           aria-label={`סימון "${e.title}" כבוצע`}
           onChange={() => updateReminder.mutate({ id: e.sourceId, payload: { is_done: true } })}
         />
-        {body}
       </label>
     )
   }
