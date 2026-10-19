@@ -133,6 +133,20 @@
   justify-content: center;
   cursor: pointer;
 }
+.sch--wide .sch-sync-toggle {
+  width: auto;
+  gap: 6px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+}
+.sch--wide .sch-sync-toggle svg {
+  width: 18px;
+  height: 18px;
+}
 .sch-sync-toggle--on {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   color: var(--color-primary);
@@ -483,10 +497,6 @@ a.sch-ev__title:hover {
   flex: 999 1 420px;
   min-width: 0;
 }
-.sch-export {
-  flex: 1 1 320px;
-  min-width: 0;
-}
 .sch-section-head {
   display: flex;
   align-items: baseline;
@@ -577,4 +587,53 @@ a.sch-ev__title:hover {
   .sch-toast {
     bottom: 100px;
   }
+}
+
+/* תזכורות */
+.sch-reminders {
+  flex: 1 1 380px;
+  min-width: 0;
+}
+.sch-rem-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-two);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.sch-rem-form > :first-child {
+  flex: 2 1 200px;
+}
+.sch-rem-form > :nth-child(2) {
+  flex: 1 1 180px;
+}
+.sch-rem-form--edit {
+  border-bottom: 0;
+}
+.sch-rem-form--edit + .sch-row,
+.sch-row + .sch-rem-form--edit {
+  border-top: 1px solid var(--color-border);
+}
+.sch-rem-form__actions {
+  display: flex;
+  gap: var(--space-two);
+}
+.sch-rem-empty {
+  margin: 0;
+  padding: 14px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.sch-row__meta--overdue {
+  color: var(--color-danger);
+}
+.sch-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-primary);
+  cursor: pointer;
 }
