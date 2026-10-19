@@ -133,6 +133,20 @@
   justify-content: center;
   cursor: pointer;
 }
+.sch--wide .sch-sync-toggle {
+  width: auto;
+  gap: 6px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--color-background-element);
+  border: 1px solid var(--color-border);
+}
+.sch--wide .sch-sync-toggle svg {
+  width: 18px;
+  height: 18px;
+}
 .sch-sync-toggle--on {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   color: var(--color-primary);
@@ -483,10 +497,6 @@ a.sch-ev__title:hover {
   flex: 999 1 420px;
   min-width: 0;
 }
-.sch-export {
-  flex: 1 1 320px;
-  min-width: 0;
-}
 .sch-section-head {
   display: flex;
   align-items: baseline;
@@ -581,6 +591,7 @@ a.sch-ev__title:hover {
 
 /* תזכורות */
 .sch-reminders {
+  flex: 1 1 380px;
   min-width: 0;
 }
 .sch-rem-form {

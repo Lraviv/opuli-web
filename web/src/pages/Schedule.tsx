@@ -169,6 +169,24 @@ export default function Schedule() {
     </button>
   )
 
+  // סנכרון עם היומן הוא הגדרה חד-פעמית - כפתור בכותרת שפותח את הפאנל, במקום כרטיס קבוע בעמוד
+  const syncToggle = (
+    <button
+      type="button"
+      className={`sch-sync-toggle${syncOpen ? ' sch-sync-toggle--on' : ''}`}
+      aria-label="סנכרון עם היומן"
+      title="סנכרון עם היומן"
+      aria-expanded={syncOpen}
+      onClick={() => setSyncOpen((v) => !v)}
+    >
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
+      </svg>
+      {wide && <span>סנכרון ליומן</span>}
+    </button>
+  )
+
   return (
     <div className={`sch${wide ? ' sch--wide' : ''}`}>
       <div className="sch-header">
@@ -201,30 +219,20 @@ export default function Schedule() {
               </button>
               {nextWeek}
             </nav>
+            {syncToggle}
             <button type="button" className="ui-button ui-button--primary sch-add" onClick={() => setAdding(true)}>
               <PlusIcon size={18} />
               הוספה
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            className={`sch-sync-toggle${syncOpen ? ' sch-sync-toggle--on' : ''}`}
-            aria-label="סנכרון עם היומן"
-            aria-expanded={syncOpen}
-            onClick={() => setSyncOpen((v) => !v)}
-          >
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="3" y="5" width="18" height="16" rx="2" />
-              <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
-            </svg>
-          </button>
+          syncToggle
         )}
       </div>
 
       {showingNextByDefault && <p className="sch-note">השבוע הנוכחי כמעט נגמר, אז מוצג השבוע הבא.</p>}
 
-      {!wide && syncOpen && (
+      {syncOpen && (
         <section className="sch-sync" aria-label="סנכרון עם היומן">
           <CalendarExport />
         </section>
@@ -306,17 +314,8 @@ export default function Schedule() {
             </div>
           </section>
         )}
-        {wide && (
-          <section className="sch-export" aria-labelledby="sch-export-title">
-            <div className="sch-section-head">
-              <h2 id="sch-export-title">סנכרון עם היומן</h2>
-            </div>
-            <CalendarExport />
-          </section>
-        )}
+        <ScheduleReminders reminders={reminders ?? []} now={now} />
       </div>
-
-      <ScheduleReminders reminders={reminders ?? []} now={now} />
 
       {(sessions ?? []).length === 0 && (
         <p className="sch-hint">מפגשי הנחיה קבועים אפשר להוסיף כאן עם "+", או בעמוד של כל קורס. הם יופיעו בכל שבוע.</p>
