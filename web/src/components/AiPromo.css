@@ -1,0 +1,62 @@
+.ai-promo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-three);
+  margin-bottom: var(--space-four);
+  padding: var(--space-three) var(--space-four);
+  padding-inline-end: 44px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-background-element));
+}
+.ai-promo__icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.ai-promo__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ai-promo__text span {
+  color: var(--color-text-secondary);
+}
+.ai-promo__cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.ai-promo__close {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.ai-promo__close:hover {
+  background: var(--color-border);
+}
+
+@media (max-width: 640px) {
+  .ai-promo {
+    flex-wrap: wrap;
+  }
+  .ai-promo__icon {
+    display: none;
+  }
+  .ai-promo__cta {
+    width: 100%;
+    text-align: center;
+  }
+}

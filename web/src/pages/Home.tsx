@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Card } from '@/components/ui'
 import { LinksBar } from '@/components/LinksBar'
+import { AiPromo } from '@/components/AiPromo'
 import { DateBox } from '@/components/CourseOverview'
 import { courseColor } from '@/lib/schedule'
 import '@/components/LinksBar.css'
@@ -116,6 +117,8 @@ export default function Home() {
     <div>
       <h1 className="home-greeting">שלום{user?.display_name ? `, ${user.display_name}` : ''} 👋</h1>
       <p className="home-subgreeting">{agendaLoading ? 'הנה מה שמחכה לך בקרוב' : weekSummary(upcoming)}</p>
+
+      <AiPromo />
 
       <LinksBar courseId={null} title="קישורים מהירים" compact />
 
