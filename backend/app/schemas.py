@@ -694,3 +694,36 @@ class AiTokenRead(BaseModel):
 class AiTokenCreated(AiTokenRead):
     # הטוקן המלא - מוחזר רק ביצירה, ולא נשמר בשרת
     token: str
+
+
+class OAuthRequestRead(BaseModel):
+    """מה שעמוד האישור /connect מציג על בקשת חיבור ממתינה."""
+
+    client_name: str
+    # הדומיין שאליו הקוד יישלח - זה מה שבאמת מזהה את האפליקציה
+    redirect_host: str
+    # שם אפליקציה מוכרת (Claude / ChatGPT) לפי הדומיין, או None לאפליקציה לא מוכרת
+    known_app: str | None
+    scopes: list[str]
+    expires_at: datetime
+
+
+class OAuthDecision(BaseModel):
+    approve: bool
+    # ההרשאות שאושרו - תת-קבוצה של מה שהתבקש
+    scopes: list[str] = Field(default_factory=list)
+
+
+class OAuthDecisionResult(BaseModel):
+    # לאן להעביר את הדפדפן: חזרה לאפליקציה עם קוד או עם access_denied
+    redirect_to: str
+
+
+class AiConnectionRead(BaseModel):
+    """אפליקציה שהתחברה ב-OAuth (חיבור אחד = grant)."""
+
+    id: str
+    name: str
+    scopes: list[str]
+    connected_at: datetime
+    last_used_at: datetime | None

@@ -1,22 +1,26 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, Input } from '@/components/ui'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
-import { ApiError } from '@/lib/api'
+import { ApiError, safeNext } from '@/lib/api'
 import './AuthLayout.css'
 
 export default function Register() {
   const { loginWithGoogle, register, user, loading } = useAuth()
   const navigate = useNavigate()
+  // אחרי ההתחברות חוזרים לעמוד שממנו הגיעו (למשל אישור חיבור AI ב-/connect)
+  const [searchParams] = useSearchParams()
+  const next = safeNext(searchParams.get('next'))
+  const nextQuery = next !== '/' ? `?next=${encodeURIComponent(next)}` : ''
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  if (!loading && user) return <Navigate to="/" replace />
+  if (!loading && user) return <Navigate to={next} replace />
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -28,7 +32,7 @@ export default function Register() {
     setBusy(true)
     try {
       await register(email, password, displayName)
-      navigate('/')
+      navigate(next)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'ההרשמה נכשלה')
     } finally {
@@ -41,7 +45,7 @@ export default function Register() {
     setBusy(true)
     try {
       await loginWithGoogle(credential)
-      navigate('/')
+      navigate(next)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'ההרשמה עם Google נכשלה')
     } finally {
@@ -81,7 +85,7 @@ export default function Register() {
         </form>
         <GoogleSignInButton onCredential={handleGoogle} onError={setError} />
         <div className="auth-switch">
-          כבר יש לך חשבון? <Link to="/login">התחברות</Link>
+          כבר יש לך חשבון? <Link to={`/login${nextQuery}`}>התחברות</Link>
         </div>
         <p className="auth-legal">
           ההרשמה מהווה הסכמה ל<Link to="/terms">תנאי השימוש</Link> ול<Link to="/privacy">מדיניות הפרטיות</Link>

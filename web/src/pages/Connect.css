@@ -1,0 +1,100 @@
+.auth-card.connect-card {
+  max-width: 440px;
+}
+.auth-logo.connect-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+}
+.connect-card h1 {
+  text-align: center;
+  line-height: 1.35;
+}
+.connect-card p.auth-subtitle {
+  text-align: center;
+}
+.connect-host {
+  margin: 0 0 var(--space-four);
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.connect-warning {
+  background: color-mix(in srgb, var(--color-warning, #d97706) 12%, transparent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: var(--space-three);
+}
+.connect-scopes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-two);
+  margin-bottom: var(--space-four);
+}
+.connect-scope {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-two);
+  padding: var(--space-two) var(--space-three);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 14px;
+}
+label.connect-scope {
+  cursor: pointer;
+}
+.connect-scope input {
+  margin-top: 3px;
+  accent-color: var(--color-primary);
+}
+.connect-scope__check {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.connect-scope__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+.connect-actions {
+  display: flex;
+  gap: var(--space-two);
+}
+.connect-actions .ui-button {
+  flex: 1;
+}
+.connect-note,
+.connect-account {
+  margin: var(--space-three) 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+.connect-note a,
+.connect-help {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.connect-help {
+  display: block;
+  text-align: center;
+  font-size: 14px;
+}
+.connect-account {
+  padding-top: var(--space-three);
+  border-top: 1px solid var(--color-border);
+}
+.connect-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+}

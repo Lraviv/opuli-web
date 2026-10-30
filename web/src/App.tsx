@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Shell } from '@/components/Shell'
 import Login from '@/pages/Login'
@@ -19,9 +19,12 @@ import InfoPage from '@/pages/Info'
 import type { InfoPageId } from '@/pages/Info'
 import { InfoLayout } from '@/components/InfoLayout'
 import { PageSkeleton } from '@/components/Skeleton'
+import Connect from '@/pages/Connect'
+import { loginPath } from '@/lib/api'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) {
     return (
       <div className="app-boot">
@@ -29,7 +32,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
       </div>
     )
   }
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to={loginPath(location.pathname + location.search)} replace />
   return <Shell>{children}</Shell>
 }
 
@@ -63,13 +66,15 @@ function HomeRoute() {
   )
 }
 
-const INFO_ROUTES: InfoPageId[] = ['help', 'faq', 'privacy', 'terms']
+const INFO_ROUTES: InfoPageId[] = ['help', 'faq', 'ai', 'privacy', 'terms']
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      {/* אישור חיבור של אפליקציית AI - עמוד עצמאי בלי הניווט, כמו דף ההתחברות */}
+      <Route path="/connect" element={<Connect />} />
       {INFO_ROUTES.map((id) => (
         <Route
           key={id}

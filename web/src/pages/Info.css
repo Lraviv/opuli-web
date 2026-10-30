@@ -115,3 +115,32 @@
     padding: var(--space-three) var(--space-four);
   }
 }
+
+/* עמוד החיבור ל-AI */
+.info-ai-url {
+  display: flex;
+  gap: var(--space-two);
+  margin-bottom: var(--space-two);
+}
+.info-ai-url .ui-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.info-code {
+  margin: 0 0 var(--space-two);
+  padding: var(--space-two) var(--space-three);
+  border-radius: 10px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  overflow-x: auto;
+  white-space: pre;
+  text-align: left;
+}
+.info-page__card code {
+  font-size: 13px;
+}
+.info-ai-examples li {
+  color: var(--color-text-secondary);
+}

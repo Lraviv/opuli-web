@@ -2,10 +2,12 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui'
 import { useAuth } from '@/auth/AuthContext'
-import { CONTACT_PATH, FEEDBACK_EMAIL, INFO_LINKS } from '@/lib/site'
+import { CONTACT_PATH, FEEDBACK_EMAIL, INFO_LINKS, MCP_URL } from '@/lib/site'
+import { CopyButton } from '@/components/AiConnections'
+import { Input } from '@/components/ui'
 import './Info.css'
 
-export type InfoPageId = 'help' | 'faq' | 'privacy' | 'terms'
+export type InfoPageId = 'help' | 'faq' | 'ai' | 'privacy' | 'terms'
 
 /** תאריך העדכון האחרון של מדיניות הפרטיות ותנאי השימוש */
 const POLICY_UPDATED = '17 באוקטובר 2026'
@@ -168,6 +170,132 @@ function Privacy() {
   )
 }
 
+const AI_EXAMPLES = [
+  'תוסיף לי את ממ"ן 11 עד ממ"ן 14 בקורס אלגברה לינארית 1, עם תאריכי ההגשה מהתמונה הזו',
+  'מה מחכה לי השבוע?',
+  'קבעתי מבחן בסטטיסטיקה ב-14 בפברואר ב-9:00, מועד א. תוסיף אותו',
+  'קיבלתי 92 בממ"ן 12 במבוא למדעי המחשב',
+  'תזכיר לי ביום חמישי בערב לשלוח את העבודה',
+  'סיימתי לצפות בשיעורים 3 עד 5 בקורס חדו"א',
+  'מה הממוצע שלי ועוד כמה נקודות זכות נשארו לי לתואר?',
+  'יש לי מפגש הנחיה כל יום שני ב-18:00 בקורס פסיכולוגיה חברתית',
+]
+
+const AI_FAQ: { q: string; a: ReactNode }[] = [
+  {
+    q: 'זה עולה כסף?',
+    a: 'החיבור ל-OpuLi חינמי. צריך חשבון ב-Claude או ב-ChatGPT, ולפעמים יש הגבלות לפי סוג המנוי שלהם.',
+  },
+  {
+    q: 'ה-AI יכול למחוק לי דברים?',
+    a: 'הוא יכול להוסיף ולעדכן, אם אישרתם הוספה ועדכון. מחיקת תואר או קורס אפשרית רק באתר עצמו. אפשר גם לאשר קריאה בלבד.',
+  },
+  {
+    q: 'ה-AI רואה את הסיסמה שלי?',
+    a: 'לא. מתחברים באתר של OpuLi, וה-AI מקבל רק אישור גישה שאפשר לבטל בכל רגע. הסיסמה לא עוברת אליו.',
+  },
+  {
+    q: 'הוא הוסיף משהו לא נכון. מה עושים?',
+    a: 'מבקשים ממנו לתקן, או מתקנים באתר כרגיל. כדאי לבקש ממנו להראות מה הוא עומד להוסיף לפני שהוא מוסיף הרבה דברים בבת אחת.',
+  },
+  {
+    q: 'זה עובד גם באפליקציה בטלפון?',
+    a: 'כן. מחברים פעם אחת באתר של Claude או ChatGPT במחשב, והחיבור זמין גם באפליקציות שלהם בטלפון.',
+  },
+]
+
+function Ai() {
+  return (
+    <>
+      <p>
+        אפשר לחבר את OpuLi ל-Claude, ל-ChatGPT ולכלי AI אחרים, ואז פשוט לכתוב להם: "תוסיף לי את המטלות מהסילבוס", "מה יש לי השבוע?" או
+        "קיבלתי 88 בממ"ן". הם קוראים ומעדכנים את הקורסים, המטלות, המבחנים, הציונים והתזכורות שלכם ב-OpuLi.
+      </p>
+      <p>זו כתובת החיבור. מדביקים אותה פעם אחת בכלי ה-AI:</p>
+      <div className="info-ai-url">
+        <Input readOnly value={MCP_URL} dir="ltr" aria-label="כתובת החיבור" onFocus={(e) => e.currentTarget.select()} />
+        <CopyButton text={MCP_URL} />
+      </div>
+
+      <h2>חיבור ל-Claude</h2>
+      <ol className="info-steps">
+        <li>
+          באתר <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a> פותחים את ההגדרות (Settings) ובוחרים{' '}
+          <b>Connectors</b>.
+        </li>
+        <li>
+          לוחצים על <b>Add custom connector</b>, נותנים שם (למשל OpuLi) ומדביקים את כתובת החיבור.
+        </li>
+        <li>
+          לוחצים <b>Connect</b>. נפתח עמוד של OpuLi: מתחברים (אם צריך), בודקים שכתוב שם Claude, ולוחצים <b>אישור</b>.
+        </li>
+        <li>בשיחה חדשה מוודאים ש-OpuLi מסומן בתפריט הכלים, ומתחילים לבקש.</li>
+      </ol>
+      <p className="info-updated">בחשבונות Team או Enterprise ייתכן שמנהל/ת החשבון צריך/ה להוסיף את החיבור קודם.</p>
+
+      <h2>חיבור ל-ChatGPT</h2>
+      <ol className="info-steps">
+        <li>
+          באתר <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a> פותחים את ההגדרות (Settings) ובוחרים{' '}
+          <b>Apps</b> (נקרא גם Apps &amp; Connectors).
+        </li>
+        <li>
+          אם אין אפשרות להוסיף אפליקציה, מפעילים קודם את <b>Developer mode</b> תחת Advanced settings.
+        </li>
+        <li>
+          לוחצים <b>Create</b>, נותנים שם (OpuLi), מדביקים את כתובת החיבור, ובאימות (Authentication) בוחרים <b>OAuth</b>.
+        </li>
+        <li>
+          מאשרים, ובעמוד של OpuLi שנפתח בודקים שכתוב שם ChatGPT ולוחצים <b>אישור</b>.
+        </li>
+        <li>בשיחה בוחרים את OpuLi מתפריט ה-+ או מהכלים, ומתחילים לבקש.</li>
+      </ol>
+      <p className="info-updated">שמות התפריטים ב-Claude וב-ChatGPT משתנים מדי פעם. אם משהו לא מופיע בדיוק כך, חפשו בהגדרות "Connectors" או "Apps".</p>
+
+      <h2>כלים אחרים</h2>
+      <p>
+        כל כלי שתומך בחיבור MCP מרוחק יכול להתחבר עם אותה כתובת. למשל ב-Claude Code:
+      </p>
+      <pre className="info-code" dir="ltr">
+        claude mcp add --transport http opuli {MCP_URL}
+      </pre>
+      <p>
+        לכלים שלא תומכים בהתחברות דרך האתר אפשר ליצור <b>טוקן אישי</b> בפרופיל, תחת "חיבור ל-AI", ולהגדיר אותו ככותרת{' '}
+        <code dir="ltr">Authorization: Bearer …</code>.
+      </p>
+
+      <h2>מה אפשר לבקש</h2>
+      <ul className="info-ai-examples">
+        {AI_EXAMPLES.map((e) => (
+          <li key={e}>"{e}"</li>
+        ))}
+      </ul>
+
+      <h2>פרטיות וניתוק</h2>
+      <ul>
+        <li>בעמוד האישור בוחרים אם ה-AI יכול רק לקרוא, או גם להוסיף ולעדכן.</li>
+        <li>ה-AI ניגש רק לחשבון שלכם, ורק בשיחות שבהן החיבור ל-OpuLi פעיל.</li>
+        <li>
+          מה שה-AI קורא מ-OpuLi עובר לשיחה איתו, ונשמר לפי מדיניות הפרטיות של Claude או ChatGPT.
+        </li>
+        <li>
+          אפשר לנתק בכל רגע ב<Link to="/profile#ai">פרופיל</Link>, תחת "חיבור ל-AI". הניתוק מיידי.
+        </li>
+      </ul>
+
+      <h2>שאלות נפוצות</h2>
+      <div className="info-faq">
+        {AI_FAQ.map((item) => (
+          <details key={item.q}>
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </>
+  )
+}
+
 function Terms() {
   return (
     <>
@@ -205,11 +333,12 @@ function Terms() {
 const PAGES: Record<InfoPageId, { title: string; body: () => ReactNode }> = {
   help: { title: 'עזרה', body: Help },
   faq: { title: 'שאלות נפוצות', body: Faq },
+  ai: { title: 'חיבור ל-Claude ול-ChatGPT', body: Ai },
   privacy: { title: 'מדיניות פרטיות', body: Privacy },
   terms: { title: 'תנאי שימוש', body: Terms },
 }
 
-/** דפי מידע סטטיים: עזרה, שאלות נפוצות, פרטיות ותנאי שימוש. פתוחים גם בלי התחברות */
+/** דפי מידע סטטיים: עזרה, שאלות נפוצות, חיבור ל-AI, פרטיות ותנאי שימוש. פתוחים גם בלי התחברות */
 export default function InfoPage({ page }: { page: InfoPageId }) {
   const { title, body: Body } = PAGES[page]
   return (

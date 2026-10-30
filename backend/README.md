@@ -121,12 +121,13 @@ See the app spec (`app-spec.md`) for the full list, or open http://localhost:800
 
 ## AI connection (MCP)
 
-`app/mcp_server/` is an MCP server mounted at `/mcp` on the same app, so students can work with OpuLi from Claude, ChatGPT and other MCP clients. It is off unless `MCP_ENABLED=true`; `API_PUBLIC_URL` must be this API's public URL (it goes into the OAuth metadata at `/.well-known/oauth-protected-resource/mcp`).
+`app/mcp_server/` is an MCP server mounted at `/mcp` on the same app, so students can work with OpuLi from Claude, ChatGPT and other MCP clients. It is off unless `MCP_ENABLED=true`; `API_PUBLIC_URL` must be this API's public https URL (it is the OAuth issuer and goes into the metadata), and `WEB_URL` the site that hosts the consent page `/connect`.
 
-- Auth: `Authorization: Bearer opl_...`, a token from `POST /me/ai-tokens` (scopes `opuli.read` / `opuli.write`). The site's own JWT does not work here. Only the SHA-256 of a token is stored.
+- Auth: OpuLi is its own OAuth 2.1 server (`app/mcp_server/oauth.py`, on top of the `mcp` SDK): `/.well-known/oauth-authorization-server`, `/register` (dynamic client registration), `/authorize`, `/token`, `/revoke`. `/authorize` stores a pending request and redirects to the site's consent page `WEB_URL/connect?request=...`; the page calls `GET /oauth/requests/{id}` and `POST /oauth/requests/{id}/decision` (`app/routers/oauth.py`), which returns the redirect back to the app with a single-use code (5 min, PKCE). Access tokens last 1 hour, refresh tokens 90 days and rotate on every use; reusing an old refresh token revokes the whole connection. A connection's tokens share a `grant_id`; `GET/DELETE /me/ai-connections` lists and disconnects them.
+- Personal tokens (`POST /me/ai-tokens`) are for clients without OAuth: `Authorization: Bearer opl_...`. The site's own JWT does not work on `/mcp`, and refresh tokens are never accepted as a bearer. Only the SHA-256 of any token is stored.
 - Every tool takes the user from the token, never from its arguments.
 - Read tools are in `tools.py`, write tools in `write_tools.py`. Write tools need `opuli.write`; a read-only token doesn't see them in `tools/list`. Writes go through `app/services/` (shared with the routers), so they behave exactly like the site.
-- Try it locally: create a token, then `claude mcp add --transport http opuli http://localhost:8000/mcp --header "Authorization: Bearer opl_..."`.
+- Try it locally: `claude mcp add --transport http opuli http://localhost:8000/mcp` and authenticate from `/mcp` in Claude Code (opens the consent page), or create a personal token and add `--header "Authorization: Bearer opl_..."`.
 
 ## Degree templates (`app/catalog_templates.py`)
 

@@ -4,6 +4,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
 import type {
+  AiConnectionRead,
+  AiScope,
+  AiTokenCreated,
+  AiTokenRead,
   AssignmentKind,
   CatalogCourseRead,
   ClassSessionRead,
@@ -17,6 +21,7 @@ import type {
   ExamRead,
   ExamTerm,
   LinkRead,
+  OAuthRequestRead,
   SemesterRead,
   SharedStructureRead,
   StudyTopicRead,
@@ -731,5 +736,61 @@ export function useVoteTip(courseId: number) {
       qc.setQueriesData<TipsPage>({ queryKey: ['tips', courseId] }, (old) => old && { ...old, items: old.items.map(patch) })
       qc.setQueriesData<TipRead[]>({ queryKey: ['tip-replies'] }, (old) => old?.map(patch))
     },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// חיבור AI (Claude / ChatGPT דרך שרת ה-MCP)
+// ---------------------------------------------------------------------------
+
+export function useAiConnections() {
+  return useQuery({ queryKey: ['ai-connections'], queryFn: () => api.get<AiConnectionRead[]>('/me/ai-connections') })
+}
+
+export function useRevokeAiConnection() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<void>(`/me/ai-connections/${encodeURIComponent(id)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-connections'] }),
+  })
+}
+
+export function useAiTokens() {
+  return useQuery({ queryKey: ['ai-tokens'], queryFn: () => api.get<AiTokenRead[]>('/me/ai-tokens') })
+}
+
+export function useCreateAiToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { name: string; scopes: AiScope[]; expires_in_days: number | null }) =>
+      api.post<AiTokenCreated>('/me/ai-tokens', payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-tokens'] }),
+  })
+}
+
+export function useRevokeAiToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/me/ai-tokens/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-tokens'] }),
+  })
+}
+
+export function useOAuthRequest(requestId: string | null) {
+  return useQuery({
+    queryKey: ['oauth-request', requestId],
+    queryFn: () => api.get<OAuthRequestRead>(`/oauth/requests/${encodeURIComponent(requestId!)}`),
+    enabled: !!requestId,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useOAuthDecision(requestId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { approve: boolean; scopes: AiScope[] }) =>
+      api.post<{ redirect_to: string }>(`/oauth/requests/${encodeURIComponent(requestId)}/decision`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-connections'] }),
   })
 }

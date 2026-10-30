@@ -427,7 +427,8 @@ class AiToken(SQLModel, table=True):
     """טוקן גישה של אפליקציית AI (Claude, ChatGPT וכו') לשרת ה-MCP.
 
     הטוקן עצמו מוצג פעם אחת ביצירה; נשמר רק ה-hash שלו (SHA-256), כך שדליפה
-    של המסד לא חושפת טוקנים. kind: personal = טוקן אישי שנוצר בפרופיל.
+    של המסד לא חושפת טוקנים. kind: personal = טוקן אישי שנוצר בפרופיל;
+    access / refresh = טוקנים שהונפקו בתהליך OAuth (עמוד /connect).
     scopes מופרדים ברווח (opuli.read / opuli.write).
     """
 
@@ -446,3 +447,38 @@ class AiToken(SQLModel, table=True):
     expires_at: Optional[datetime] = None
     last_used_at: Optional[datetime] = None
     revoked_at: Optional[datetime] = None
+    # חיבור OAuth אחד (אישור אחד בעמוד /connect) = grant_id אחד, שמשותף לכל
+    # טוקני ה-access וה-refresh שלו. ביטול חיבור מבטל את כולם יחד.
+    grant_id: Optional[str] = Field(default=None, index=True)
+
+
+class OAuthClient(SQLModel, table=True):
+    """אפליקציה שנרשמה לבד (Dynamic Client Registration) - למשל Claude או ChatGPT.
+    client_info = ה-JSON המלא שה-SDK של MCP מחזיר ובודק מולו (redirect_uris וכו')."""
+
+    __tablename__ = "oauth_clients"
+
+    client_id: str = Field(primary_key=True)
+    client_name: Optional[str] = None
+    client_info: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class OAuthAuthorization(SQLModel, table=True):
+    """בקשת חיבור אחת: נוצרת כשאפליקציה שולחת את המשתמשת ל-/authorize, מחכה
+    לאישור בעמוד /connect, ואחרי האישור מחזיקה קוד חד-פעמי (רק ה-hash שלו)
+    שהאפליקציה מחליפה בטוקנים."""
+
+    __tablename__ = "oauth_authorizations"
+
+    id: str = Field(primary_key=True)
+    client_id: str = Field(index=True)
+    # AuthorizationParams של ה-SDK (state, PKCE challenge, redirect_uri, scopes) כ-JSON
+    params: str
+    user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    granted_scopes: Optional[str] = None
+    code_hash: Optional[str] = Field(default=None, index=True, unique=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    decided_at: Optional[datetime] = None
+    consumed_at: Optional[datetime] = None
