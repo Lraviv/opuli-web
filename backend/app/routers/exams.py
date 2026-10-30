@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, status
 from sqlmodel import Session, select
 
 from ..authz import get_owned_course, get_owned_exam
-from ..config import settings
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import Course, Exam, ExamReminder, User
 from ..schemas import ExamCreate, ExamRead, ExamReminderRead, ExamUpdate
+from ..services.exams import create_exam as create_exam_service
+from ..services.exams import update_exam as update_exam_service
 
 router = APIRouter(tags=["exams"])
 
@@ -16,16 +17,6 @@ def _exam_to_read(exam: Exam, session: Session) -> ExamRead:
     data = ExamRead.model_validate(exam)
     data.reminders = [ExamReminderRead.model_validate(r) for r in reminders]
     return data
-
-
-def _replace_reminders(exam_id: int, offsets_minutes: list[int], session: Session) -> None:
-    # מוחקים תזכורות קיימות (כולל כאלה שכבר נשלחו - קונפיגורציה חדשה מתחילה מחדש)
-    existing = session.exec(select(ExamReminder).where(ExamReminder.exam_id == exam_id)).all()
-    for reminder in existing:
-        session.delete(reminder)
-
-    for offset in offsets_minutes:
-        session.add(ExamReminder(exam_id=exam_id, offset_minutes=offset))
 
 
 # ---------------------------------------------------------------------------
@@ -60,25 +51,7 @@ def create_exam(
     session: Session = Depends(get_session),
 ):
     get_owned_course(course_id, current_user.id, session)
-
-    exam = Exam(
-        course_id=course_id,
-        date_time=payload.date_time,
-        location=payload.location,
-        notes=payload.notes,
-        term=payload.term,
-    )
-    session.add(exam)
-    session.commit()
-    session.refresh(exam)
-
-    offsets = payload.reminder_offsets_minutes
-    if offsets is None:
-        offsets = settings.default_exam_reminder_offsets_minutes
-    for offset in offsets:
-        session.add(ExamReminder(exam_id=exam.id, offset_minutes=offset))
-    session.commit()
-
+    exam = create_exam_service(session, course_id, payload)
     return _exam_to_read(exam, session)
 
 
@@ -90,17 +63,7 @@ def update_exam(
     session: Session = Depends(get_session),
 ):
     exam = get_owned_exam(exam_id, current_user.id, session)
-
-    update_data = payload.model_dump(exclude_unset=True, exclude={"reminder_offsets_minutes"})
-    for field, value in update_data.items():
-        setattr(exam, field, value)
-    session.add(exam)
-
-    if payload.reminder_offsets_minutes is not None:
-        _replace_reminders(exam_id, payload.reminder_offsets_minutes, session)
-
-    session.commit()
-    session.refresh(exam)
+    exam = update_exam_service(session, exam, payload)
     return _exam_to_read(exam, session)
 
 

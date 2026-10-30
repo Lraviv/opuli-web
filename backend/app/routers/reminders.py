@@ -9,6 +9,8 @@ from typing import List, Optional
 from app.db import get_session
 from app.models import UserReminder
 from app.deps import get_current_user
+from app.services.reminders import create_reminder as create_reminder_service
+from app.services.reminders import update_reminder as update_reminder_service
 
 router = APIRouter(prefix="/reminders", tags=["Reminders"])
 
@@ -35,15 +37,7 @@ def create_reminder(
     session: Session = Depends(get_session),
     current_user = Depends(get_current_user)
 ):
-    db_reminder = UserReminder(
-        user_id=current_user.id,
-        title=reminder_in.title,
-        due_date=reminder_in.due_date
-    )
-    session.add(db_reminder)
-    session.commit()
-    session.refresh(db_reminder)
-    return db_reminder
+    return create_reminder_service(session, current_user.id, reminder_in.title, reminder_in.due_date)
 
 @router.patch("/{reminder_id}", response_model=UserReminder)
 def update_reminder(
@@ -56,21 +50,7 @@ def update_reminder(
     if not db_reminder or db_reminder.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Reminder not found")
     
-    update_data = reminder_in.dict(exclude_unset=True)
-    
-    if "is_done" in update_data:
-        if update_data["is_done"] and not db_reminder.is_done:
-            db_reminder.completed_at = datetime.utcnow()
-        elif not update_data["is_done"] and db_reminder.is_done:
-            db_reminder.completed_at = None
-
-    for field, value in update_data.items():
-        setattr(db_reminder, field, value)
-        
-    session.add(db_reminder)
-    session.commit()
-    session.refresh(db_reminder)
-    return db_reminder
+    return update_reminder_service(session, db_reminder, reminder_in.dict(exclude_unset=True))
 
 @router.delete("/{reminder_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_reminder(

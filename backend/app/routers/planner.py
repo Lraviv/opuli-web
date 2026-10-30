@@ -1,7 +1,6 @@
 """כלי תכנון: דרישות תואר לפי קטגוריה, קישורים אישיים, ומפגשים קבועים (מערכת שעות)."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import ValidationError
 from sqlmodel import Session, func, select
 
 from ..authz import get_owned_course, get_owned_degree
@@ -18,6 +17,7 @@ from ..schemas import (
     LinkRead,
     LinkUpdate,
 )
+from ..services.class_sessions import InvalidSession, create_class_session, update_class_session
 
 router = APIRouter(tags=["planner"])
 
@@ -198,11 +198,7 @@ def create_session(
     session: Session = Depends(get_session),
 ):
     get_owned_course(course_id, current_user.id, session)
-    class_session = ClassSession(course_id=course_id, **payload.model_dump())
-    session.add(class_session)
-    session.commit()
-    session.refresh(class_session)
-    return class_session
+    return create_class_session(session, course_id, payload)
 
 
 @router.put("/sessions/{session_id}", response_model=ClassSessionRead)
@@ -213,24 +209,10 @@ def update_session(
     session: Session = Depends(get_session),
 ):
     class_session = _get_owned_session(session_id, current_user.id, session)
-    data = payload.model_dump(exclude_unset=True)
-    # שדות חובה: null מפורש לא מנקה אותם
-    for required in ("weekday", "start_time", "end_time", "interval_weeks"):
-        if required in data and data[required] is None:
-            del data[required]
-    merged = {**class_session.model_dump(), **data}
-    # בודקים את הצירוף הסופי עם אותם כללים כמו ביצירה (סדר שעות, עוגן לכל-שבועיים)
     try:
-        ClassSessionCreate.model_validate({k: merged[k] for k in ClassSessionCreate.model_fields})
-    except ValidationError as exc:
-        message = exc.errors()[0].get("msg", "ערכים לא תקינים").removeprefix("Value error, ")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-    for field, value in data.items():
-        setattr(class_session, field, value)
-    session.add(class_session)
-    session.commit()
-    session.refresh(class_session)
-    return class_session
+        return update_class_session(session, class_session, payload)
+    except InvalidSession as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)

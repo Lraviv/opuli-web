@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 
+from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 
-from ..ai_tokens import SCOPE_READ
+from ..ai_tokens import SCOPE_READ, SCOPE_WRITE
 from ..config import settings
 from .auth import OpuliTokenVerifier
 
@@ -15,8 +16,23 @@ Call get_overview first: it returns today's date, the student's degrees, semeste
 Courses can be referenced by id, course code or (part of) the name; if a name is ambiguous the tool
 returns the candidates - ask the student which one they meant.
 All dates and times are Israel local time (Asia/Jerusalem), ISO format without offset.
+Before adding or changing several items at once, show the student what you are about to write.
 Answer the student in their language (usually Hebrew).
 """
+
+
+async def hide_write_tools_without_scope(ctx, call_next):
+    """חיבור עם הרשאת קריאה בלבד לא רואה את כלי הכתיבה ב-tools/list, כדי שה-AI
+    לא ינסה להשתמש בהם. (הכלים עצמם בודקים את ההרשאה בכל מקרה - require_write.)"""
+    result = await call_next(ctx)
+    if ctx.method != "tools/list":
+        return result
+    token = get_access_token()
+    if token is not None and SCOPE_WRITE in token.scopes:
+        return result
+    # התשובה כבר בצורת JSON (dict) בשלב הזה
+    result["tools"] = [t for t in result["tools"] if (t.get("annotations") or {}).get("readOnlyHint")]
+    return result
 
 RESOURCE_URL = f"{settings.api_public_url.rstrip('/')}/mcp"
 
@@ -35,10 +51,11 @@ mcp_server = MCPServer(
     website_url=settings.web_url,
     token_verifier=OpuliTokenVerifier(RESOURCE_URL),
     auth=_auth,
+    middleware=[hide_write_tools_without_scope],
 )
 
 
-from . import tools  # noqa: E402,F401  (רושם את הכלים על mcp_server)
+from . import tools, write_tools  # noqa: E402,F401  (רושם את הכלים על mcp_server)
 
 
 def _streamable_app() -> Starlette:

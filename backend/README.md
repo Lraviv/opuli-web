@@ -96,6 +96,7 @@ backend/
     push.py         # push sending via Expo (no extra dependency, plain httpx)
     ai_tokens.py    # tokens for AI apps (hashed in the DB, prefix opl_)
     mcp_server/     # MCP server at /mcp for Claude / ChatGPT (see "AI connection" below)
+    services/       # logic shared by the routers and the MCP tools (courses, items, exams, reminders, sessions)
     routers/
       auth.py          # /auth/register, /auth/login, /auth/refresh, /me
       degrees.py       # /degrees, /degrees/{id}/catalog, /catalog-courses/...
@@ -124,6 +125,7 @@ See the app spec (`app-spec.md`) for the full list, or open http://localhost:800
 
 - Auth: `Authorization: Bearer opl_...`, a token from `POST /me/ai-tokens` (scopes `opuli.read` / `opuli.write`). The site's own JWT does not work here. Only the SHA-256 of a token is stored.
 - Every tool takes the user from the token, never from its arguments.
+- Read tools are in `tools.py`, write tools in `write_tools.py`. Write tools need `opuli.write`; a read-only token doesn't see them in `tools/list`. Writes go through `app/services/` (shared with the routers), so they behave exactly like the site.
 - Try it locally: create a token, then `claude mcp add --transport http opuli http://localhost:8000/mcp --header "Authorization: Bearer opl_..."`.
 
 ## Degree templates (`app/catalog_templates.py`)
