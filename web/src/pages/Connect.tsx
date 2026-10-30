@@ -120,8 +120,8 @@ function ConnectRequest({ requestId }: { requestId: string }) {
           <label className="connect-scope">
             <input type="checkbox" checked={allowWrite} onChange={(e) => setAllowWrite(e.target.checked)} />
             <span>
-              <b>הוספה ועדכון</b>
-              <span className="connect-scope__sub">קורסים, מטלות, מבחנים, ציונים, תזכורות, שיעורים ומפגשים. מחיקת תואר או קורס אפשרית רק באתר.</span>
+              <b>הוספה, עדכון ומחיקה</b>
+              <span className="connect-scope__sub">הוספה ועדכון של קורסים, מטלות, מבחנים, ציונים, תזכורות, שיעורים ומפגשים, ומחיקה של תזכורות, מטלות, מבחנים ומפגשים (תמיד באישור שלך). תואר וקורס אפשר למחוק רק באתר.</span>
             </span>
           </label>
         )}

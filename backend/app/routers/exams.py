@@ -8,6 +8,7 @@ from ..models import Course, Exam, ExamReminder, User
 from ..schemas import ExamCreate, ExamRead, ExamReminderRead, ExamUpdate
 from ..services.exams import create_exam as create_exam_service
 from ..services.exams import update_exam as update_exam_service
+from ..services.exams import delete_exam as delete_exam_service
 
 router = APIRouter(tags=["exams"])
 
@@ -73,10 +74,4 @@ def delete_exam(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    exam = get_owned_exam(exam_id, current_user.id, session)
-    for reminder in session.exec(select(ExamReminder).where(ExamReminder.exam_id == exam_id)).all():
-        session.delete(reminder)
-    # קודם מוחקים את התזכורות במסד, ורק אז את המבחן (מפתח זר ב-Postgres)
-    session.flush()
-    session.delete(exam)
-    session.commit()
+    delete_exam_service(session, get_owned_exam(exam_id, current_user.id, session))

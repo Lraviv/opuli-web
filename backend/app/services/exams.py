@@ -49,3 +49,13 @@ def update_exam(session: Session, exam: Exam, payload: ExamUpdate) -> Exam:
     session.commit()
     session.refresh(exam)
     return exam
+
+
+def delete_exam(session: Session, exam: Exam) -> None:
+    """מוחק מבחן יחד עם התזכורות שלו."""
+    for reminder in session.exec(select(ExamReminder).where(ExamReminder.exam_id == exam.id)).all():
+        session.delete(reminder)
+    # קודם מוחקים את התזכורות במסד, ורק אז את המבחן (מפתח זר ב-Postgres)
+    session.flush()
+    session.delete(exam)
+    session.commit()

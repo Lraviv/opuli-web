@@ -47,7 +47,7 @@ from ..services.courses import (
     update_course as update_course_service,
     update_course_item,
 )
-from ..services.exams import create_exam, update_exam as update_exam_service
+from ..services.exams import create_exam, delete_exam, update_exam as update_exam_service
 from ..services.reminders import create_reminder, update_reminder as update_reminder_service
 from .auth import current_user_id, require_write
 from .common import TERMS, course_url, norm, parse_local, resolve_course, to_local, to_local_display, validation_message
@@ -57,6 +57,8 @@ from .server import mcp_server
 ADD = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False)
 # עדכון שדות: אותה קריאה פעמיים = אותה תוצאה
 UPDATE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
+# מחיקה: הרסנית, ולקוחות כמו Claude מבקשים עליה אישור מהמשתמשת
+DELETE = ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=True, open_world_hint=False)
 
 MAX_BATCH = 30
 _WEEKDAY_NAMES = {
@@ -714,3 +716,44 @@ def mark_lessons_watched(course: str, lessons: list[str], watched: bool = True) 
             "course": c.name,
             "updated": [{"id": i.id, "title": i.title, "watched": i.is_done} for i in updated],
         }
+
+
+# ---------------------------------------------------------------- מחיקה
+
+_DELETE_LABEL = {"reminder": "התזכורת", "assignment": "המטלה", "exam": "המבחן", "class_session": "המפגש"}
+
+
+@mcp_server.tool(annotations=DELETE)
+def delete_item(kind: Literal["reminder", "assignment", "exam", "class_session"], item_id: int) -> dict[str, Any]:
+    """Delete one reminder, assignment, exam or recurring class session by id.
+    ALWAYS tell the student exactly what will be deleted and get an explicit yes first; this cannot be undone.
+    Courses, degrees, lessons and grades can't be deleted here (only on the website).
+    Ids come from get_course, list_upcoming, list_reminders or get_schedule."""
+    require_write()
+    user_id = current_user_id()
+    with Session(engine) as session:
+        if kind == "reminder":
+            row = _owned_reminder(session, item_id, user_id)
+            title = row.title
+            session.delete(row)
+            session.commit()
+        elif kind == "exam":
+            exam = _owned_course_row(session, Exam, item_id, user_id, "מבחן")
+            course = session.get(Course, exam.course_id)
+            title = f"מבחן ב{course.name} {to_local_display(exam.date_time)}"
+            delete_exam(session, exam)
+        elif kind == "assignment":
+            item = _owned_course_row(session, CourseItem, item_id, user_id, "מטלה")
+            if item.type != CourseItemType.assignment:
+                raise ToolError(f"מטלה {item_id} לא נמצאה.")
+            title = item.title
+            session.delete(item)
+            session.commit()
+        else:
+            class_session = _owned_course_row(session, ClassSession, item_id, user_id, "מפגש")
+            course = session.get(Course, class_session.course_id)
+            days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
+            title = f"{class_session.title or 'מפגש'} ב{course.name}, יום {days[class_session.weekday]} {class_session.start_time}"
+            session.delete(class_session)
+            session.commit()
+    return {"deleted": kind, "id": item_id, "title": title, "message": f"{_DELETE_LABEL[kind]} \"{title}\" נמחק/ה."}

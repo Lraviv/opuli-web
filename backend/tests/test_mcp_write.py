@@ -218,3 +218,44 @@ def test_lessons(client):
     site = {i["title"]: i for i in client.get(f"/courses/{course['id']}/items", headers=user["headers"]).json()}
     assert site["שיעור 02"]["is_done"] and site["שיעור 02"]["watched_at"] is not None
     assert not site["שיעור 01"]["is_done"]
+
+
+# ---------------------------------------------------------------- מחיקה
+
+
+def test_delete_item(client):
+    user, token = setup_user(client)
+    course = new_course(client, user)
+    exam = client.post(f"/courses/{course['id']}/exams", json={"date_time": "2027-02-14T07:00:00Z"}, headers=user["headers"]).json()
+    item = client.post(f"/courses/{course['id']}/items", json={"type": "assignment", "title": "ממ\"ן 11"}, headers=user["headers"]).json()
+    lesson = client.post(f"/courses/{course['id']}/items", json={"type": "lesson", "title": "שיעור 1"}, headers=user["headers"]).json()
+    reminder = client.post("/reminders/", json={"title": "לשלוח עבודה"}, headers=user["headers"]).json()
+    sess = client.post(f"/courses/{course['id']}/sessions", json={"weekday": 0, "start_time": "18:00", "end_time": "20:00"}, headers=user["headers"]).json()
+
+    tool = next(t for t in rpc(client, token, "tools/list").json()["result"]["tools"] if t["name"] == "delete_item")
+    assert tool["annotations"]["destructiveHint"] is True
+
+    assert data(call(client, token, "delete_item", kind="exam", item_id=exam["id"]))["title"].startswith("מבחן ב")
+    assert data(call(client, token, "delete_item", kind="assignment", item_id=item["id"]))["title"] == 'ממ"ן 11'
+    assert data(call(client, token, "delete_item", kind="reminder", item_id=reminder["id"]))["title"] == "לשלוח עבודה"
+    assert data(call(client, token, "delete_item", kind="class_session", item_id=sess["id"]))["id"] == sess["id"]
+
+    assert client.get("/exams", headers=user["headers"]).json() == []
+    assert client.get("/reminders/", headers=user["headers"]).json() == []
+    assert client.get("/sessions", headers=user["headers"]).json() == []
+    # שיעור הוא לא מטלה - לא נמחק דרך kind="assignment"
+    assert "לא נמצא" in error_text(call(client, token, "delete_item", kind="assignment", item_id=lesson["id"]))
+    assert [i["id"] for i in client.get(f"/courses/{course['id']}/items", headers=user["headers"]).json()] == [lesson["id"]]
+    # מחיקה חוזרת: לא נמצא, בלי לשבור כלום
+    assert "לא נמצא" in error_text(call(client, token, "delete_item", kind="reminder", item_id=reminder["id"]))
+
+
+def test_delete_needs_write_and_ownership(client):
+    alice, _ = setup_user(client, "alice-d@example.com")
+    _, bob_token = setup_user(client, "bob-d@example.com")
+    reminder = client.post("/reminders/", json={"title": "x"}, headers=alice["headers"]).json()
+    read_token = make_token(client, alice)
+
+    assert "הרשאת קריאה בלבד" in error_text(call(client, read_token, "delete_item", kind="reminder", item_id=reminder["id"]))
+    assert "לא נמצא" in error_text(call(client, bob_token, "delete_item", kind="reminder", item_id=reminder["id"]))
+    assert len(client.get("/reminders/", headers=alice["headers"]).json()) == 1

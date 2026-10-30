@@ -14,7 +14,7 @@ function formatDate(value: string | null): string {
 }
 
 function scopeLabel(scopes: AiScope[]): string {
-  return scopes.includes('opuli.write') ? 'קריאה, הוספה ועדכון' : 'קריאה בלבד'
+  return scopes.includes('opuli.write') ? 'קריאה וכתיבה' : 'קריאה בלבד'
 }
 
 /** כפתור העתקה עם "הועתק" לשתי שניות */
@@ -188,7 +188,7 @@ function PersonalTokens() {
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="שם, למשל Claude Code" maxLength={60} aria-label="שם הטוקן" />
           <label className="ai-form__write">
             <input type="checkbox" checked={allowWrite} onChange={(e) => setAllowWrite(e.target.checked)} />
-            גם הוספה ועדכון
+            גם כתיבה
           </label>
           <Button type="submit" disabled={create.isPending}>
             יצירת טוקן
