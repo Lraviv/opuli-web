@@ -60,6 +60,12 @@ class Settings(BaseSettings):
     # כתובת האתר לקישורים בתוך המיילים
     web_url: str = "https://opuli.web.app"
 
+    # חיבור AI (שרת MCP ב-/mcp): כבוי כברירת מחדל עד שמדליקים במכוון.
+    # api_public_url = הכתובת הציבורית של ה-API הזה (בלי / בסוף) - ממנה נבנית
+    # כתובת ה-MCP שמופיעה במטא-דאטה של ההרשאות.
+    mcp_enabled: bool = False
+    api_public_url: str = "http://localhost:8000"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("database_url")

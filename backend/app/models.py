@@ -421,3 +421,28 @@ class ForumReport(SQLModel, table=True):
     reason: str = Field(default="")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
+
+
+class AiToken(SQLModel, table=True):
+    """טוקן גישה של אפליקציית AI (Claude, ChatGPT וכו') לשרת ה-MCP.
+
+    הטוקן עצמו מוצג פעם אחת ביצירה; נשמר רק ה-hash שלו (SHA-256), כך שדליפה
+    של המסד לא חושפת טוקנים. kind: personal = טוקן אישי שנוצר בפרופיל.
+    scopes מופרדים ברווח (opuli.read / opuli.write).
+    """
+
+    __tablename__ = "ai_tokens"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    token_hash: str = Field(index=True, unique=True)
+    # תחילת הטוקן לתצוגה ברשימה ("opl_ab12…"), כדי לזהות אותו בלי לחשוף אותו
+    token_prefix: str
+    kind: str = Field(default="personal")
+    name: str
+    client_id: Optional[str] = None
+    scopes: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None
+    last_used_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None

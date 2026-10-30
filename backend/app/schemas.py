@@ -665,3 +665,32 @@ class CalendarTokenRead(BaseModel):
     token: str
     # נתיב יחסי לשרת ה-API - הקליינט מצמיד אותו לכתובת ה-API שלו
     path: str
+
+
+# ---------------------------------------------------------------------------
+# טוקנים לאפליקציות AI (שרת ה-MCP)
+# ---------------------------------------------------------------------------
+
+
+class AiTokenCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    # opuli.read / opuli.write (write כולל read)
+    scopes: list[str] = Field(default_factory=lambda: ["opuli.read"], min_length=1)
+    # None = בלי תפוגה
+    expires_in_days: int | None = Field(default=90, ge=1, le=365)
+
+
+class AiTokenRead(BaseModel):
+    id: int
+    name: str
+    kind: str
+    token_prefix: str
+    scopes: list[str]
+    created_at: datetime
+    expires_at: datetime | None
+    last_used_at: datetime | None
+
+
+class AiTokenCreated(AiTokenRead):
+    # הטוקן המלא - מוחזר רק ביצירה, ולא נשמר בשרת
+    token: str
