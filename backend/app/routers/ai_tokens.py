@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ..ai_tokens import issue_token, normalize_scopes
+from ..ai_tokens import KIND_PERSONAL, issue_token, normalize_scopes
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import AiToken, User
@@ -34,7 +34,7 @@ def _active_tokens(user_id: int, session: Session) -> list[AiToken]:
     now = datetime.utcnow()
     rows = session.exec(
         select(AiToken)
-        .where(AiToken.user_id == user_id, AiToken.revoked_at.is_(None))
+        .where(AiToken.user_id == user_id, AiToken.kind == KIND_PERSONAL, AiToken.revoked_at.is_(None))
         .order_by(AiToken.created_at.desc())
     ).all()
     return [r for r in rows if r.expires_at is None or r.expires_at > now]
@@ -76,7 +76,7 @@ def revoke_ai_token(
     session: Session = Depends(get_session),
 ):
     row = session.get(AiToken, token_id)
-    if row is None or row.user_id != current_user.id or row.revoked_at is not None:
+    if row is None or row.user_id != current_user.id or row.kind != KIND_PERSONAL or row.revoked_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="טוקן לא נמצא")
     row.revoked_at = datetime.utcnow()
     session.add(row)

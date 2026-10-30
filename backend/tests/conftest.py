@@ -6,7 +6,8 @@ os.environ.setdefault("JWT_SECRET", "test-secret")
 os.environ.setdefault("INTERNAL_SECRET", "test-internal-secret")
 os.environ.setdefault("DISABLE_SCHEDULER", "1")
 os.environ.setdefault("MCP_ENABLED", "1")
-os.environ.setdefault("API_PUBLIC_URL", "http://testserver")
+os.environ.setdefault("API_PUBLIC_URL", "http://localhost:8000")
+os.environ.setdefault("WEB_URL", "http://localhost:5173")
 
 import pytest
 from fastapi.testclient import TestClient

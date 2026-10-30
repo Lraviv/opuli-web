@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { Button, Card, IconPicker, Input } from '@/components/ui'
 import { InstallHint } from '@/components/InstallHint'
 import { CalendarExport } from '@/components/CalendarExport'
+import { AiConnections } from '@/components/AiConnections'
 import { AccentColorPresets, AvatarIcons } from '@/lib/constants'
 import { Link } from 'react-router-dom'
 import { FEEDBACK_EMAIL, INFO_LINKS, LINKEDIN_URL } from '@/lib/site'
@@ -148,6 +149,11 @@ export default function Profile() {
       <div className="profile-section">
         <h2>ייצוא ליומן</h2>
         <CalendarExport />
+      </div>
+
+      <div className="profile-section" id="ai">
+        <h2>חיבור ל-AI</h2>
+        <AiConnections />
       </div>
 
       <FeedbackSection />

@@ -341,3 +341,42 @@ export interface ForumPostCreate {
   pin?: boolean
   all_institutions?: boolean
 }
+
+// --- חיבור AI (שרת MCP) ---
+
+export type AiScope = 'opuli.read' | 'opuli.write'
+
+/** טוקן אישי - לכלים שלא תומכים בהתחברות אוטומטית */
+export interface AiTokenRead {
+  id: number
+  name: string
+  kind: string
+  token_prefix: string
+  scopes: AiScope[]
+  created_at: string
+  expires_at: string | null
+  last_used_at: string | null
+}
+
+export interface AiTokenCreated extends AiTokenRead {
+  /** הטוקן המלא - מוצג פעם אחת בלבד */
+  token: string
+}
+
+/** אפליקציה שהתחברה דרך עמוד האישור (Claude, ChatGPT…) */
+export interface AiConnectionRead {
+  id: string
+  name: string
+  scopes: AiScope[]
+  connected_at: string
+  last_used_at: string | null
+}
+
+export interface OAuthRequestRead {
+  client_name: string
+  redirect_host: string
+  /** שם אפליקציה מוכרת לפי הדומיין, או null כשהדומיין לא מוכר */
+  known_app: string | null
+  scopes: AiScope[]
+  expires_at: string
+}

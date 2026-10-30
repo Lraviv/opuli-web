@@ -15,6 +15,7 @@ from .routers.exams import router as exams_router
 from .routers.feedback import router as feedback_router
 from .routers.forum import router as forum_router
 from .routers.internal import router as internal_router
+from .routers.oauth import router as oauth_router
 from .routers.planner import router as planner_router
 from .routers.push_tokens import router as push_tokens_router
 from .routers.semesters import router as semesters_router
@@ -85,8 +86,9 @@ app.include_router(planner_router)
 app.include_router(calendar_router)
 app.include_router(internal_router)
 app.include_router(ai_tokens_router)
+app.include_router(oauth_router)
 
 if mcp_app is not None:
     # אחרון: מה שלא נתפס ע"י הראוטרים של FastAPI עובר לאפליקציית ה-MCP -
-    # /mcp ו-/.well-known/oauth-protected-resource/mcp
+    # /mcp, ה-metadata ב-/.well-known/, ושרת ההרשאות: /authorize /token /register /revoke
     app.mount("/", mcp_app)

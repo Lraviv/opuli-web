@@ -122,7 +122,7 @@ def test_expired_token_rejected(client):
 
 def test_protected_resource_metadata(client):
     meta = client.get("/.well-known/oauth-protected-resource/mcp").json()
-    assert meta["resource"] == "http://testserver/mcp"
+    assert meta["resource"] == "http://localhost:8000/mcp"
     assert "opuli.read" in meta["scopes_supported"]
 
 

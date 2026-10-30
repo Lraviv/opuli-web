@@ -24,6 +24,16 @@ export function clearTokens(): void {
   localStorage.removeItem(REFRESH_KEY)
 }
 
+/** כתובת ההתחברות, עם חזרה לעמוד הנוכחי אחריה (למשל לעמוד אישור החיבור /connect) */
+export function loginPath(next: string): string {
+  return next && next !== '/' && next !== '/login' ? `/login?next=${encodeURIComponent(next)}` : '/login'
+}
+
+/** יעד בטוח לחזרה אחרי התחברות: רק נתיב פנימי באתר, לא כתובת חיצונית */
+export function safeNext(next: string | null): string {
+  return next && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\') ? next : '/'
+}
+
 export class ApiError extends Error {
   status: number
   constructor(status: number, message: string) {
@@ -90,7 +100,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     const refreshed = await tryRefresh()
     if (refreshed) return request<T>(path, options, true)
     clearTokens()
-    window.location.href = '/login'
+    window.location.href = loginPath(window.location.pathname + window.location.search)
     throw new ApiError(401, 'לא מחובר/ת')
   }
 

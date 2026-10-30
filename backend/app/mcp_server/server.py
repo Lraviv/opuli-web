@@ -1,14 +1,14 @@
 from contextlib import asynccontextmanager
 
 from mcp.server.auth.middleware.auth_context import get_access_token
-from mcp.server.auth.settings import AuthSettings
+from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 
-from ..ai_tokens import SCOPE_READ, SCOPE_WRITE
+from ..ai_tokens import ALL_SCOPES, SCOPE_READ, SCOPE_WRITE
 from ..config import settings
-from .auth import OpuliTokenVerifier
+from .oauth import OpuliOAuthProvider
 
 INSTRUCTIONS = """\
 OpuLi is a degree organizer for university students (mostly Israeli, mostly the Open University).
@@ -37,11 +37,16 @@ async def hide_write_tools_without_scope(ctx, call_next):
 RESOURCE_URL = f"{settings.api_public_url.rstrip('/')}/mcp"
 
 _auth = AuthSettings(
-    # שרת ההרשאות (OAuth) הוא ה-API עצמו - נבנה בשלב 3. עד אז מתחברים בטוקן אישי.
+    # שרת ההרשאות (OAuth) הוא ה-API עצמו - ראו oauth.py
     issuer_url=settings.api_public_url.rstrip("/"),
+    service_documentation_url=f"{settings.web_url.rstrip('/')}/ai",
     resource_server_url=RESOURCE_URL,
     validate_token_resource=True,
     required_scopes=[SCOPE_READ],
+    client_registration_options=ClientRegistrationOptions(
+        enabled=True, valid_scopes=list(ALL_SCOPES), default_scopes=list(ALL_SCOPES)
+    ),
+    revocation_options=RevocationOptions(enabled=True),
 )
 
 mcp_server = MCPServer(
@@ -49,7 +54,9 @@ mcp_server = MCPServer(
     title="OpuLi",
     instructions=INSTRUCTIONS,
     website_url=settings.web_url,
-    token_verifier=OpuliTokenVerifier(RESOURCE_URL),
+    # ה-SDK מוסיף את /authorize, /token, /register, /revoke ואת ה-metadata,
+    # ומאמת את ה-Bearer של /mcp דרך provider.load_access_token
+    auth_server_provider=OpuliOAuthProvider(RESOURCE_URL),
     auth=_auth,
     middleware=[hide_write_tools_without_scope],
 )
