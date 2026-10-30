@@ -20,13 +20,12 @@ from ..models import (
     UserReminder,
 )
 from .auth import current_user_id
-from .common import course_url, now_local, resolve_course, to_local, to_local_display
+from .common import TERMS, course_url, now_local, resolve_course, to_local, to_local_display
 from .server import mcp_server
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 
 DEFAULT_PASS_GRADE = 60  # כמו DEFAULT_PASS_GRADE באתר (web/src/lib/grades.ts)
-_TERMS = {"a": "א", "b": "ב", "special": "מיוחד"}  # Exam.term
 _SESSION_WEEKDAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]  # ClassSession.weekday
 
 
@@ -164,7 +163,7 @@ def get_course(course: str) -> dict[str, Any]:
             "exams": [
                 {
                     "id": e.id,
-                    "term": _TERMS.get(e.term, e.term) if e.term else None,
+                    "term": TERMS.get(e.term, e.term) if e.term else None,
                     "when": to_local(e.date_time),
                     "when_display": to_local_display(e.date_time),
                     "location": e.location,
@@ -230,7 +229,7 @@ def list_upcoming(days: int = 14) -> dict[str, Any]:
                 events.append({
                     "type": "exam",
                     "id": exam.id,
-                    "title": f"מבחן {courses[exam.course_id].name}" + (f" (מועד {_TERMS.get(exam.term, exam.term)})" if exam.term else ""),
+                    "title": f"מבחן {courses[exam.course_id].name}" + (f" (מועד {TERMS.get(exam.term, exam.term)})" if exam.term else ""),
                     "course": courses[exam.course_id].name,
                     "course_id": exam.course_id,
                     "location": exam.location,

@@ -6,7 +6,7 @@ from ..catalog_templates import TEMPLATES, get_template
 from ..db import get_session
 from ..deps import get_current_user
 from ..models import CatalogCourse, Course, Degree, DegreeRequirement, User
-from ..tips import code_from_catalog_notes, resolve_shared_course
+from ..services.courses import course_from_catalog
 from ..schemas import (
     CatalogCourseCreate,
     CatalogCourseRead,
@@ -263,21 +263,12 @@ def select_catalog_course(
         if semester.degree_id != catalog_course.degree_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="הסמסטר שייך לתואר אחר")
 
-    course = Course(
-        user_id=current_user.id,
-        degree_id=catalog_course.degree_id,
-        catalog_course_id=catalog_course.id,
-        name=catalog_course.name,
-        credits=catalog_course.credits,
-        category=catalog_course.category,
+    return course_from_catalog(
+        session,
+        current_user.id,
+        catalog_course,
         status=payload.status,
         semester=payload.semester,
         semester_id=payload.semester_id,
         grade=payload.grade,
-        course_code=code_from_catalog_notes(catalog_course.notes),
     )
-    session.add(course)
-    session.commit()
-    session.refresh(course)
-    resolve_shared_course(course, session)
-    return course
