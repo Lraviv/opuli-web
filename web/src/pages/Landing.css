@@ -87,3 +87,22 @@
     align-self: center;
   }
 }
+
+.landing__ai {
+  margin-top: var(--space-five);
+  text-align: center;
+}
+.landing__ai h2 {
+  margin: 0 0 var(--space-two);
+  font-size: 20px;
+}
+.landing__ai p {
+  max-width: 560px;
+  margin: 0 auto var(--space-two);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+.landing__ai a {
+  color: var(--color-primary);
+  font-weight: 700;
+}

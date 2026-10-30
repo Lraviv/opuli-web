@@ -51,6 +51,14 @@ export default function Landing() {
         ))}
       </div>
 
+      <section className="landing__ai">
+        <h2>✨ עובד גם עם Claude ו-ChatGPT</h2>
+        <p>
+          במקום להקליד כל מטלה ומבחן, מחברים את OpuLi ל-AI וכותבים לו: "תוסיף לי את המטלות מהסילבוס", "מה יש לי השבוע?" או "קיבלתי 88 בממ"ן".
+        </p>
+        <Link to="/ai">איך זה עובד</Link>
+      </section>
+
       <section className="landing__cta">
         <h2>מתחילים בשתי דקות</h2>
         <p>נרשמים, בוחרים את התואר מהרשימה, ומסמנים אילו קורסים כבר עשיתם.</p>
