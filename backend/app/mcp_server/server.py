@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from mcp.server.auth.middleware.auth_context import get_access_token
+from mcp.server.auth.routes import create_protected_resource_routes
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
@@ -65,15 +66,32 @@ mcp_server = MCPServer(
 from . import tools, write_tools  # noqa: E402,F401  (רושם את הכלים על mcp_server)
 
 
+def _advertise_all_scopes(app: Starlette) -> Starlette:
+    """ה-SDK מפרסם ב-metadata של המשאב (/.well-known/oauth-protected-resource/mcp)
+    רק את required_scopes, כלומר opuli.read. Claude מבקש בדיוק את מה שמופיע שם,
+    ולכן קיבל הרשאת קריאה בלבד. מחליפים את הנתיב בגרסה שמפרסמת את שתי ההרשאות;
+    הדרישה המינימלית לגישה נשארת opuli.read."""
+    routes = create_protected_resource_routes(
+        resource_url=_auth.resource_server_url,
+        authorization_servers=[_auth.issuer_url],
+        scopes_supported=list(ALL_SCOPES),
+        resource_name="OpuLi",
+        resource_documentation=_auth.service_documentation_url,
+    )
+    replacement = {r.path: r for r in routes}
+    app.router.routes = [replacement.get(getattr(r, "path", None), r) for r in app.router.routes]
+    return app
+
+
 def _streamable_app() -> Starlette:
-    return mcp_server.streamable_http_app(
+    return _advertise_all_scopes(mcp_server.streamable_http_app(
         streamable_http_path="/mcp",
         stateless_http=True,
         json_response=True,
         # הגנת DNS rebinding רלוונטית לשרתים מקומיים עם עוגיות; כאן כל בקשה
         # מאומתת ב-Bearer, וה-Host בייצור הוא הדומיין של Cloud Run
         transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
-    )
+    ))
 
 
 class McpApp:
