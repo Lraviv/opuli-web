@@ -9,6 +9,7 @@ from starlette.applications import Starlette
 
 from ..ai_tokens import ALL_SCOPES, SCOPE_READ, SCOPE_WRITE
 from ..config import settings
+from . import ratelimit
 from .oauth import OpuliOAuthProvider
 
 INSTRUCTIONS = """\
@@ -112,6 +113,11 @@ class McpApp:
     async def __call__(self, scope, receive, send) -> None:
         if self._app is None:
             raise RuntimeError("MCP app used outside the application lifespan")
+        if scope["type"] == "http" and scope.get("method") != "OPTIONS":
+            retry_after = ratelimit.check(scope)
+            if retry_after:
+                await ratelimit.too_many_requests(send, retry_after)
+                return
         await self._app(scope, receive, send)
 
 

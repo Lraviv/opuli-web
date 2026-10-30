@@ -29,6 +29,10 @@ def _reset_db_file():
 @pytest.fixture()
 def client():
     _reset_db_file()
+    # מגבלות הקצב נשמרות בזיכרון - כל בדיקה מתחילה נקייה
+    from app.mcp_server import ratelimit
+
+    ratelimit.window.reset()
     with TestClient(app) as c:
         yield c
     _reset_db_file()
