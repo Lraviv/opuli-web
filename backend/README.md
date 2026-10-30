@@ -94,6 +94,8 @@ backend/
     deps.py         # dependency that identifies the signed-in user from the token
     authz.py        # helpers that check ownership of a resource (degree/course/exam/item)
     push.py         # push sending via Expo (no extra dependency, plain httpx)
+    ai_tokens.py    # tokens for AI apps (hashed in the DB, prefix opl_)
+    mcp_server/     # MCP server at /mcp for Claude / ChatGPT (see "AI connection" below)
     routers/
       auth.py          # /auth/register, /auth/login, /auth/refresh, /me
       degrees.py       # /degrees, /degrees/{id}/catalog, /catalog-courses/...
@@ -103,6 +105,7 @@ backend/
       forum.py         # /forum/... (community forum per institution: posts, events, comments, reports)
       push_tokens.py   # /push-tokens
       internal.py      # /internal/check-reminders (for the external trigger)
+      ai_tokens.py     # /me/ai-tokens (personal tokens for AI apps)
       ...              # calendar, feedback, planner, reminders, semesters, study_topics
   alembic/            # migrations
   tests/              # pytest suite (conftest.py has the client and sign-up fixtures)
@@ -114,6 +117,14 @@ backend/
 ## Endpoints
 
 See the app spec (`app-spec.md`) for the full list, or open http://localhost:8000/docs after starting the server: Swagger lists every endpoint and lets you try them from the browser.
+
+## AI connection (MCP)
+
+`app/mcp_server/` is an MCP server mounted at `/mcp` on the same app, so students can work with OpuLi from Claude, ChatGPT and other MCP clients. It is off unless `MCP_ENABLED=true`; `API_PUBLIC_URL` must be this API's public URL (it goes into the OAuth metadata at `/.well-known/oauth-protected-resource/mcp`).
+
+- Auth: `Authorization: Bearer opl_...`, a token from `POST /me/ai-tokens` (scopes `opuli.read` / `opuli.write`). The site's own JWT does not work here. Only the SHA-256 of a token is stored.
+- Every tool takes the user from the token, never from its arguments.
+- Try it locally: create a token, then `claude mcp add --transport http opuli http://localhost:8000/mcp --header "Authorization: Bearer opl_..."`.
 
 ## Degree templates (`app/catalog_templates.py`)
 

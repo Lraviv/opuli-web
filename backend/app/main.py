@@ -1,10 +1,11 @@
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import create_db_and_tables
+from .routers.ai_tokens import router as ai_tokens_router
 from .routers.auth import me_router, router as auth_router
 from .routers.calendar import router as calendar_router
 from .routers.course_structure import router as course_structure_router
@@ -22,6 +23,13 @@ from .routers.study_topics import router as study_topics_router
 from .routers.tips import router as tips_router
 from .scheduler import start_scheduler, stop_scheduler
 
+# שרת ה-MCP (חיבור Claude / ChatGPT) - נטען רק כשהוא מודלק
+mcp_app = None
+if settings.mcp_enabled:
+    from .mcp_server import build_mcp_app
+
+    mcp_app = build_mcp_app()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,7 +43,10 @@ async def lifespan(app: FastAPI):
     import os
     if os.environ.get("DISABLE_SCHEDULER") != "1":
         start_scheduler()
-    yield
+    async with AsyncExitStack() as stack:
+        if mcp_app is not None:
+            await stack.enter_async_context(mcp_app.lifespan())
+        yield
     if os.environ.get("DISABLE_SCHEDULER") != "1":
         stop_scheduler()
 
@@ -73,3 +84,9 @@ app.include_router(forum_router)
 app.include_router(planner_router)
 app.include_router(calendar_router)
 app.include_router(internal_router)
+app.include_router(ai_tokens_router)
+
+if mcp_app is not None:
+    # אחרון: מה שלא נתפס ע"י הראוטרים של FastAPI עובר לאפליקציית ה-MCP -
+    # /mcp ו-/.well-known/oauth-protected-resource/mcp
+    app.mount("/", mcp_app)

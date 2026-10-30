@@ -5,6 +5,8 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./test_smoke.db")
 os.environ.setdefault("JWT_SECRET", "test-secret")
 os.environ.setdefault("INTERNAL_SECRET", "test-internal-secret")
 os.environ.setdefault("DISABLE_SCHEDULER", "1")
+os.environ.setdefault("MCP_ENABLED", "1")
+os.environ.setdefault("API_PUBLIC_URL", "http://testserver")
 
 import pytest
 from fastapi.testclient import TestClient

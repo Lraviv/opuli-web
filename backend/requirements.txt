@@ -9,6 +9,8 @@ bcrypt==4.0.1
 pyjwt[crypto]==2.9.0
 email-validator==2.2.0
 httpx==0.27.2
+# שרת MCP (חיבור Claude / ChatGPT) - ראו app/mcp_server
+mcp==2.3.0
 
 apscheduler==3.10.4
 # נתוני אזורי זמן ל-zoneinfo (תמונות slim לא תמיד כוללות אותם) - ייצוא יומן
