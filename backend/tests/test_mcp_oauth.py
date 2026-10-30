@@ -116,6 +116,8 @@ def test_authorization_server_metadata(client):
     assert meta["code_challenge_methods_supported"] == ["S256"]
     resource = client.get("/.well-known/oauth-protected-resource/mcp").json()
     assert [u.rstrip("/") for u in resource["authorization_servers"]] == ["http://localhost:8000"]
+    # Claude מבקש את ההרשאות שמופיעות כאן - חייבות להיות שתיהן, אחרת מקבלים קריאה בלבד
+    assert set(resource["scopes_supported"]) == {"opuli.read", "opuli.write"}
 
 
 def test_full_connect_flow(client):
